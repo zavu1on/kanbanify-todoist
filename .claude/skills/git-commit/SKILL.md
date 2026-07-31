@@ -5,9 +5,9 @@ description: Generates a conventional commit message from staged changes — pas
 
 # Git Commit
 
-Скилл анализирует **только staged changes**, формирует conventional commit message по правилам проекта и выполняет коммит после подтверждения.
+Analyzes **staged changes only**, builds a conventional commit message per project rules, and commits after confirmation.
 
-## Формат коммита
+## Commit format
 
 ```
 type(scope): past-tense-verb short summary
@@ -16,22 +16,22 @@ type(scope): past-tense-verb short summary
 - past-tense-verb specific detail
 ```
 
-**Обязательные правила:**
-- Язык — строго **английский**. Лексика уровня B2
-- Глаголы — **прошедшее время**: `created`, `added`, `fixed`, `removed`, `updated`, `refactored`, `moved`, `renamed`, `deleted`, `implemented`, `extracted`, `configured`, `changed`, `replaced`, `improved`
-- `type` — один из: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`
-- `scope` — опционально, только если добавляет смысл (например, `auth`, `api`, `adr`); без scope — `type: verb summary`
-- Заголовок — краткий, до 72 символов
-- Тело — маркированный список (`-`), каждый пункт начинается с глагола в прошедшем времени
-- Тело **обязательно**, если затронуто более одного файла или изменение нетривиальное
-- Тело **не нужно**, если изменение в одном файле и заголовок полностью его описывает
-- Тело **лаконичное**: максимум 4 пункта, один пункт — одно смысловое действие, не файл
-  - Объединяй однотипные изменения в один пункт (например, несколько новых ADR-файлов → один пункт `added ADR files for X, Y, Z`, а не по пункту на файл)
-  - Не перечисляй файлы построчно — описывай суть изменения, а не список путей
-  - Не повторяй в теле то, что уже сказано в заголовке
-  - Если после группировки остаётся один пункт, дублирующий заголовок по смыслу — убери тело вообще
+**Mandatory rules:**
+- Language — strictly **English**. B2-level vocabulary
+- Verbs — **past tense**: `created`, `added`, `fixed`, `removed`, `updated`, `refactored`, `moved`, `renamed`, `deleted`, `implemented`, `extracted`, `configured`, `changed`, `replaced`, `improved`
+- `type` — one of: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`
+- `scope` — optional, only if it adds meaning (e.g. `auth`, `api`, `adr`); without scope — `type: verb summary`
+- Title — concise, up to 72 chars
+- Body — bulleted list (`-`), each item starts with a past-tense verb
+- Body is **required** if more than one file is affected or the change is non-trivial
+- Body is **not needed** if the change is a single file and the title fully describes it
+- Body is **terse**: max 4 items, one item = one logical action, not one file
+  - Group similar changes into one item (e.g. several new ADR files → one item `added ADR files for X, Y, Z`, not one item per file)
+  - Don't list files line by line — describe the essence of the change, not a path list
+  - Don't repeat in the body what the title already says
+  - If grouping leaves one item that just duplicates the title, drop the body entirely
 
-**Примеры:**
+**Examples:**
 
 ```
 docs: created initial docs/ structure for docs-as-code pattern
@@ -50,56 +50,56 @@ feat(auth): added JWT token refresh endpoint
 fix: removed duplicate index on users table
 ```
 
-## Пайплайн
+## Pipeline
 
-Выполняй шаги строго по порядку.
+Follow the steps strictly in order.
 
 ---
 
-### Шаг 1. Проверь staged changes
+### Step 1. Check staged changes
 
-Запусти обе команды:
+Run both commands:
 
 ```bash
 git status --short
 git diff --staged
 ```
 
-Если staged changes **нет** (вывод `git diff --staged` пустой) — сообщи:
-> Нет staged changes. Добавь файлы командой `git add <file>` и вызови скилл снова.
+If there are **no** staged changes (`git diff --staged` output is empty) — report:
+> No staged changes. Add files with `git add <file>` and call the skill again.
 
-Остановись. Не анализируй unstaged изменения.
-
----
-
-### Шаг 2. Сформируй commit message
-
-На основе `git diff --staged`:
-
-1. Определи **тип** (`type`): что за изменение — новая функция, фикс, документация, рефакторинг?
-2. Определи **scope** (если релевантен): какая область системы затронута?
-3. Напиши **заголовок**: `type(scope): verb summary` или `type: verb summary` — кратко, до 72 символов
-4. Составь **тело**: сгруппируй изменения по смыслу и опиши каждую группу одним пунктом (не более 4 пунктов, без перечисления файлов)
-
-Правило выбора типа:
-- `feat` — новая функциональность для пользователя/системы
-- `fix` — исправление ошибки
-- `docs` — изменения только в документации
-- `refactor` — рефакторинг без изменения функциональности
-- `chore` — обслуживание: зависимости, конфиги, скрипты
-- `test` — добавление или изменение тестов
-- `style` — форматирование, пробелы (не влияет на логику)
-- `ci` — изменения в CI/CD пайплайне
-- `build` — изменения системы сборки
+Stop. Don't analyze unstaged changes.
 
 ---
 
-### Шаг 3. Покажи сообщение и запроси подтверждение
+### Step 2. Build the commit message
 
-Выведи предлагаемый коммит в блоке кода и задай вопрос:
+Based on `git diff --staged`:
+
+1. Determine the **type**: what kind of change is it — new feature, fix, docs, refactor?
+2. Determine the **scope** (if relevant): which area of the system is affected?
+3. Write the **title**: `type(scope): verb summary` or `type: verb summary` — concise, up to 72 chars
+4. Build the **body**: group changes by meaning and describe each group in one item (max 4 items, no file listing)
+
+Type selection rule:
+- `feat` — new functionality for a user/system
+- `fix` — bug fix
+- `docs` — documentation-only changes
+- `refactor` — refactoring with no functional change
+- `chore` — maintenance: dependencies, configs, scripts
+- `test` — added or changed tests
+- `style` — formatting, whitespace (no logic change)
+- `ci` — CI/CD pipeline changes
+- `build` — build system changes
+
+---
+
+### Step 3. Show the message and ask for confirmation
+
+Print the proposed commit in a code block and ask:
 
 ```
-Предлагаемый коммит:
+Proposed commit:
 
 ───────────────────────────────────
 docs: created initial docs/ structure
@@ -107,19 +107,19 @@ docs: created initial docs/ structure
 - created mock decision files for ADR pattern
 ───────────────────────────────────
 
-Выполнить коммит? [да / нет / edit]
+Commit it? [yes / no / edit]
 ```
 
-Варианты ответа пользователя:
-- **да** / **y** / **yes** — перейди к Шагу 4
-- **нет** / **n** / **no** — остановись, не коммить, скажи что операция отменена
-- **edit** / **исправь** / любое пояснение — прими правки, скорректируй сообщение и покажи снова
+User response options:
+- **yes** / **y** / **да** — proceed to Step 4
+- **no** / **n** / **нет** — stop, don't commit, report that the operation was cancelled
+- **edit** / any clarification — apply the edits, adjust the message, show it again
 
 ---
 
-### Шаг 4. Выполни коммит
+### Step 4. Commit
 
-Выполни `git commit` с многострочным сообщением через HEREDOC:
+Run `git commit` with a multiline message via HEREDOC:
 
 ```bash
 git commit -m "$(cat <<'COMMIT_MSG'
@@ -131,6 +131,6 @@ COMMIT_MSG
 )"
 ```
 
-После выполнения:
-- Если коммит прошёл успешно — выведи хэш и первую строку сообщения
-- Если коммит не прошёл (pre-commit hook, ошибка) — выведи текст ошибки и **не** пытайся коммитить повторно; скажи пользователю что нужно исправить
+After running:
+- If the commit succeeded — print the hash and the first line of the message
+- If the commit failed (pre-commit hook, error) — print the error text and **don't** retry the commit; tell the user what needs fixing

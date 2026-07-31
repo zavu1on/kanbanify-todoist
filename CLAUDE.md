@@ -33,8 +33,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | Скилл | Источник | Назначение |
 |---|---|---|
-| [`git-commit`](.claude/skills/git-commit/SKILL.md) | самописный (перенесён из `b2s-api`) | Формирует conventional commit message по staged changes и коммитит после подтверждения |
-| [`accept-adr`](.claude/skills/accept-adr/SKILL.md) | самописный (перенесён из `b2s-api`) | Форматирует ADR-файл под шаблон проекта и проводит строгое ревью содержания |
+| [`git-commit`](.claude/skills/git-commit/SKILL.md) | самописный | Формирует conventional commit message по staged changes и коммитит после подтверждения |
+| [`accept-adr`](.claude/skills/accept-adr/SKILL.md) | самописный | Форматирует ADR-файл под шаблон проекта и проводит строгое ревью содержания |
 | [`todoist-sdk`](.claude/skills/todoist-sdk/SKILL.md) | самописный (спарсен из [GitHub-репозитория](https://github.com/Doist/todoist-sdk-typescript) `@doist/todoist-sdk`, версия `13.0.0`) | Справочник по TS SDK Todoist API: инициализация клиента, задачи/проекты/лейблы, пагинация, ошибки |
 
 ### Слэш-команды

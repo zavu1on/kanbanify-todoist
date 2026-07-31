@@ -5,38 +5,38 @@ description: Formats and deeply reviews an ADR file in docs/decisions/ — forma
 
 # Accept ADR
 
-Скилл принимает файл ADR из `docs/decisions/`, приводит его к шаблону проекта и проводит строгое ревью.
+Takes an ADR file from `docs/decisions/`, brings it to the project template, and runs a strict review.
 
-## Аргумент
+## Argument
 
-Путь к файлу ADR, переданный через `$ARGUMENTS`. Может быть как полным, так и относительным от корня репозитория.
+Path to the ADR file, passed via `$ARGUMENTS`. Can be absolute or relative to the repo root.
 
-Пример вызова: `/accept-adr docs/decisions/04-my-decision.md`
+Call example: `/accept-adr docs/decisions/04-my-decision.md`
 
-## Пайплайн
+## Pipeline
 
-Выполняй шаги строго по порядку, каждый обязателен.
-
----
-
-### Шаг 1. Загрузи контекст
-
-Прочитай все файлы, необходимые для работы:
-
-1. `docs/decisions/README.md` — шаблон, поля, статусы, критерии создания ADR
-2. `docs/README.md` — правила форматирования документации (язык, отступы, жирный/курсив/подчёркивание)
-3. Целевой файл ADR (путь из `$ARGUMENTS`)
-4. Все остальные файлы в `docs/decisions/` (кроме `README.md`) — для проверки согласованности
-
-Если файл из аргумента не существует — сообщи об ошибке и остановись.
+Follow the steps strictly in order, each one is mandatory.
 
 ---
 
-### Шаг 2. Форматирование
+### Step 1. Load context
 
-Приведи содержимое файла к шаблону из `docs/decisions/README.md`. Правила:
+Read all files needed for the work:
 
-**Структура файла (обязательный порядок):**
+1. `docs/decisions/README.md` — template, fields, statuses, criteria for creating an ADR
+2. `docs/README.md` — documentation formatting rules (language, indentation, bold/italic/underline)
+3. The target ADR file (path from `$ARGUMENTS`)
+4. All other files in `docs/decisions/` (except `README.md`) — to check consistency
+
+If the file from the argument doesn't exist — report an error and stop.
+
+---
+
+### Step 2. Formatting
+
+Bring the file's content to the template from `docs/decisions/README.md`. Rules:
+
+**File structure (mandatory order):**
 ```
 # NN. Название решения
 
@@ -61,79 +61,79 @@ description: Formats and deeply reviews an ADR file in docs/decisions/ — forma
 ...
 ```
 
-**Правила форматирования (из `docs/README.md`):**
-- Язык: русский
-- Двойной пустой перенос строки между параграфами и разделами
-- Бизнес-сущности (Организация, Аккаунт, Курс и др.) — **полужирным** с заглавной буквы
-- Названия полей БД/кода — `<u>fieldName</u>`
-- Акцент на слове — *курсивом*
-- Определения — **полужирным**
+**Formatting rules (from `docs/README.md`):**
+- Language: Russian
+- Double blank line between paragraphs and sections
+- Business entities (Организация, Аккаунт, Курс, etc.) — **bold**, capitalized
+- DB/code field names — `<u>fieldName</u>`
+- Word emphasis — *italic*
+- Definitions — **bold**
 
-**Что НЕ изменять при форматировании:**
-- Смысл и содержание решения — только структура и разметка
-- Дату — если в файле её нет, извлеки из `git log --diff-filter=A --pretty=format:"%ad" --date=short -- <файл>`
-- Автора — если нет, возьми из `git log --pretty=format:"%an" -1 -- <файл>`
-- Статус — если нет, выстави `Предложено`
+**What NOT to change while formatting:**
+- The meaning and content of the decision — only structure and markup
+- The date — if the file has none, extract it from `git log --diff-filter=A --pretty=format:"%ad" --date=short -- <file>`
+- The author — if missing, take it from `git log --pretty=format:"%an" -1 -- <file>`
+- The status — if missing, set `Предложено`
 
-Запиши обновлённый файл.
-
----
-
-### Шаг 3. Ревью
-
-После форматирования проведи строгое ревью по каждому критерию. Не смягчай оценки — лучше указать на слабое место, чем пропустить его.
-
-#### 3.1 Соответствие шаблону
-
-- [ ] Все обязательные поля присутствуют и заполнены (не пустые, не `—` там, где нужно значение)
-- [ ] Статус валидный: `Предложено | Принято | Отклонено | Устарело`
-- [ ] Номер NN в заголовке совпадает с именем файла
-- [ ] Связанные решения: если ссылки есть — файлы существуют
-
-#### 3.2 Качество контента
-
-**Контекст:**
-- Описана ли *проблема*, а не просто ситуация?
-- Понятно ли *почему* потребовалось это решение?
-- Есть ли намёк на то, что рассматривались альтернативы?
-
-**Решение:**
-- Сформулировано ли конкретно? Читатель должен однозначно понять, что именно выбрано.
-- Не смешивается ли с Контекстом или Последствиями?
-
-**Последствия:**
-- Перечислены ли и плюсы, и минусы / ограничения?
-- Есть ли конкретные технические следствия (что нужно сделать, что изменится в системе)?
-- Нет ли безосновательного оптимизма («всё будет хорошо» без деталей)?
-
-#### 3.3 Соответствие критериям создания ADR
-
-Из `docs/decisions/README.md` — ADR создаётся, если решение:
-- *неочевидно* — есть реальные альтернативы с компромиссами
-- *трудно обратимо* — смена подхода потребует значительных усилий
-- *системно значимо* — влияет на структуру, модель данных или поведение нескольких компонентов
-
-Если ни один критерий не выполнен — сигнализируй об этом явно.
-
-#### 3.4 Согласованность с принятыми решениями
-
-Проверь по всем файлам в `docs/decisions/`:
-- Не противоречит ли новое решение уже принятым (статус `Принято`)?
-- Если противоречие есть — какое решение должно быть пересмотрено?
-- Есть ли ADR, которые следует указать в поле `Связанные решения`, но они не указаны?
-
-#### 3.5 Форматирование
-
-- [ ] Язык — русский
-- [ ] Двойные отступы между блоками соблюдены
-- [ ] Бизнес-сущности выделены **полужирным**
-- [ ] Названия полей оформлены `<u>fieldName</u>`
+Write the updated file.
 
 ---
 
-### Шаг 4. Отчёт
+### Step 3. Review
 
-Выведи результат в формате:
+After formatting, run a strict review against each criterion. Don't soften scores — flagging a weak spot beats missing it.
+
+#### 3.1 Template compliance
+
+- [ ] All mandatory fields present and filled in (not empty, not `—` where a value is required)
+- [ ] Status is valid: `Предложено | Принято | Отклонено | Устарело`
+- [ ] The NN number in the title matches the filename
+- [ ] Related decisions: if links exist — the files exist
+
+#### 3.2 Content quality
+
+**Context:**
+- Does it describe the *problem*, not just the situation?
+- Is it clear *why* this decision was needed?
+- Is there a hint that alternatives were considered?
+
+**Decision:**
+- Is it stated concretely? The reader must unambiguously understand what exactly was chosen.
+- Is it not mixed up with Context or Consequences?
+
+**Consequences:**
+- Are both pros and cons/limitations listed?
+- Are there concrete technical consequences (what needs to be done, what changes in the system)?
+- No baseless optimism ("everything will be fine" with no details)?
+
+#### 3.3 Compliance with ADR creation criteria
+
+Per `docs/decisions/README.md` — an ADR is created if the decision is:
+- *non-obvious* — real alternatives with trade-offs exist
+- *hard to reverse* — switching approach would take significant effort
+- *systemically significant* — affects the structure, data model, or behavior of multiple components
+
+If none of the criteria hold — flag this explicitly.
+
+#### 3.4 Consistency with accepted decisions
+
+Check against all files in `docs/decisions/`:
+- Does the new decision contradict already accepted decisions (status `Принято`)?
+- If there's a contradiction — which decision should be revisited?
+- Are there ADRs that should be listed in the `Связанные решения` field but aren't?
+
+#### 3.5 Formatting
+
+- [ ] Language — Russian
+- [ ] Double spacing between blocks is followed
+- [ ] Business entities are **bold**
+- [ ] Field names are formatted as `<u>fieldName</u>`
+
+---
+
+### Step 4. Report
+
+Print the result in this format:
 
 ```
 ## Ревью: NN-название-решения.md
@@ -162,4 +162,4 @@ description: Formats and deeply reviews an ADR file in docs/decisions/ — forma
 - ...
 ```
 
-Если есть блокирующие замечания — не называй решение «принятым к приёмке».
+If there are blocking issues — don't call the decision "accepted".
