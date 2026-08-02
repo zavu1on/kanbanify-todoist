@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { LoginResult } from "../main/auth/domain/contracts/LoginResult";
+import type { LoginResult } from "../main/auth";
 
 const api = {
   auth: {

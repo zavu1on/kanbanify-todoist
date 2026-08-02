@@ -1,6 +1,5 @@
-import type { LoginResult } from "@/main/auth/domain/contracts/LoginResult";
-import { accessTokenSchema } from "@/main/auth/domain/value-objects/AccessToken";
 import z from "zod";
+import { accessTokenSchema, type LoginResult } from "@/main/auth";
 
 export const authFormSchema = z.object({
   accessToken: accessTokenSchema,
