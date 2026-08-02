@@ -1,9 +1,13 @@
 import { Button, PasswordInput, Stack } from "@mantine/core";
 import { schemaResolver, useForm } from "@mantine/form";
+import { notifications } from "@mantine/notifications";
 import type { FC } from "react";
-import { authFormSchema } from "../model/auth";
+import { useState } from "react";
+import { authFormSchema, loginWithAccessToken } from "../model/auth";
 
 export const LoginForm: FC = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const form = useForm({
     initialValues: {
       accessToken: "",
@@ -11,8 +15,31 @@ export const LoginForm: FC = () => {
     validate: schemaResolver(authFormSchema, { sync: true }),
   });
 
-  const handleSubmit = form.onSubmit(() => {
-    // TODO: send form.getValues().accessToken to the main process via IPC for validation
+  const handleSubmit = form.onSubmit(async ({ accessToken }) => {
+    setIsSubmitting(true);
+    const result = await loginWithAccessToken(accessToken);
+    setIsSubmitting(false);
+
+    if (result.ok) {
+      notifications.show({
+        color: "green",
+        title: "Signed in",
+        message: `Welcome, ${result.user.fullName} (${result.user.email})`,
+      });
+
+      if (result.tokenStorageWarning) {
+        notifications.show({
+          color: "yellow",
+          title: "Token stored without encryption",
+          message: result.tokenStorageWarning,
+          autoClose: false,
+        });
+      }
+
+      form.reset();
+    } else {
+      form.setFieldError("accessToken", result.error.message);
+    }
   });
 
   return (
@@ -28,6 +55,7 @@ export const LoginForm: FC = () => {
 
         <Button
           type="submit"
+          loading={isSubmitting}
           disabled={form.values.accessToken.trim().length === 0}
           fullWidth
         >

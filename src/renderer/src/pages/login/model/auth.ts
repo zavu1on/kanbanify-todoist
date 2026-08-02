@@ -1,11 +1,13 @@
+import type { LoginResult } from "@/main/auth/domain/contracts/LoginResult";
+import { accessTokenSchema } from "@/main/auth/domain/value-objects/AccessToken";
 import z from "zod";
 
 export const authFormSchema = z.object({
-  accessToken: z
-    .string()
-    .trim()
-    .min(32, "Access token is too short")
-    .regex(/^\S+$/, "Access token must not contain whitespace"),
+  accessToken: accessTokenSchema,
 });
 
 export type AuthFormSchema = z.infer<typeof authFormSchema>;
+
+export const loginWithAccessToken = (
+  accessToken: string,
+): Promise<LoginResult> => window.api.auth.login(accessToken);

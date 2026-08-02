@@ -1,8 +1,21 @@
 import path from "node:path";
 import { app, BrowserWindow, nativeImage } from "electron";
 import icon from "../../resources/icon.png?asset";
+import { LoginUseCase } from "./auth/application/use-cases/LoginUseCase";
+import { AuthIpcController } from "./auth/infrastructure/AuthIpcController";
+import { SafeStorageTokenStore } from "./auth/infrastructure/SafeStorageTokenStore";
+import { TodoistUserGateway } from "./auth/infrastructure/TodoistUserGateway";
 
 const appIcon = nativeImage.createFromPath(icon);
+
+const registerIpcHandlers = () => {
+  const loginUseCase = new LoginUseCase(
+    new TodoistUserGateway(),
+    new SafeStorageTokenStore(),
+  );
+
+  new AuthIpcController(loginUseCase).register();
+};
 
 const createWindow = () => {
   const window = new BrowserWindow({
@@ -24,6 +37,8 @@ const createWindow = () => {
 };
 
 app.whenReady().then(() => {
+  registerIpcHandlers();
+
   if (process.platform === "darwin") {
     app.dock?.setIcon(appIcon);
   }

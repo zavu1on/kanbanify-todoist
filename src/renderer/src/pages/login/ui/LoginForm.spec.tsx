@@ -11,6 +11,14 @@ const renderLoginForm = () => {
 };
 
 describe("LoginForm", () => {
+  beforeEach(() => {
+    Object.defineProperty(window, "api", {
+      writable: true,
+      configurable: true,
+      value: { auth: { login: vi.fn() } },
+    });
+  });
+
   it("disables the login button while the access token field is empty", () => {
     renderLoginForm();
 
@@ -33,7 +41,9 @@ describe("LoginForm", () => {
     await user.type(screen.getByLabelText("Access token"), "short-token");
     await user.click(screen.getByRole("button", { name: "Log in" }));
 
-    expect(await screen.findByText("Access token is too short")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Access token is too short"),
+    ).toBeInTheDocument();
   });
 
   it("shows a validation error when the token contains whitespace", async () => {
@@ -52,15 +62,54 @@ describe("LoginForm", () => {
   });
 
   it("does not show a validation error when submitting a valid token", async () => {
+    vi.mocked(window.api.auth.login).mockResolvedValue({
+      ok: true,
+      user: { id: "1", fullName: "Ada Lovelace", email: "ada@example.com" },
+    });
     const user = userEvent.setup();
     renderLoginForm();
 
     await user.type(screen.getByLabelText("Access token"), "a".repeat(40));
     await user.click(screen.getByRole("button", { name: "Log in" }));
 
-    expect(screen.queryByText("Access token is too short")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Access token is too short"),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByText("Access token must not contain whitespace"),
     ).not.toBeInTheDocument();
+  });
+
+  it("calls the IPC login bridge with the entered access token", async () => {
+    vi.mocked(window.api.auth.login).mockResolvedValue({
+      ok: true,
+      user: { id: "1", fullName: "Ada Lovelace", email: "ada@example.com" },
+    });
+    const user = userEvent.setup();
+    renderLoginForm();
+
+    const token = "a".repeat(40);
+    await user.type(screen.getByLabelText("Access token"), token);
+    await user.click(screen.getByRole("button", { name: "Log in" }));
+
+    await waitFor(() => {
+      expect(window.api.auth.login).toHaveBeenCalledWith(token);
+    });
+  });
+
+  it("shows the backend error message when authentication fails", async () => {
+    vi.mocked(window.api.auth.login).mockResolvedValue({
+      ok: false,
+      error: { type: "invalid_token", message: "Access token is invalid" },
+    });
+    const user = userEvent.setup();
+    renderLoginForm();
+
+    await user.type(screen.getByLabelText("Access token"), "a".repeat(40));
+    await user.click(screen.getByRole("button", { name: "Log in" }));
+
+    expect(
+      await screen.findByText("Access token is invalid"),
+    ).toBeInTheDocument();
   });
 });

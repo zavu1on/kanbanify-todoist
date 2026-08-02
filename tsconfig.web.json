@@ -17,8 +17,14 @@
       "@/widgets/*": ["./src/renderer/src/widgets/*"],
       "@/features/*": ["./src/renderer/src/features/*"],
       "@/entities/*": ["./src/renderer/src/entities/*"],
-      "@/shared/*": ["./src/renderer/src/shared/*"]
+      "@/shared/*": ["./src/renderer/src/shared/*"],
+      "@/main/*": ["./src/main/*"]
     }
   },
-  "include": ["src/renderer/src/**/*", "src/renderer/src/main.tsx", "vitest.setup.ts"]
+  "include": [
+    "src/renderer/src/**/*",
+    "src/renderer/src/main.tsx",
+    "src/preload/global.d.ts",
+    "vitest.setup.ts"
+  ]
 }
