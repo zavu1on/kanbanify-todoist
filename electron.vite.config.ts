@@ -17,6 +17,16 @@ export default defineConfig({
   },
   renderer: {
     root: "src/renderer",
+    resolve: {
+      alias: {
+        "@/app": path.resolve(import.meta.dirname, "src/renderer/src/app"),
+        "@/pages": path.resolve(import.meta.dirname, "src/renderer/src/pages"),
+        "@/widgets": path.resolve(import.meta.dirname, "src/renderer/src/widgets"),
+        "@/features": path.resolve(import.meta.dirname, "src/renderer/src/features"),
+        "@/entities": path.resolve(import.meta.dirname, "src/renderer/src/entities"),
+        "@/shared": path.resolve(import.meta.dirname, "src/renderer/src/shared"),
+      },
+    },
     build: {
       outDir: path.resolve(import.meta.dirname, "dist/renderer"),
     },

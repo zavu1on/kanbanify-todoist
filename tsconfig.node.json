@@ -8,7 +8,8 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true
+    "noEmit": true,
+    "types": ["electron-vite/node"]
   },
-  "include": ["electron.vite.config.ts", "src/main/**/*", "src/preload/**/*"]
+  "include": ["electron.vite.config.ts", "vitest.config.ts", "src/main/**/*", "src/preload/**/*"]
 }
