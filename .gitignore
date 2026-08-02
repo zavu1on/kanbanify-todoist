@@ -1,0 +1,10 @@
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/versions
+
+# node-modules linker: node_modules is local install state, not committed
+node_modules
+
+# Built application
+dist

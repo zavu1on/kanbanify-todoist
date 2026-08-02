@@ -6,7 +6,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Kanbanify Todoist** — desktop-приложение (Electron), UI-клиент для Todoist, добавляющий kanban-статусы для задач через встроенные Todoist-теги (не через нативные поля Todoist, так как community-версия API их не предоставляет).
 
-Проект на стадии проектирования: репозиторий содержит только техническую спецификацию, кода ещё нет. Полное описание экранов и сценариев — [`docs/SPECIFICATION.md`](docs/SPECIFICATION.md). Навигация по всей документации — [`docs/README.md`](docs/README.md), начинай оттуда, если нужен контекст за пределами этого файла.
+Полное описание экранов и сценариев — [`docs/SPECIFICATION.md`](docs/SPECIFICATION.md). Навигация по всей документации — [`docs/README.md`](docs/README.md), начинай оттуда, если нужен контекст за пределами этого файла. Обоснование выбора стека и архитектуры — [`docs/decisions/01-tech-stack.md`](docs/decisions/01-tech-stack.md).
+
+### Структура репозитория и архитектура
+
+Электрон-приложение (`electron-vite`) с тремя процессами, каждый — в своей директории под `src/`:
+
+- **`src/main/`** — Electron main-процесс (бекенд). Здесь и только здесь доступен Todoist Access Token и `@doist/todoist-sdk`. Организован по **чистой архитектуре** (Clean Architecture): доменная логика (kanban-статусы, доменная модель задач) изолирована от Electron- и SDK-специфичных деталей через слои use cases / adapters / gateways.
+- **`src/preload/`** — Electron preload-скрипт, единственный мост между main и renderer: описывает IPC-контракт, через который renderer запрашивает данные Todoist, не получая доступа к токену напрямую.
+- **`src/renderer/src/`** — Electron renderer-процесс (фронтенд): React + React Router + Mantine UI + dnd-kit (drag-and-drop канбан-доски). Организован по **FSD** (Feature-Sliced Design) — слои и сегменты фич, публичные API слайсов.
+
+Связь бекенда и фронтенда — исключительно через IPC (preload как контракт), renderer не имеет прямого доступа к Todoist API или токену.
 
 > Это приложение не создано, не аффилировано и не поддерживается компанией Doist. При работе с Todoist API соблюдай [требования Todoist к использованию бренда](https://developer.todoist.com/) (см. также раздел в [`README.md`](README.md)) — не позиционировать проект как официальный продукт Todoist.
 
@@ -28,11 +38,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Команды разработки
 
-В репозитории пока нет package.json / кода — команды сборки, линта и тестов появятся вместе с первой реализацией. Не изобретай их заранее; когда стек будет выбран (см. процесс ADR ниже), команды должны быть задокументированы здесь.
+Пакетный менеджер — **yarn** (через Corepack, версия зафиксирована в `packageManager`). Тестов пока нет — команда появится вместе с первыми тестами.
+
+| Команда | Действие |
+|---|---|
+| `yarn dev` | запуск приложения в dev-режиме (`electron-vite dev --watch`) |
+| `yarn build` | production-сборка (`electron-vite build`) |
+| `yarn start` | предпросмотр production-сборки (`electron-vite preview`) |
+| `yarn typecheck` | проверка типов отдельно для node- и web-частей (`tsconfig.node.json`, `tsconfig.web.json`) |
+| `yarn lint` | линт через `biome lint .` |
+| `yarn format` | автоформатирование через `biome format --write .` |
 
 ## AI-инфраструктура (Claude Code)
 
-Репозиторий использует Claude Code с обвязкой: скиллы, слэш-команды и (в будущем) MCP-серверы и агенты. Вся обвязка хранится **строго в `.claude/`** в этом репозитории — не в домашней директории.
+Репозиторий использует Claude Code с обвязкой: скиллы, слэш-команды и MCP-серверы (агентов пока нет). Вся обвязка хранится **строго в `.claude/`** в этом репозитории (MCP-серверы — исключение, их конфиг лежит в `.mcp.json` в корне репозитория, как того требует сам Claude Code) — не в домашней директории.
 
 ### Установленные скиллы
 
@@ -59,7 +78,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### MCP-серверы и агенты
 
-Пока не подключены. Раздел обновится, когда появятся.
+| MCP-сервер | Источник | Назначение |
+|---|---|---|
+| `mantine` ([`.mcp.json`](.mcp.json), пакет [`@mantine/mcp-server`](https://www.npmjs.com/package/@mantine/mcp-server)) | официальный (мейнтейнер Mantine, `mantine.dev`) | Поиск и справка по документации компонентов Mantine UI при написании фронтенда |
+
+Агенты пока не подключены.
 
 ### Правило актуализации
 
