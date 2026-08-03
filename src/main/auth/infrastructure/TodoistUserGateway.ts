@@ -2,7 +2,7 @@ import { TodoistApi, TodoistRequestError } from "@doist/todoist-sdk";
 import type { ITodoistUserGateway } from "../application/ports/ITodoistUserGateway";
 import { AuthenticatedUser } from "../domain/entities/AuthenticatedUser";
 import { InvalidAccessTokenError } from "../domain/errors/InvalidAccessTokenError";
-import { TodoistAuthConnectionError } from "../domain/errors/TodoistConnectionError";
+import { TodoistAuthConnectionError } from "../domain/errors/TodoistAuthConnectionError";
 import { UnknownAuthError } from "../domain/errors/UnknownAuthError";
 
 export class TodoistUserGateway implements ITodoistUserGateway {

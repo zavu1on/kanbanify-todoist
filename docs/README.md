@@ -2,18 +2,23 @@
 
 **Kanbanify Todoist** — desktop-приложение (Electron), UI-клиент для Todoist, который добавляет kanban-статусы для задач через встроенные теги. Приложение опирается только на функционал бесплатного тарифа Todoist.
 
-Текущий этап — проектирование, код ещё не написан.
+Текущий этап — разработка: спроектирована архитектура обоих процессов, реализованы экран входа и авторизация по токену.
 
 
 ## Файловая структура
 
 ```
 docs/
-├── README.md                  — навигационный хаб (этот файл)
-├── SPECIFICATION.md           — техническое задание: экраны, сценарии, поведение
-└── decisions/                 — ADR (Architecture Decision Records)
-    ├── README.md              — паттерн, процесс и шаблон ADR
-    └── 00-use-adr.md          — использование паттерна ADR
+├── README.md                    — навигационный хаб (этот файл)
+├── SPECIFICATION.md             — техническое задание: экраны, сценарии, поведение
+├── FRONTEND_CODE_STYLE_GUIDE.md — архитектура (FSD), code style, рецепты и SDLC фронтенда
+├── BACKEND_CODE_STYLE_GUIDE.md  — архитектура (clean architecture), code style, рецепты и SDLC бэкенда
+└── decisions/                   — ADR (Architecture Decision Records)
+    ├── README.md                — паттерн, процесс и шаблон ADR
+    ├── 00-use-adr.md            — использование паттерна ADR
+    ├── 01-tech-stack.md         — технологический стек и выбор архитектурных парадигм
+    ├── 02-architecture.md       — конвенции архитектуры бэкенда и фронтенда
+    └── 03-ai-harness.md         — AI-обвязка репозитория для разработки через Claude Code
 ```
 
 
@@ -26,7 +31,10 @@ docs/
 | Что именно нельзя использовать из-за бесплатного тарифа Todoist | [`SPECIFICATION.md`](SPECIFICATION.md), раздел «Ограничения тарифа» |
 | Как устроен вход по токену и где он хранится | [`SPECIFICATION.md`](SPECIFICATION.md), раздел «Авторизация» |
 | Почему было принято то или иное архитектурное решение | [`decisions/`](decisions/) |
-| AI-инфраструктуру проекта (скиллы, команды, MCP, агенты) | [`../CLAUDE.md`](../CLAUDE.md) |
+| Архитектуру фронтенда (FSD), code style и SDLC | [`FRONTEND_CODE_STYLE_GUIDE.md`](FRONTEND_CODE_STYLE_GUIDE.md) |
+| Архитектуру бэкенда (clean architecture), code style и SDLC | [`BACKEND_CODE_STYLE_GUIDE.md`](BACKEND_CODE_STYLE_GUIDE.md) |
+| Пошаговый рецепт, как добавить фичу на бэкенде или фронтенде | Раздел «Рецепт» в [`BACKEND_CODE_STYLE_GUIDE.md`](BACKEND_CODE_STYLE_GUIDE.md) и [`FRONTEND_CODE_STYLE_GUIDE.md`](FRONTEND_CODE_STYLE_GUIDE.md) |
+| AI-инфраструктуру проекта (скиллы, команды, MCP, агенты, хуки) | [`../CLAUDE.md`](../CLAUDE.md) |
 | Правила форматирования этой документации | Раздел ниже в этом файле |
 
 

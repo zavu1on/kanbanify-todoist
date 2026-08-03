@@ -14,11 +14,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **`src/main/`** — Electron main-процесс (бекенд). Здесь и только здесь доступен Todoist Access Token и `@doist/todoist-sdk`. Организован по **чистой архитектуре** (Clean Architecture): доменная логика (kanban-статусы, доменная модель задач) изолирована от Electron- и SDK-специфичных деталей через слои use cases / adapters / gateways.
 - **`src/preload/`** — Electron preload-скрипт, единственный мост между main и renderer: описывает IPC-контракт, через который renderer запрашивает данные Todoist, не получая доступа к токену напрямую.
-- **`src/renderer/src/`** — Electron renderer-процесс (фронтенд): React + React Router + Mantine UI + dnd-kit (drag-and-drop канбан-доски). Организован по **FSD** (Feature-Sliced Design) — слои и сегменты фич, публичные API слайсов.
+- **`src/renderer/src/`** — Electron renderer-процесс (фронтенд): React + React Router + Mantine UI (плюс dnd-kit для drag-and-drop канбан-доски — заложен в стек, но ещё не установлен). Организован по **FSD** (Feature-Sliced Design) — слои и сегменты фич, публичные API слайсов.
 
 Связь бекенда и фронтенда — исключительно через IPC (preload как контракт), renderer не имеет прямого доступа к Todoist API или токену.
-
-> Это приложение не создано, не аффилировано и не поддерживается компанией Doist. При работе с Todoist API соблюдай [требования Todoist к использованию бренда](https://developer.todoist.com/) (см. также раздел в [`README.md`](README.md)) — не позиционировать проект как официальный продукт Todoist.
 
 ### Ключевая доменная модель (из ТЗ)
 
@@ -38,7 +36,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Команды разработки
 
-Пакетный менеджер — **yarn** (через Corepack, версия зафиксирована в `packageManager`). Тестов пока нет — команда появится вместе с первыми тестами.
+Пакетный менеджер — **yarn** (через Corepack, версия зафиксирована в `packageManager`).
 
 | Команда | Действие |
 |---|---|
@@ -46,12 +44,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `yarn build` | production-сборка (`electron-vite build`) |
 | `yarn start` | предпросмотр production-сборки (`electron-vite preview`) |
 | `yarn typecheck` | проверка типов отдельно для node- и web-частей (`tsconfig.node.json`, `tsconfig.web.json`) |
+| `yarn test` | прогон тестов через Vitest (`vitest run`) |
 | `yarn lint` | линт через `biome lint .` |
 | `yarn format` | автоформатирование через `biome format --write .` |
 
 ## AI-инфраструктура (Claude Code)
 
-Репозиторий использует Claude Code с обвязкой: скиллы, слэш-команды и MCP-серверы (агентов пока нет). Вся обвязка хранится **строго в `.claude/`** в этом репозитории (MCP-серверы — исключение, их конфиг лежит в `.mcp.json` в корне репозитория, как того требует сам Claude Code) — не в домашней директории.
+Репозиторий использует Claude Code с обвязкой: скиллы, слэш-команды, агенты, хуки и MCP-серверы. Вся обвязка хранится **строго в `.claude/`** в этом репозитории (MCP-серверы — исключение, их конфиг лежит в `.mcp.json` в корне репозитория, как того требует сам Claude Code) — не в домашней директории.
+
+Разделение ответственности в обвязке: **руководства по коду** (`docs/*_CODE_STYLE_GUIDE.md`) — единственный источник конвенций, **скиллы** — процесс (порядок шагов, чек-листы, гейты) со ссылкой на руководство. Скилл не копирует правила из руководства: при расхождении прав руководство, а скилл считается устаревшим.
 
 ### Установленные скиллы
 
@@ -60,6 +61,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | [`git-commit`](.claude/skills/git-commit/SKILL.md) | самописный | Формирует conventional commit message по staged changes и коммитит после подтверждения |
 | [`accept-adr`](.claude/skills/accept-adr/SKILL.md) | самописный | Форматирует ADR-файл под шаблон проекта и проводит строгое ревью содержания |
 | [`todoist-sdk`](.claude/skills/todoist-sdk/SKILL.md) | самописный (спарсен из [GitHub-репозитория](https://github.com/Doist/todoist-sdk-typescript) `@doist/todoist-sdk`, версия `13.0.0`) | Справочник по TS SDK Todoist API: инициализация клиента, задачи/проекты/лейблы, пагинация, ошибки |
+| [`feature-backend`](.claude/skills/feature-backend/SKILL.md) | самописный | Процесс реализации фичи/правки в `src/main` и `src/preload` по [`BACKEND_CODE_STYLE_GUIDE.md`](docs/BACKEND_CODE_STYLE_GUIDE.md) |
+| [`feature-frontend`](.claude/skills/feature-frontend/SKILL.md) | самописный | Процесс реализации фичи/правки в `src/renderer` по [`FRONTEND_CODE_STYLE_GUIDE.md`](docs/FRONTEND_CODE_STYLE_GUIDE.md) |
+| [`feature-fullstack`](.claude/skills/feature-fullstack/SKILL.md) | самописный | Оркестратор фичи через границу IPC: сначала контракт и бэкенд, затем фронтенд — в одном контексте, без субагентов |
 
 ### Слэш-команды
 
@@ -67,6 +71,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |---|---|
 | `/git-commit` | вызывает скилл `git-commit` |
 | `/accept-adr <путь-к-adr>` | вызывает скилл `accept-adr` для указанного файла |
+| `/feature-backend <описание>` | вызывает скилл `feature-backend` |
+| `/feature-frontend <описание>` | вызывает скилл `feature-frontend` |
+| `/feature <описание>` | вызывает скилл `feature-fullstack` |
+| `/guide-review` | запускает агента `code-reviewer` по текущему дифу |
 
 ### Источник скиллов и lock-файл
 
@@ -82,11 +90,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |---|---|---|
 | `mantine` ([`.mcp.json`](.mcp.json), пакет [`@mantine/mcp-server`](https://www.npmjs.com/package/@mantine/mcp-server)) | официальный (мейнтейнер Mantine, `mantine.dev`) | Поиск и справка по документации компонентов Mantine UI при написании фронтенда |
 
-Агенты пока не подключены.
+| Агент | Назначение |
+|---|---|
+| [`code-reviewer`](.claude/agents/code-reviewer.md) | Read-only ревью дифа на соответствие обоим руководствам по коду и `SPECIFICATION.md`. Запускается субагентом осознанно: изолированный контекст даёт свежий взгляд, не защищающий собственный код |
+
+Реализация фич субагентам **не** делегируется: фича через границу IPC требует непрерывного контекста (общий контракт между бэкендом и фронтендом), а субагент возвращает отчёт, а не состояние.
+
+### Хуки
+
+Настроены в [`.claude/settings.json`](.claude/settings.json):
+
+| Хук | Действие |
+|---|---|
+| `PostToolUse` на `Edit`/`Write`/`MultiEdit` | прогоняет `yarn biome format --write` по изменённому файлу (`.ts`, `.tsx`, `.json`, `.md`) |
+| `Stop` | запускает [`.claude/hooks/sdlc-gates.sh`](.claude/hooks/sdlc-gates.sh): `yarn typecheck` и `yarn test`, если в `src/` есть изменения. При красном результате блокирует завершение и возвращает вывод агенту на починку |
+
+Гейт-скрипт пропускает прогон, когда `src/` не менялся (правки только в документации), и не блокирует повторно при уже активном stop-хуке — чтобы непочиняемая ошибка не зациклила сессию.
 
 ### Правило актуализации
 
-При добавлении, изменении или удалении скилла, команды, MCP-сервера или агента — **в том же коммите** обнови:
+При добавлении, изменении или удалении скилла, команды, MCP-сервера, агента или хука — **в том же коммите** обнови:
 
 1. Таблицы в этом разделе `CLAUDE.md` (описание, ссылку на файл)
 2. `skills-lock.json`, если менялся набор скиллов из skills.sh

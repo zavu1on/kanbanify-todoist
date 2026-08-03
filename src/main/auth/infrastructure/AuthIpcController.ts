@@ -7,7 +7,7 @@ import type {
 } from "../domain/contracts/LoginResult";
 import { AuthError } from "../domain/errors/AuthError";
 import { InvalidAccessTokenError } from "../domain/errors/InvalidAccessTokenError";
-import { TodoistAuthConnectionError } from "../domain/errors/TodoistConnectionError";
+import { TodoistAuthConnectionError } from "../domain/errors/TodoistAuthConnectionError";
 import { AccessToken } from "../domain/value-objects/AccessToken";
 
 export class AuthIpcController implements IpcController {

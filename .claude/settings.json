@@ -1,0 +1,34 @@
+{
+  "enabledMcpjsonServers": [
+    "mantine"
+  ],
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"$f\" in *.ts|*.tsx|*.json|*.md) yarn biome format --write \"$f\";; esac; } 2>/dev/null || true",
+            "statusMessage": "Formatting with Biome"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/sdlc-gates.sh\"",
+            "timeout": 300,
+            "statusMessage": "Running typecheck and tests"
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "ponytail@ponytail": true
+  }
+}
