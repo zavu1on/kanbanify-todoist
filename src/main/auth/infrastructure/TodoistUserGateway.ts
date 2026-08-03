@@ -11,7 +11,12 @@ export class TodoistUserGateway implements ITodoistUserGateway {
       const api = new TodoistApi(accessToken);
       const user = await api.getUser();
 
-      return new AuthenticatedUser(user.id, user.fullName, user.email);
+      return new AuthenticatedUser(
+        user.id,
+        user.fullName,
+        user.email,
+        user.avatarMedium ?? null,
+      );
     } catch (error) {
       if (error instanceof TodoistRequestError) {
         if (error.isAuthenticationError()) {

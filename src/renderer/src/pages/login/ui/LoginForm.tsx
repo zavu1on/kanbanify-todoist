@@ -1,11 +1,13 @@
-import { Button, PasswordInput, Stack } from "@mantine/core";
+import { Alert, Button, PasswordInput, Stack } from "@mantine/core";
 import { schemaResolver, useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import type { FC } from "react";
 import { useState } from "react";
+import { useSession } from "@/app/SessionContext";
 import { authFormSchema, loginWithAccessToken } from "../model/auth";
 
 export const LoginForm: FC = () => {
+  const session = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm({
@@ -37,6 +39,7 @@ export const LoginForm: FC = () => {
       }
 
       form.reset();
+      session.authenticate(result.user);
     } else {
       form.setFieldError("accessToken", result.error.message);
     }
@@ -45,6 +48,12 @@ export const LoginForm: FC = () => {
   return (
     <form onSubmit={handleSubmit}>
       <Stack gap="sm">
+        {session.status === "unauthenticated" && session.errorMessage && (
+          <Alert color="red" title="Session expired">
+            {session.errorMessage}
+          </Alert>
+        )}
+
         <PasswordInput
           label="Access token"
           placeholder="Paste your Todoist access token"

@@ -1,17 +1,25 @@
 import { ipcMain } from "electron";
 import type { IpcController } from "../../shared/IpcController";
+import type { CheckSessionUseCase } from "../application/use-cases/CheckSessionUseCase";
 import type { LoginUseCase } from "../application/use-cases/LoginUseCase";
+import type { LogoutUseCase } from "../application/use-cases/LogoutUseCase";
 import type {
   AuthErrorType,
   LoginResult,
 } from "../domain/contracts/LoginResult";
+import type { LogoutResult } from "../domain/contracts/LogoutResult";
+import type { SessionCheckResult } from "../domain/contracts/SessionCheckResult";
 import { AuthError } from "../domain/errors/AuthError";
 import { InvalidAccessTokenError } from "../domain/errors/InvalidAccessTokenError";
 import { TodoistAuthConnectionError } from "../domain/errors/TodoistAuthConnectionError";
 import { AccessToken } from "../domain/value-objects/AccessToken";
 
 export class AuthIpcController implements IpcController {
-  constructor(private readonly loginUseCase: LoginUseCase) {}
+  constructor(
+    private readonly loginUseCase: LoginUseCase,
+    private readonly checkSessionUseCase: CheckSessionUseCase,
+    private readonly logoutUseCase: LogoutUseCase,
+  ) {}
 
   register(): void {
     ipcMain.handle(
@@ -19,6 +27,11 @@ export class AuthIpcController implements IpcController {
       (_event, rawAccessToken: unknown): Promise<LoginResult> =>
         this.login(rawAccessToken),
     );
+    ipcMain.handle(
+      "auth:checkSession",
+      (): Promise<SessionCheckResult> => this.checkSession(),
+    );
+    ipcMain.handle("auth:logout", (): Promise<LogoutResult> => this.logout());
   }
 
   private async login(rawAccessToken: unknown): Promise<LoginResult> {
@@ -38,6 +51,38 @@ export class AuthIpcController implements IpcController {
         parsedToken.data,
       );
       return { ok: true, user, tokenStorageWarning };
+    } catch (error) {
+      return {
+        ok: false,
+        error: {
+          type: this.getErrorType(error),
+          message: this.getMessageFromError(error),
+        },
+      };
+    }
+  }
+
+  private async checkSession(): Promise<SessionCheckResult> {
+    try {
+      const output = await this.checkSessionUseCase.execute();
+      return output.status === "authenticated"
+        ? { status: "authenticated", user: output.user }
+        : { status: "no_token" };
+    } catch (error) {
+      return {
+        status: "error",
+        error: {
+          type: this.getErrorType(error),
+          message: this.getMessageFromError(error),
+        },
+      };
+    }
+  }
+
+  private async logout(): Promise<LogoutResult> {
+    try {
+      await this.logoutUseCase.execute();
+      return { ok: true };
     } catch (error) {
       return {
         ok: false,

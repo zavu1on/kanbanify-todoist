@@ -6,7 +6,7 @@ import type {
   TokenStoreResult,
 } from "../application/ports/ITokenStore";
 
-const TOKEN_FILE_NAME = "todoist-token.enc";
+const TOKEN_FILE_NAME = "kanbanify-todoist-token.enc";
 
 /**
  * Persists the Todoist access token under `app.getPath('userData')`, encrypted via
@@ -33,5 +33,26 @@ export class SafeStorageTokenStore implements ITokenStore {
     await fs.writeFile(tokenFilePath, encrypted, { mode: 0o600 });
 
     return { encrypted: true };
+  }
+
+  async load(): Promise<string | null> {
+    const tokenFilePath = path.join(app.getPath("userData"), TOKEN_FILE_NAME);
+
+    let fileContents: Buffer;
+    try {
+      fileContents = await fs.readFile(tokenFilePath);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+      throw error;
+    }
+
+    return safeStorage.isEncryptionAvailable()
+      ? safeStorage.decryptString(fileContents)
+      : fileContents.toString("utf-8");
+  }
+
+  async clear(): Promise<void> {
+    const tokenFilePath = path.join(app.getPath("userData"), TOKEN_FILE_NAME);
+    await fs.rm(tokenFilePath, { force: true });
   }
 }

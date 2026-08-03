@@ -1,11 +1,11 @@
-import { Button, Text } from "@mantine/core";
+import { Stack, Text, Title } from "@mantine/core";
 import type { FC } from "react";
 
 export const DashboardPage: FC = () => {
   return (
-    <div>
-      <Text>Dashboard Page</Text>
-      <Button> Hello World</Button>
-    </div>
+    <Stack gap="xs">
+      <Title order={2}>Dashboard Page</Title>
+      <Text c="dimmed">This screen is a placeholder — not built yet.</Text>
+    </Stack>
   );
 };

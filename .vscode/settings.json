@@ -3,5 +3,10 @@
     "**/.yarn": true,
     "**/.pnp.*": true
   },
-  "js/ts.tsdk.path": ".yarn/sdks/typescript/lib"
+  "js/ts.tsdk.path": ".yarn/sdks/typescript/lib",
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "*.ts": "${capture}.spec.ts, ${capture}.test.ts",
+    "*.tsx": "${capture}.spec.tsx, ${capture}.test.tsx"
+  }
 }

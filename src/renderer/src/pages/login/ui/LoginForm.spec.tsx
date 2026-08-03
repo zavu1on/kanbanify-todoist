@@ -1,11 +1,14 @@
 import { MantineProvider } from "@mantine/core";
 import { screen } from "@testing-library/react";
+import { SessionProvider } from "@/app/SessionContext";
 import { LoginForm } from "./LoginForm";
 
 const renderLoginForm = () => {
   return render(
     <MantineProvider>
-      <LoginForm />
+      <SessionProvider>
+        <LoginForm />
+      </SessionProvider>
     </MantineProvider>,
   );
 };
@@ -15,7 +18,13 @@ describe("LoginForm", () => {
     Object.defineProperty(window, "api", {
       writable: true,
       configurable: true,
-      value: { auth: { login: vi.fn() } },
+      value: {
+        auth: {
+          login: vi.fn(),
+          checkSession: vi.fn().mockResolvedValue({ status: "no_token" }),
+          logout: vi.fn(),
+        },
+      },
     });
   });
 
@@ -64,7 +73,12 @@ describe("LoginForm", () => {
   it("does not show a validation error when submitting a valid token", async () => {
     vi.mocked(window.api.auth.login).mockResolvedValue({
       ok: true,
-      user: { id: "1", fullName: "Ada Lovelace", email: "ada@example.com" },
+      user: {
+        id: "1",
+        fullName: "Ada Lovelace",
+        email: "ada@example.com",
+        avatarUrl: null,
+      },
     });
     const user = userEvent.setup();
     renderLoginForm();
@@ -83,7 +97,12 @@ describe("LoginForm", () => {
   it("calls the IPC login bridge with the entered access token", async () => {
     vi.mocked(window.api.auth.login).mockResolvedValue({
       ok: true,
-      user: { id: "1", fullName: "Ada Lovelace", email: "ada@example.com" },
+      user: {
+        id: "1",
+        fullName: "Ada Lovelace",
+        email: "ada@example.com",
+        avatarUrl: null,
+      },
     });
     const user = userEvent.setup();
     renderLoginForm();

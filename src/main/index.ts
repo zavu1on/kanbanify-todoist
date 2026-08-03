@@ -1,7 +1,9 @@
 import path from "node:path";
 import { app, BrowserWindow, nativeImage } from "electron";
 import icon from "../../resources/icon.png?asset";
+import { CheckSessionUseCase } from "./auth/application/use-cases/CheckSessionUseCase";
 import { LoginUseCase } from "./auth/application/use-cases/LoginUseCase";
+import { LogoutUseCase } from "./auth/application/use-cases/LogoutUseCase";
 import { AuthIpcController } from "./auth/infrastructure/AuthIpcController";
 import { SafeStorageTokenStore } from "./auth/infrastructure/SafeStorageTokenStore";
 import { TodoistUserGateway } from "./auth/infrastructure/TodoistUserGateway";
@@ -9,12 +11,18 @@ import { TodoistUserGateway } from "./auth/infrastructure/TodoistUserGateway";
 const appIcon = nativeImage.createFromPath(icon);
 
 const registerIpcHandlers = () => {
-  const loginUseCase = new LoginUseCase(
-    new TodoistUserGateway(),
-    new SafeStorageTokenStore(),
-  );
+  const userGateway = new TodoistUserGateway();
+  const tokenStore = new SafeStorageTokenStore();
 
-  new AuthIpcController(loginUseCase).register();
+  const loginUseCase = new LoginUseCase(userGateway, tokenStore);
+  const checkSessionUseCase = new CheckSessionUseCase(userGateway, tokenStore);
+  const logoutUseCase = new LogoutUseCase(tokenStore);
+
+  new AuthIpcController(
+    loginUseCase,
+    checkSessionUseCase,
+    logoutUseCase,
+  ).register();
 };
 
 const createWindow = () => {

@@ -3,5 +3,6 @@ export class AuthenticatedUser {
     readonly id: string,
     readonly fullName: string,
     readonly email: string,
+    readonly avatarUrl: string | null,
   ) {}
 }

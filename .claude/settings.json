@@ -1,7 +1,4 @@
 {
-  "enabledMcpjsonServers": [
-    "mantine"
-  ],
   "hooks": {
     "PostToolUse": [
       {

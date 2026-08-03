@@ -3,13 +3,16 @@ import "@mantine/notifications/styles.css";
 
 import { Notifications } from "@mantine/notifications";
 import { Router } from "./Router";
+import { SessionProvider } from "./SessionContext";
 import { ThemeProvider } from "./ThemeProvider";
 
 export function App() {
   return (
     <ThemeProvider>
       <Notifications />
-      <Router />
+      <SessionProvider>
+        <Router />
+      </SessionProvider>
     </ThemeProvider>
   );
 }
