@@ -44,8 +44,9 @@ Import the result type from `@/main/<module>` — never restate it on the fronte
 Run once, over the whole change:
 
 1. Stale references — `docs/README.md`, `CLAUDE.md`, ADRs, and alias sync between `tsconfig.web.json` and `vitest.config.ts` if an alias was added
-2. `yarn typecheck`
-3. `yarn test`
+2. Update `docs/DEFERRED.md` — delete rows this change resolved, add a row for anything you deliberately left out because the functionality it depends on does not exist yet
+3. `yarn typecheck`
+4. `yarn test`
 
 `yarn format` runs automatically via the `PostToolUse` hook. Fix everything the gates report before reporting completion.
 
