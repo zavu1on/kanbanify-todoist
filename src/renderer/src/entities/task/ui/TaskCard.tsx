@@ -1,13 +1,4 @@
-import {
-  Badge,
-  Card,
-  Center,
-  Group,
-  Paper,
-  Stack,
-  Text,
-  Tooltip,
-} from "@mantine/core";
+import { Badge, Card, Group, Paper, Stack, Text, Tooltip } from "@mantine/core";
 import { BadgeAlertIcon, ClockIcon } from "lucide-animated";
 import type { FC } from "react";
 import type { Task } from "@/main/tasks";
@@ -52,9 +43,11 @@ export const TaskCard: FC<TaskCardProps> = ({ task }) => {
                 // at a past time) — see getDueDisplay's doc comment.
                 color={due.isOverdue ? "red" : due.isDueToday ? "blue" : "gray"}
                 leftSection={
-                  <Center>
-                    <ClockIcon size={12} animateOnHover={false} />
-                  </Center>
+                  <ClockIcon
+                    size={12}
+                    animateOnHover={false}
+                    style={{ display: "flex" }}
+                  />
                 }
               >
                 {due.label}
