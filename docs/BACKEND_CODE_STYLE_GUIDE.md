@@ -22,6 +22,8 @@
 
 Правило зависимостей — только внутрь: `infrastructure` знает про `application` и `domain`, `application` знает про `domain`, `domain` не знает ни про что снаружи. `infrastructure` реализует интерфейсы портов из `application/ports`, а не наоборот.
 
+Порт может использоваться use-case'ами другого модуля — так, `ITokenStore`/`SafeStorageTokenStore` живут в `auth` (токен по смыслу принадлежит авторизации), а `tasks`-модуль импортирует порт оттуда напрямую (`auth/application/ports/ITokenStore`), не заводя свою копию. Модуль, которому конкретный порт принадлежит, определяется семантикой (что это за данные и кто ответственен за их жизненный цикл), а не тем, кто первым в нём нуждался.
+
 Сборка зависимостей (DI) — вручную, без DI-фреймворка. Единственное место, где создаются конкретные реализации и передаются друг другу как зависимости, — `src/main/index.ts`:
 
 ```ts
@@ -48,7 +50,45 @@ export { accessTokenSchema } from "./domain/value-objects/AccessToken";
 - Один класс/интерфейс/тип — один файл, имя файла = имя экспорта (`PascalCase.ts`)
 - Интерфейсы портов — префикс `I` (`ITokenStore`, `ITodoistUserGateway`), лежат в `application/ports/`
 - Доменные ошибки — на модуль один абстрактный базовый класс (`AuthError extends Error`, с `this.name = new.target.name`), от него наследуются конкретные ошибки (`InvalidAccessTokenError`, `TodoistAuthConnectionError`). Инфраструктурный код бросает конкретные ошибки, `infrastructure`-контроллер на границе IPC ловит базовый класс модуля и мапит в тип по `instanceof`
-- Value objects — приватный конструктор + статическая фабрика `safeParse`, возвращающая discriminated union (`{ success: true; data } | { success: false; error }`), а не бросающая исключение:
+- **Мапперы — классы, и живут в `domain/mappers/`.** Маппинг сырого ответа API в доменную сущность (`TaskMapper.toDomain`) и маппинг классифицированной ошибки в конкретный класс доменной ошибки (`TasksErrorMapper.toDomainError`) — это доменная логика («какая сущность/ошибка собирается из этих данных»), поэтому не метод гейтвея и не файл в `infrastructure/`:
+  ```ts
+  // domain/mappers/TaskMapper.ts
+  export class TaskMapper {
+    toDomain(source: TaskApiSource): Task { ... }
+  }
+
+  // domain/errors/TasksErrorMapper.ts
+  export class TasksErrorMapper {
+    toDomainError(kind: TasksErrorKind, message?: string): TasksError { ... }
+  }
+  ```
+  `TaskApiSource` — структурный тип с нужными полями, а не тип SDK: маппер в `domain/` не имеет права импортировать `@doist/todoist-sdk` (см. «Чего делать нельзя»). По этой же причине классификация SDK-ошибки (`error instanceof TodoistRequestError`) не может жить в доменном мапере — она остаётся в `infrastructure/<Module>ErrorClassifier.ts`, который читает `TodoistRequestError`, определяет `kind` (`"auth" | "network" | "unknown"`) и передаёт его доменному `<Module>ErrorMapper`, а не строит ошибку сам:
+  ```ts
+  // infrastructure/TodoistTasksErrorClassifier.ts
+  export class TodoistTasksErrorClassifier {
+    private readonly errorMapper = new TasksErrorMapper();
+    async wrap<T>(fn: () => Promise<T>): Promise<T> {
+      try { return await fn(); }
+      catch (error) {
+        if (error instanceof TodoistRequestError) {
+          throw this.errorMapper.toDomainError(error.isAuthenticationError() ? "auth" : "network");
+        }
+        throw this.errorMapper.toDomainError("unknown", error instanceof Error ? error.message : undefined);
+      }
+    }
+  }
+  ```
+  Гейтвей держит оба как приватные поля (`private readonly taskMapper = new TaskMapper()`) и вызывает их методы, не содержит их тел
+- **Все доменные сущности, value objects и мапперы — классы**, не `interface`/plain-object/объект с методами. Доменная логика, которая определяет их поведение (валидация, разрешение конфликтов, применение изменений, маппинг), живёт как метод класса:
+  ```ts
+  export class KanbanStatus {
+    private constructor(readonly level: KanbanStatusLevel, readonly hasConflict: boolean) {}
+    static resolve(labels: string[]): KanbanStatus { ... }
+    applyTo(labels: string[]): string[] { ... }
+  }
+  ```
+  Если у класса в итоге остались бы только статические методы, biome (`noStaticOnlyClass`) не даст оформить это классом — так и должно быть: значит, у него по ошибке нет состояния/инстанс-метода. Для мапперов решение — метод `toDomain`/`toDomainError` делай **инстанс-методом**, а не `static` (даже если он не читает поля), и создавай маппер через `new` там, где он используется (`private readonly taskMapper = new TaskMapper()` в гейтвее). Это не «настоящее» состояние, но проходит правило и держит мапперы в общем ряду с сущностями/VO как классы, а не как исключение из него
+- Value objects — приватный конструктор + статическая фабрика `safeParse` (для валидируемого ввода, возвращает discriminated union `{ success: true; data } | { success: false; error }`, а не бросает исключение) либо `of`/`fromApiValue` (для доверенного ввода, без валидации):
   ```ts
   export class AccessToken {
     private constructor(readonly value: string) {}
@@ -73,11 +113,35 @@ export { accessTokenSchema } from "./domain/value-objects/AccessToken";
 - Имя канала — `module:action` (`auth:login`)
 - **Ошибки никогда не пересекают границу IPC как исключение.** Контроллер оборачивает вызов use-case'а в `try/catch` и всегда возвращает сериализуемый discriminated union, определённый в `domain/contracts/` модуля:
   ```ts
-  type LoginResult =
-    | { ok: true; user: AuthenticatedUser; tokenStorageWarning?: string }
-    | { ok: false; error: { type: AuthErrorType; message: string } };
+  type LoginResult = ({ ok: true } & LoginOutput) | AuthFailure;
   ```
   Этот тип — общий контракт для `preload` и renderer (импортируется оттуда через `@/main`), поэтому он живёт в `domain/contracts/`, а не дублируется на фронте
+- **Неудачный результат вида `{ ok: false; error: { type: XxxErrorType; message: string } }` не дублируется по контрактам.** На модуль — один тип-неудача в `domain/contracts/<Module>Failure.ts` (например, `AuthFailure`, `TasksFailure`), рядом с ним — union типов ошибок модуля (`AuthErrorType`/`TasksErrorType`). Каждый контракт модуля ссылается на этот тип, а не переопределяет форму заново:
+  ```ts
+  // domain/contracts/AuthFailure.ts
+  export type AuthErrorType = "invalid_token" | "network_error" | "unknown";
+  export type AuthFailure = { ok: false; error: { type: AuthErrorType; message: string } };
+
+  // domain/contracts/LoginResult.ts
+  export type LoginResult = ({ ok: true } & LoginOutput) | AuthFailure;
+  ```
+  Если у контракта неудачи другой дискриминант, а не `ok: false` (например, `SessionCheckResult` использует `status: "error"`), переиспользуй хотя бы форму `error: { type; message }` через `AuthFailure["error"]`, а не переопределяй её
+- **Возвращаемые типы, пересекающиеся между портом, его инфраструктурной реализацией и доменным контрактом, живут в одном месте — в порте** (`application/ports/`), а не дублируются в каждом слое. Порт экспортирует именованный тип для формы, которую отдаёт его метод; use-case и `domain/contracts/` ссылаются на этот тип, а не переопределяют поля заново:
+  ```ts
+  // application/ports/ITaskGateway.ts
+  export interface TaskListPage { tasks: Task[]; nextCursor: string | null; }
+  export interface ITaskGateway {
+    listTasks(accessToken: string, cursor: string | null): Promise<TaskListPage>;
+  }
+
+  // application/use-cases/ListTasksUseCase.ts
+  export class ListTasksUseCase implements UseCase<string | null, TaskListPage> { ... }
+
+  // domain/contracts/TasksListResult.ts
+  import type { TaskListPage } from "../../application/ports/ITaskGateway";
+  export type TasksListResult = ({ ok: true } & TaskListPage) | TasksFailure;
+  ```
+  Импорт из `domain/contracts/` в `application/ports/` — только `import type`: он стирается при компиляции, так что `domain` не приобретает рантайм-зависимость от `application`, только разделяет форму типа. Это единственное исключение из правила зависимостей выше, и оно допустимо только для этого типа импорта
 - Zod-схемы полей, общие с фронтендом (например, `accessTokenSchema`), — тоже в `domain/value-objects/` соответствующего модуля и реэкспортируются через barrel; фронтенд не заводит свою копию
 
 

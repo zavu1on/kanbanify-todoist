@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **`src/main/`** — Electron main-процесс (бекенд). Здесь и только здесь доступен Todoist Access Token и `@doist/todoist-sdk`. Организован по **чистой архитектуре** (Clean Architecture): доменная логика (kanban-статусы, доменная модель задач) изолирована от Electron- и SDK-специфичных деталей через слои use cases / adapters / gateways.
 - **`src/preload/`** — Electron preload-скрипт, единственный мост между main и renderer: описывает IPC-контракт, через который renderer запрашивает данные Todoist, не получая доступа к токену напрямую.
-- **`src/renderer/src/`** — Electron renderer-процесс (фронтенд): React + React Router + Mantine UI (плюс dnd-kit для drag-and-drop канбан-доски — заложен в стек, но ещё не установлен). Организован по **FSD** (Feature-Sliced Design) — слои и сегменты фич, публичные API слайсов.
+- **`src/renderer/src/`** — Electron renderer-процесс (фронтенд): React + React Router + Mantine UI + dnd-kit (drag-and-drop канбан-доски) + TanStack Query (серверное состояние, IPC-запросы, пагинация) + Day.js (работа со сроком задачи). Организован по **FSD** (Feature-Sliced Design) — слои и сегменты фич, публичные API слайсов.
 
 Связь бекенда и фронтенда — исключительно через IPC (preload как контракт), renderer не имеет прямого доступа к Todoist API или токену.
 
@@ -64,6 +64,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | [`feature-backend`](.claude/skills/feature-backend/SKILL.md) | самописный | Процесс реализации фичи/правки в `src/main` и `src/preload` по [`BACKEND_CODE_STYLE_GUIDE.md`](docs/BACKEND_CODE_STYLE_GUIDE.md) |
 | [`feature-frontend`](.claude/skills/feature-frontend/SKILL.md) | самописный | Процесс реализации фичи/правки в `src/renderer` по [`FRONTEND_CODE_STYLE_GUIDE.md`](docs/FRONTEND_CODE_STYLE_GUIDE.md) |
 | [`feature-fullstack`](.claude/skills/feature-fullstack/SKILL.md) | самописный | Оркестратор фичи через границу IPC: сначала контракт и бэкенд, затем фронтенд — в одном контексте, без субагентов |
+| [`tanstack-query`](.claude/skills/tanstack-query/SKILL.md) | [skills.sh](https://skills.sh/), источник [`tanstack-skills/tanstack-skills`](https://github.com/tanstack-skills/tanstack-skills) | Справочник по TanStack Query v5: `useQuery`/`useInfiniteQuery`/`useMutation`, query keys, оптимистичные обновления, инвалидация кэша |
 
 ### Слэш-команды
 
