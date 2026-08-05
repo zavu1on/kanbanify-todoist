@@ -1,5 +1,5 @@
 import type { UseCase } from "../../../shared/UseCase";
-import { PLAINTEXT_TOKEN_STORAGE_WARNING } from "../../domain/contracts/LoginResult";
+import { PLAINTEXT_TOKEN_STORAGE_WARNING } from "../../domain/contracts/AuthFailure";
 import type { AccessToken } from "../../domain/value-objects/AccessToken";
 import type { LoginOutput } from "../dtos/LoginOutput";
 import type { ITodoistUserGateway } from "../ports/ITodoistUserGateway";

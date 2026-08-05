@@ -7,6 +7,10 @@ import { LogoutUseCase } from "./auth/application/use-cases/LogoutUseCase";
 import { AuthIpcController } from "./auth/infrastructure/AuthIpcController";
 import { SafeStorageTokenStore } from "./auth/infrastructure/SafeStorageTokenStore";
 import { TodoistUserGateway } from "./auth/infrastructure/TodoistUserGateway";
+import { ListTasksUseCase } from "./tasks/application/use-cases/ListTasksUseCase";
+import { UpdateTaskStatusUseCase } from "./tasks/application/use-cases/UpdateTaskStatusUseCase";
+import { TasksIpcController } from "./tasks/infrastructure/TasksIpcController";
+import { TodoistTaskGateway } from "./tasks/infrastructure/TodoistTaskGateway";
 
 const appIcon = nativeImage.createFromPath(icon);
 
@@ -23,6 +27,15 @@ const registerIpcHandlers = () => {
     checkSessionUseCase,
     logoutUseCase,
   ).register();
+
+  const taskGateway = new TodoistTaskGateway();
+  const listTasksUseCase = new ListTasksUseCase(taskGateway, tokenStore);
+  const updateTaskStatusUseCase = new UpdateTaskStatusUseCase(
+    taskGateway,
+    tokenStore,
+  );
+
+  new TasksIpcController(listTasksUseCase, updateTaskStatusUseCase).register();
 };
 
 const createWindow = () => {

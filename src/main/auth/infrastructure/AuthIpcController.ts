@@ -3,10 +3,8 @@ import type { IpcController } from "../../shared/IpcController";
 import type { CheckSessionUseCase } from "../application/use-cases/CheckSessionUseCase";
 import type { LoginUseCase } from "../application/use-cases/LoginUseCase";
 import type { LogoutUseCase } from "../application/use-cases/LogoutUseCase";
-import type {
-  AuthErrorType,
-  LoginResult,
-} from "../domain/contracts/LoginResult";
+import type { AuthErrorType } from "../domain/contracts/AuthFailure";
+import type { LoginResult } from "../domain/contracts/LoginResult";
 import type { LogoutResult } from "../domain/contracts/LogoutResult";
 import type { SessionCheckResult } from "../domain/contracts/SessionCheckResult";
 import { AuthError } from "../domain/errors/AuthError";

@@ -13,7 +13,7 @@ export class CheckSessionUseCase implements UseCase<void, SessionCheckOutput> {
     const storedToken = await this.tokenStore.load();
     if (storedToken === null) return { status: "no_token" };
 
-    const user = await this.userGateway.fetchCurrentUser(storedToken);
+    const user = await this.userGateway.fetchCurrentUser(storedToken.value);
     return { status: "authenticated", user };
   }
 }

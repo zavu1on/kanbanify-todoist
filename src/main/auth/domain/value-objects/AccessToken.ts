@@ -17,6 +17,12 @@ export type AccessTokenParseSuccess = { success: true; data: AccessToken };
 export class AccessToken {
   private constructor(readonly value: string) {}
 
+  /** Wraps an already-trusted value (e.g. read back from token storage) without
+   * re-validating it — validation happened once, at the point it was first entered. */
+  static of(value: string): AccessToken {
+    return new AccessToken(value);
+  }
+
   static safeParse(
     rawValue: string,
   ): AccessTokenParseSuccess | AccessTokenParseFailure {

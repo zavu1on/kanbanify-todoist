@@ -5,6 +5,7 @@ import type {
   ITokenStore,
   TokenStoreResult,
 } from "../application/ports/ITokenStore";
+import { AccessToken } from "../domain/value-objects/AccessToken";
 
 const TOKEN_FILE_NAME = "kanbanify-todoist-token.enc";
 
@@ -35,7 +36,7 @@ export class SafeStorageTokenStore implements ITokenStore {
     return { encrypted: true };
   }
 
-  async load(): Promise<string | null> {
+  async load(): Promise<AccessToken | null> {
     const tokenFilePath = path.join(app.getPath("userData"), TOKEN_FILE_NAME);
 
     let fileContents: Buffer;
@@ -46,9 +47,11 @@ export class SafeStorageTokenStore implements ITokenStore {
       throw error;
     }
 
-    return safeStorage.isEncryptionAvailable()
+    const rawValue = safeStorage.isEncryptionAvailable()
       ? safeStorage.decryptString(fileContents)
       : fileContents.toString("utf-8");
+
+    return AccessToken.of(rawValue);
   }
 
   async clear(): Promise<void> {

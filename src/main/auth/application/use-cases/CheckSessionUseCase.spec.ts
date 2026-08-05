@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { AuthenticatedUser } from "../../domain/entities/AuthenticatedUser";
 import { InvalidAccessTokenError } from "../../domain/errors/InvalidAccessTokenError";
+import { AccessToken } from "../../domain/value-objects/AccessToken";
 import type { ITodoistUserGateway } from "../ports/ITodoistUserGateway";
 import type { ITokenStore } from "../ports/ITokenStore";
 import { CheckSessionUseCase } from "./CheckSessionUseCase";
 
-const buildTokenStore = (storedToken: string | null): ITokenStore => ({
+const buildTokenStore = (storedToken: AccessToken | null): ITokenStore => ({
   save: vi.fn(),
   load: vi.fn().mockResolvedValue(storedToken),
   clear: vi.fn(),
@@ -32,7 +33,7 @@ describe("CheckSessionUseCase", () => {
     };
     const useCase = new CheckSessionUseCase(
       userGateway,
-      buildTokenStore("stored-token"),
+      buildTokenStore(AccessToken.of("stored-token")),
     );
 
     await expect(useCase.execute()).resolves.toEqual({
@@ -50,7 +51,7 @@ describe("CheckSessionUseCase", () => {
     };
     const useCase = new CheckSessionUseCase(
       userGateway,
-      buildTokenStore("stored-token"),
+      buildTokenStore(AccessToken.of("stored-token")),
     );
 
     await expect(useCase.execute()).rejects.toBeInstanceOf(

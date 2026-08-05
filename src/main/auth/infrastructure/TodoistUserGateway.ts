@@ -1,34 +1,19 @@
-import { TodoistApi, TodoistRequestError } from "@doist/todoist-sdk";
+import { TodoistApi } from "@doist/todoist-sdk";
 import type { ITodoistUserGateway } from "../application/ports/ITodoistUserGateway";
-import { AuthenticatedUser } from "../domain/entities/AuthenticatedUser";
-import { InvalidAccessTokenError } from "../domain/errors/InvalidAccessTokenError";
-import { TodoistAuthConnectionError } from "../domain/errors/TodoistAuthConnectionError";
-import { UnknownAuthError } from "../domain/errors/UnknownAuthError";
+import type { AuthenticatedUser } from "../domain/entities/AuthenticatedUser";
+import { AuthenticatedUserMapper } from "../domain/mappers/AuthenticatedUserMapper";
+import { TodoistAuthErrorClassifier } from "./TodoistAuthErrorClassifier";
 
 export class TodoistUserGateway implements ITodoistUserGateway {
+  private readonly userMapper = new AuthenticatedUserMapper();
+  private readonly errorClassifier = new TodoistAuthErrorClassifier();
+
   async fetchCurrentUser(accessToken: string): Promise<AuthenticatedUser> {
-    try {
+    return this.errorClassifier.wrap(async () => {
       const api = new TodoistApi(accessToken);
       const user = await api.getUser();
 
-      return new AuthenticatedUser(
-        user.id,
-        user.fullName,
-        user.email,
-        user.avatarMedium ?? null,
-      );
-    } catch (error) {
-      if (error instanceof TodoistRequestError) {
-        if (error.isAuthenticationError()) {
-          throw new InvalidAccessTokenError();
-        }
-
-        throw new TodoistAuthConnectionError();
-      }
-
-      throw new UnknownAuthError(
-        error instanceof Error ? error.message : undefined,
-      );
-    }
+      return this.userMapper.toDomain(user);
+    });
   }
 }

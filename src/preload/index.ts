@@ -4,6 +4,11 @@ import type {
   LogoutResult,
   SessionCheckResult,
 } from "../main/auth";
+import type {
+  KanbanStatusLevel,
+  TasksListResult,
+  UpdateTaskStatusResult,
+} from "../main/tasks";
 
 const api = {
   auth: {
@@ -12,6 +17,15 @@ const api = {
     checkSession: (): Promise<SessionCheckResult> =>
       ipcRenderer.invoke("auth:checkSession"),
     logout: (): Promise<LogoutResult> => ipcRenderer.invoke("auth:logout"),
+  },
+  tasks: {
+    list: (cursor: string | null): Promise<TasksListResult> =>
+      ipcRenderer.invoke("tasks:list", cursor),
+    updateStatus: (
+      taskId: string,
+      status: KanbanStatusLevel,
+    ): Promise<UpdateTaskStatusResult> =>
+      ipcRenderer.invoke("tasks:updateStatus", taskId, status),
   },
 };
 
