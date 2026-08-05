@@ -193,11 +193,18 @@ export { accessTokenSchema } from "./domain/value-objects/AccessToken";
 
 ## Тестирование
 
-Тестов для `src/main`/`src/preload` пока нет — конвенция ниже фиксируется на будущее, по аналогии с фронтендом ([`FRONTEND_CODE_STYLE_GUIDE.md`](FRONTEND_CODE_STYLE_GUIDE.md), раздел «Тестирование»):
+Обязательному покрытию unit-тестами подлежат:
+
+- **Доменная логика** — сущности и Value Object'ы (`domain/entities/`, `domain/value-objects/`), в первую очередь там, где есть нетривиальные правила (например, разрешение конфликта Kanban-статусов в `KanbanStatus.resolve`, инверсия приоритета в `Priority.fromApiValue`)
+- **Use case'ы** (`application/use-cases/`) — включая обработку отсутствующей/невалидной сессии (`ITokenStore.load() === null`) и делегирование в gateway с правильными аргументами
+
+Инфраструктура (`infrastructure/`, адаптеры к `@doist/todoist-sdk`) unit-тестами не покрывается — она проверяется вручную/интеграционно, юнит-тестов на прямой вызов SDK нет смысла писать.
+
+Конвенции:
 
 - Тест — `*.spec.ts`, рядом с тестируемым файлом
 - Тестовый раннер — Vitest; конфиг ([`vitest.config.ts`](../vitest.config.ts)) на весь проект один, `environment: "jsdom"` — при тестировании `src/main` это не мешает (Node API доступны), но модули `electron` (`ipcMain`, `app`, `safeStorage` и т.д.) нужно мокать через `vi.mock("electron", ...)`, а не полагаться на реальный рантайм — в тестовом окружении Electron не запущен
-- Порты (`ITokenStore`, `ITodoistUserGateway`) в тестах use-case'ов мокаются напрямую (это и есть их назначение) — не тестируй use-case через реальную инфраструктуру
+- Порты (`ITokenStore`, `ITaskGateway`, `ITodoistUserGateway`) в тестах use-case'ов мокаются напрямую (это и есть их назначение) — не тестируй use-case через реальную инфраструктуру
 
 
 ## Форматирование и импорты
