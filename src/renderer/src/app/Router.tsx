@@ -3,6 +3,7 @@ import type { FC } from "react";
 import { createHashRouter, RouterProvider } from "react-router";
 import { DashboardPage } from "@/pages/dashboard";
 import { LoginPage } from "@/pages/login";
+import { TasksPage } from "@/pages/tasks";
 import { AppLayout } from "./AppLayout";
 import { useSession } from "./SessionContext";
 
@@ -10,7 +11,10 @@ const appRouter = createHashRouter([
   {
     path: "/",
     element: <AppLayout />,
-    children: [{ index: true, element: <DashboardPage /> }],
+    children: [
+      { index: true, element: <DashboardPage /> },
+      { path: "tasks", element: <TasksPage /> },
+    ],
   },
 ]);
 

@@ -6,7 +6,7 @@ import {
   type RefAttributes,
   useRef,
 } from "react";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 
 type AnimatedIconHandle = {
   startAnimation: () => void;
@@ -33,12 +33,13 @@ export const SidebarNavLink: FC<SidebarNavLinkProps> = ({
   to,
 }) => {
   const iconRef = useRef<AnimatedIconHandle>(null);
+  const location = useLocation();
 
   return (
     <NavLink
       label={label}
       leftSection={<Icon ref={iconRef} size={18} animateOnHover={false} />}
-      active={label === "Dashboard"}
+      active={location.pathname === to}
       component={Link}
       to={to}
       onClick={to === "#" ? (e) => e.preventDefault() : undefined}

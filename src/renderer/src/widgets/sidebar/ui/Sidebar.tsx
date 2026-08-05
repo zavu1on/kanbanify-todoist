@@ -19,7 +19,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "New task", icon: PlusIcon, to: "#" },
   { label: "Search", icon: SearchIcon, to: "#" },
   { label: "Dashboard", icon: LayoutGridIcon, to: "/" },
-  { label: "Tasks", icon: ListIcon, to: "#" },
+  { label: "Tasks", icon: ListIcon, to: "/tasks" },
   { label: "Today", icon: SunIcon, to: "#" },
   { label: "Calendar", icon: CalendarDaysIcon, to: "#" },
 ];

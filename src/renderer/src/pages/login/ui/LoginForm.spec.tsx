@@ -1,14 +1,21 @@
 import { MantineProvider } from "@mantine/core";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { screen } from "@testing-library/react";
 import { SessionProvider } from "@/app/SessionContext";
 import { LoginForm } from "./LoginForm";
 
 const renderLoginForm = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+
   return render(
     <MantineProvider>
-      <SessionProvider>
-        <LoginForm />
-      </SessionProvider>
+      <QueryClientProvider client={queryClient}>
+        <SessionProvider>
+          <LoginForm />
+        </SessionProvider>
+      </QueryClientProvider>
     </MantineProvider>,
   );
 };

@@ -1,14 +1,14 @@
 import { Alert, Button, PasswordInput, Stack } from "@mantine/core";
 import { schemaResolver, useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
+import { useMutation } from "@tanstack/react-query";
 import type { FC } from "react";
-import { useState } from "react";
 import { useSession } from "@/app/SessionContext";
-import { authFormSchema, loginWithAccessToken } from "../model/auth";
+import { loginWithAccessToken } from "../api/loginWithAccessToken";
+import { authFormSchema } from "../model/auth";
 
 export const LoginForm: FC = () => {
   const session = useSession();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm({
     initialValues: {
@@ -17,12 +17,14 @@ export const LoginForm: FC = () => {
     validate: schemaResolver(authFormSchema, { sync: true }),
   });
 
-  const handleSubmit = form.onSubmit(async ({ accessToken }) => {
-    setIsSubmitting(true);
-    const result = await loginWithAccessToken(accessToken);
-    setIsSubmitting(false);
+  const loginMutation = useMutation({
+    mutationFn: loginWithAccessToken,
+    onSuccess: (result) => {
+      if (!result.ok) {
+        form.setFieldError("accessToken", result.error.message);
+        return;
+      }
 
-    if (result.ok) {
       notifications.show({
         color: "green",
         title: "Signed in",
@@ -40,9 +42,11 @@ export const LoginForm: FC = () => {
 
       form.reset();
       session.authenticate(result.user);
-    } else {
-      form.setFieldError("accessToken", result.error.message);
-    }
+    },
+  });
+
+  const handleSubmit = form.onSubmit(({ accessToken }) => {
+    loginMutation.mutate(accessToken);
   });
 
   return (
@@ -64,7 +68,7 @@ export const LoginForm: FC = () => {
 
         <Button
           type="submit"
-          loading={isSubmitting}
+          loading={loginMutation.isPending}
           disabled={form.values.accessToken.trim().length === 0}
           fullWidth
         >
