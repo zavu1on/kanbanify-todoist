@@ -6,6 +6,7 @@ import type {
 } from "../main/auth";
 import type {
   KanbanStatusLevel,
+  TasksCountResult,
   TasksListResult,
   UpdateTaskStatusResult,
 } from "../main/tasks";
@@ -26,6 +27,7 @@ const api = {
       status: KanbanStatusLevel,
     ): Promise<UpdateTaskStatusResult> =>
       ipcRenderer.invoke("tasks:updateStatus", taskId, status),
+    count: (): Promise<TasksCountResult> => ipcRenderer.invoke("tasks:count"),
   },
 };
 

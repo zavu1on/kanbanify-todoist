@@ -10,6 +10,7 @@ import {
 import type { FC } from "react";
 import { useSession } from "@/app/SessionContext";
 import logo from "@/shared/ui/kanbanify-logo.svg";
+import { useTaskCountQuery } from "../api/useTaskCountQuery";
 import { type AnimatedIcon, SidebarNavLink } from "./SidebarNavLink";
 import { UserCard } from "./UserCard";
 
@@ -26,6 +27,10 @@ const NAV_ITEMS: NavItem[] = [
 
 export const Sidebar: FC = () => {
   const session = useSession();
+  const taskCountQuery = useTaskCountQuery();
+  const taskCount = taskCountQuery.data?.ok
+    ? taskCountQuery.data.count
+    : undefined;
 
   return (
     <AppShell.Navbar>
@@ -41,7 +46,11 @@ export const Sidebar: FC = () => {
       <AppShell.Section grow py="sm">
         <Stack gap={2}>
           {NAV_ITEMS.map((item) => (
-            <SidebarNavLink key={item.label} {...item} />
+            <SidebarNavLink
+              key={item.label}
+              {...item}
+              badge={item.label === "Tasks" ? taskCount : undefined}
+            />
           ))}
         </Stack>
       </AppShell.Section>
