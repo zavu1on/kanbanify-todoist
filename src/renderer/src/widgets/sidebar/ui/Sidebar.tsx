@@ -38,7 +38,7 @@ export const Sidebar: FC = () => {
         </Group>
       </AppShell.Section>
 
-      <AppShell.Section grow p="sm">
+      <AppShell.Section grow py="sm">
         <Stack gap={2}>
           {NAV_ITEMS.map((item) => (
             <SidebarNavLink key={item.label} {...item} />
