@@ -11,11 +11,16 @@ import { PRIORITY_MARKER_COLORS } from "../lib/priority";
 
 type TaskCardProps = {
   task: Task;
+  // The kanban board already conveys status via the column — pass this to
+  // drop the redundant status badge there.
+  hideKanbanStatus?: boolean;
 };
 
-export const TaskCard: FC<TaskCardProps> = ({ task }) => {
+export const TaskCard: FC<TaskCardProps> = ({ task, hideKanbanStatus }) => {
   const due = task.due ? getDueDisplay(task.due) : null;
   const priorityColor = PRIORITY_MARKER_COLORS[task.priority.level];
+  const showKanbanStatus =
+    !hideKanbanStatus && task.kanbanStatus.level !== "none";
 
   return (
     <Card withBorder radius="md" p="sm">
@@ -31,9 +36,7 @@ export const TaskCard: FC<TaskCardProps> = ({ task }) => {
           </Text>
         </Group>
 
-        {(due ||
-          task.kanbanStatus.level !== "none" ||
-          task.labels.length > 0) && (
+        {(due || showKanbanStatus || task.labels.length > 0) && (
           <Group gap={6}>
             {due && (
               <Badge
@@ -54,7 +57,7 @@ export const TaskCard: FC<TaskCardProps> = ({ task }) => {
               </Badge>
             )}
 
-            {task.kanbanStatus.level !== "none" && (
+            {showKanbanStatus && (
               <Badge
                 size="sm"
                 variant="light"

@@ -1,5 +1,9 @@
 import { useDroppable } from "@dnd-kit/core";
 import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import {
   ActionIcon,
   Badge,
   Group,
@@ -17,17 +21,22 @@ import { DraggableTaskCard } from "./DraggableTaskCard";
 type KanbanColumnProps = {
   status: KanbanStatusLevel;
   tasks: Task[];
+  isDropTarget: boolean;
 };
 
-export const KanbanColumn: FC<KanbanColumnProps> = ({ status, tasks }) => {
-  const { setNodeRef, isOver } = useDroppable({ id: status });
+export const KanbanColumn: FC<KanbanColumnProps> = ({
+  status,
+  tasks,
+  isDropTarget,
+}) => {
+  const { setNodeRef } = useDroppable({ id: status });
 
   return (
     <Paper
       withBorder
       radius="md"
       p="xs"
-      bg={isOver ? "var(--mantine-color-blue-light)" : undefined}
+      bg={isDropTarget ? "var(--mantine-color-blue-light)" : undefined}
       style={{
         display: "flex",
         flexDirection: "column",
@@ -58,9 +67,14 @@ export const KanbanColumn: FC<KanbanColumnProps> = ({ status, tasks }) => {
 
       <ScrollArea.Autosize mah="calc(100vh - 260px)">
         <Stack ref={setNodeRef} gap="xs" p="xs" mih={40}>
-          {tasks.map((task) => (
-            <DraggableTaskCard key={task.id} task={task} />
-          ))}
+          <SortableContext
+            items={tasks.map((task) => task.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {tasks.map((task) => (
+              <DraggableTaskCard key={task.id} task={task} />
+            ))}
+          </SortableContext>
         </Stack>
       </ScrollArea.Autosize>
     </Paper>
