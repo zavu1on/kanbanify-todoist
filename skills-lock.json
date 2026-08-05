@@ -1,4 +1,10 @@
 {
   "version": 1,
-  "skills": {}
+  "skills": {
+    "tanstack-query": {
+      "source": "https://github.com/tanstack-skills/tanstack-skills/tree/main/plugins/tanstack-query/skills/tanstack-query",
+      "commit": "6f5521ecbdfbfa3d54d335eba6c8b4df0b804c03",
+      "installedAt": "2026-08-05"
+    }
+  }
 }
