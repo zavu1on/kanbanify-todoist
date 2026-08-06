@@ -1,9 +1,24 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ITokenStore } from "../../../auth/application/ports/ITokenStore";
 import { AccessToken } from "../../../auth/domain/value-objects/AccessToken";
+import { Task } from "../../domain/entities/Task";
 import { InvalidTaskSessionError } from "../../domain/errors/InvalidTaskSessionError";
+import { KanbanStatus } from "../../domain/value-objects/KanbanStatus";
+import { Priority } from "../../domain/value-objects/Priority";
+import { TaskDue } from "../../domain/value-objects/TaskDue";
 import type { ITaskGateway, TaskListPage } from "../ports/ITaskGateway";
 import { ListTasksUseCase } from "./ListTasksUseCase";
+
+const buildTask = (id: string, due: TaskDue | null): Task =>
+  new Task(
+    id,
+    `task-${id}`,
+    "project-1",
+    Priority.fromApiValue(4),
+    due,
+    KanbanStatus.resolve([]),
+    [],
+  );
 
 const buildTokenStore = (accessToken: AccessToken | null): ITokenStore => ({
   save: vi.fn(),
@@ -42,6 +57,33 @@ describe("ListTasksUseCase", () => {
       "a-valid-token-value-000000000000",
       "current-cursor",
     );
-    expect(result).toBe(page);
+    expect(result).toEqual(page);
+  });
+
+  it("sorts tasks by due date — overdue to farthest, undated last", async () => {
+    const noDue = buildTask("no-due", null);
+    const farthest = buildTask("farthest", TaskDue.of("2026-09-01", null));
+    const overdue = buildTask("overdue", TaskDue.of("2026-08-01", null));
+    const withTime = buildTask(
+      "with-time",
+      TaskDue.of("2026-08-10", "2026-08-10T09:00:00Z"),
+    );
+    const page: TaskListPage = {
+      tasks: [noDue, farthest, withTime, overdue],
+      nextCursor: null,
+    };
+    const useCase = new ListTasksUseCase(
+      buildGateway(page),
+      buildTokenStore(AccessToken.of("a-valid-token-value-000000000000")),
+    );
+
+    const result = await useCase.execute(null);
+
+    expect(result.tasks.map((task) => task.id)).toEqual([
+      "overdue",
+      "with-time",
+      "farthest",
+      "no-due",
+    ]);
   });
 });

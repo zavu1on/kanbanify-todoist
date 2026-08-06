@@ -29,4 +29,37 @@ describe("buildColumns", () => {
     expect(columns.get("in-progress")).toEqual([inProgressTask]);
     expect(columns.get("completed")).toEqual([]);
   });
+
+  it("keeps existing card order when a `previous` map is given, even if `tasks` order changed", () => {
+    const first = buildTask("1", "todo");
+    const second = buildTask("2", "todo");
+    const previous = buildColumns([first, second]);
+
+    // `tasks` now lists them in the opposite order (e.g. a resort elsewhere).
+    const columns = buildColumns([second, first], previous);
+
+    expect(columns.get("todo")).toEqual([first, second]);
+  });
+
+  it("places a task that changed column at the end of its new column, keeping others in place", () => {
+    const first = buildTask("1", "todo");
+    const second = buildTask("2", "todo");
+    const previous = buildColumns([first, second]);
+
+    const movedSecond = buildTask("2", "in-progress");
+    const columns = buildColumns([first, movedSecond], previous);
+
+    expect(columns.get("todo")).toEqual([first]);
+    expect(columns.get("in-progress")).toEqual([movedSecond]);
+  });
+
+  it("appends a genuinely new task using `tasks` order", () => {
+    const first = buildTask("1", "todo");
+    const previous = buildColumns([first]);
+
+    const second = buildTask("2", "todo");
+    const columns = buildColumns([first, second], previous);
+
+    expect(columns.get("todo")).toEqual([first, second]);
+  });
 });

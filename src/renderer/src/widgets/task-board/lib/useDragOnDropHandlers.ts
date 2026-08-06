@@ -25,7 +25,7 @@ export const useDragOnDropHandlers = (tasks: Task[]) => {
   // Drops the live drag preview once the server-backed `tasks` prop catches
   // up with the move (optimistic update or rollback) — see handleDragEnd.
   useEffect(() => {
-    setColumns(buildColumns(tasks));
+    setColumns((current) => buildColumns(tasks, current));
   }, [tasks]);
 
   const handleDragStart = ({ active }: DragStartEvent) => {
