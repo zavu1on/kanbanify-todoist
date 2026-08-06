@@ -13,10 +13,11 @@ Checks a diff for compliance with this project's own written rules. Read-only: r
 
 Read these before judging anything — they are the only standard that counts here, ahead of your general opinions about good code:
 
-1. `docs/BACKEND_CODE_STYLE_GUIDE.md` — for changes in `src/main/`, `src/preload/`
-2. `docs/FRONTEND_CODE_STYLE_GUIDE.md` — for changes in `src/renderer/`
-3. `docs/SPECIFICATION.md` — domain model and free-tier constraints
-4. `CLAUDE.md` — repo-wide rules, including the AI-infrastructure update rule
+1. `docs/COMMON_CODE_STYLE_GUIDE.md` — rules binding on both processes (code language, formatting, SDLC)
+2. `docs/BACKEND_CODE_STYLE_GUIDE.md` — for changes in `src/main/`, `src/preload/`
+3. `docs/FRONTEND_CODE_STYLE_GUIDE.md` — for changes in `src/renderer/`
+4. `docs/SPECIFICATION.md` — domain model and free-tier constraints
+5. `CLAUDE.md` — repo-wide rules, including the AI-infrastructure update rule
 
 ## Getting the diff
 
@@ -35,7 +36,7 @@ Priority order — report the first two categories even if the code is otherwise
 
 **1. Layer and boundary violations**
 - Backend: dependency rule pointing outward; `electron` or `@doist/todoist-sdk` imported into `domain/`/`application/`; dependencies assembled outside `src/main/index.ts`; use cases or port implementations leaking through a module barrel; business logic in `src/preload`
-- Frontend: imports from a higher layer; reaching into a foreign slice past its `index.ts`; `window.api` called straight from `ui/`; anything from `src/main` imported other than types and Zod schemas via `@/main/*`
+- Frontend: imports from a higher layer; reaching into a foreign slice past its `index.ts`; `window.api` called from anywhere but the slice's `api/` segment; anything from `src/main` imported other than types and Zod schemas via `@/main/*`
 
 **2. Contract and error handling**
 - An exception able to cross the IPC boundary instead of a serializable discriminated union
@@ -51,6 +52,7 @@ Priority order — report the first two categories even if the code is otherwise
 **4. Conventions**
 - Naming: one export per file, file name equals export name, `I` prefix on ports, `PascalCase.tsx` components
 - Value objects with `safeParse` returning a union rather than throwing; entities `readonly`
+- Business rules placed in a value object, a use case or a gateway instead of the entity that owns the state (see the backend guide's "Value objects" bullet and its `Task`/`KanbanStatus` example)
 - Tests present and placed next to the code, querying by user-visible affordances
 - Language: everything in `src/` is English, including user-facing text; Russian appears only in documentation
 - Mantine props instead of inline styles

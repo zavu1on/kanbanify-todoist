@@ -23,7 +23,7 @@ Before any code, agree on the seam and show it to the user:
 
 Everything else follows from this. Getting it wrong costs both phases.
 
-Check `docs/SPECIFICATION.md` for the screen and the domain traps (inverted priority, reserved labels as kanban statuses, free-tier-only fields, 200-item pagination) — pagination in particular is a contract decision, not a UI detail: if the endpoint returns a list, the contract carries the cursor.
+Check `docs/SPECIFICATION.md` for the screen and for the domain traps in its "Ограничения тарифа" and "Доменная модель" sections — pagination in particular is a contract decision, not a UI detail: if the endpoint returns a list, the contract carries the cursor.
 
 ### Step 1. Backend phase
 
@@ -41,12 +41,11 @@ Import the result type from `@/main/<module>` — never restate it on the fronte
 
 ### Step 3. Joint SDLC gates
 
-Run once, over the whole change:
+Run the project SDLC (`docs/COMMON_CODE_STYLE_GUIDE.md`, section "SDLC") once, over the whole change — step 3 (stale references, `docs/DEFERRED.md`), then:
 
-1. Stale references — `docs/README.md`, `CLAUDE.md`, ADRs, and alias sync between `tsconfig.web.json` and `vitest.config.ts` if an alias was added
-2. Update `docs/DEFERRED.md` — delete rows this change resolved, add a row for anything you deliberately left out because the functionality it depends on does not exist yet
-3. `yarn typecheck`
-4. `yarn test`
+1. Alias sync between `tsconfig.web.json` and `vitest.config.ts` if an alias was added
+2. `yarn typecheck`
+3. `yarn test`
 
 `yarn format` runs automatically via the `PostToolUse` hook. Fix everything the gates report before reporting completion.
 

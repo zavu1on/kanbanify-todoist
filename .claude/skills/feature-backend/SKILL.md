@@ -20,8 +20,8 @@ Drives a feature or fix in `src/main/` and `src/preload/` from clarification to 
 
 Always, in this order:
 
-1. `docs/BACKEND_CODE_STYLE_GUIDE.md` — architecture, naming, IPC contract, the step-by-step recipe, the "чего делать нельзя" list
-2. The relevant section of `docs/SPECIFICATION.md` — what the feature must do, plus the domain traps (inverted priority, reserved labels as kanban statuses, free-tier-only fields, 200-item pagination)
+1. `docs/BACKEND_CODE_STYLE_GUIDE.md` — architecture, naming, IPC contract, the step-by-step recipe, the "чего делать нельзя" list — plus `docs/COMMON_CODE_STYLE_GUIDE.md`, which it references for the cross-process rules
+2. The relevant section of `docs/SPECIFICATION.md` — what the feature must do, plus its "Ограничения тарифа" and "Доменная модель" sections, which are the authority on the domain traps
 3. `docs/DEFERRED.md` — deferred work waiting on missing functionality. Check whether this feature unblocks any row; if it does, do it in the same change or tell the user why not
 4. An existing module as the working example — `src/main/auth/` is currently the only complete one; mirror its layer layout
 
@@ -57,12 +57,10 @@ Add or update `*.spec.ts` next to the code under test. Mock ports directly when 
 
 ### Step 6. SDLC gates
 
-Run the project SDLC (the guide's "SDLC" section):
+Run the project SDLC (`docs/COMMON_CODE_STYLE_GUIDE.md`, section "SDLC") — step 3 (stale references, `docs/DEFERRED.md`), then:
 
-1. Check for stale references — does `docs/README.md`, `CLAUDE.md` or an ADR need an update? Does a new decision need one?
-2. Update `docs/DEFERRED.md` — delete rows this change resolved, add a row for anything you deliberately left out because the functionality it depends on does not exist yet
-3. `yarn typecheck`
-4. `yarn test`
+1. `yarn typecheck`
+2. `yarn test`
 
 `yarn format` runs automatically via the `PostToolUse` hook on every edit, so don't run it by hand unless the hook reported a failure. Fix everything these gates report before reporting completion — a red gate is not a finding to hand off, it's work.
 

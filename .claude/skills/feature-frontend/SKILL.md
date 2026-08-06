@@ -1,6 +1,6 @@
 ---
 name: feature-frontend
-description: Implements a feature or fix in the Electron renderer (src/renderer) following the project's FSD guide — slices, Mantine UI, forms, IPC calls through model/, Vitest specs. Use when the work touches React UI and not the main process.
+description: Implements a feature or fix in the Electron renderer (src/renderer) following the project's FSD guide — slices, Mantine UI, forms, IPC calls through api/, Vitest specs. Use when the work touches React UI and not the main process.
 ---
 
 # Frontend feature
@@ -19,10 +19,10 @@ Drives a feature or fix in `src/renderer/src/` from clarification to a review-re
 
 Always, in this order:
 
-1. `docs/FRONTEND_CODE_STYLE_GUIDE.md` — layers, slice structure, Mantine rules, forms/IPC, routing, state policy, the "чего делать нельзя" list
+1. `docs/FRONTEND_CODE_STYLE_GUIDE.md` — layers, slice structure, Mantine rules, forms/IPC, routing, state policy, the "чего делать нельзя" list — plus `docs/COMMON_CODE_STYLE_GUIDE.md`, which it references for the cross-process rules
 2. The relevant screen description in `docs/SPECIFICATION.md` — behaviour, states, edge cases
 3. `docs/DEFERRED.md` — deferred work waiting on missing functionality. Check whether this feature unblocks any row; if it does, do it in the same change or tell the user why not
-4. `src/renderer/src/pages/login/` as the working example of a complete slice (`ui/` + `model/` + barrel + spec)
+4. `src/renderer/src/pages/tasks/` as the working example of a complete slice (`ui/` + `model/` + `api/` + barrel + specs)
 5. The backend contract you will consume: the module barrel in `src/main/<module>/index.ts` and what `src/preload/index.ts` actually exposes on `window.api`
 
 If the channel you need is missing from `window.api`, stop — that is backend work, switch to `feature-fullstack`.
@@ -37,13 +37,13 @@ Ask only what changes the outcome:
 
 ### Step 3. Plan the slice
 
-Before editing, list the concrete files: slice path, `ui/` components, `model/` functions, barrel, specs, and where the slice gets mounted (page, widget or router). Show it to the user.
+Before editing, list the concrete files: slice path, `ui/` components, `api/` calls and hooks, `model/` functions, barrel, specs, and where the slice gets mounted (page, widget or router). Show it to the user.
 
 ### Step 4. Implement
 
 Follow the guide's recipe. Non-negotiables worth re-checking as you go:
 
-- Components never call `window.api` directly — always through a `model/` function
+- Components never call `window.api` directly — always through an `api/` function or one of its TanStack Query hooks; `model/` is for non-UI logic that does not touch IPC
 - IPC results are discriminated unions handled with `if (result.ok)`, never `try/catch` over a throw
 - Zod schemas shared with the backend are imported from `@/main/*`, never re-declared
 - Cross-slice imports go through `index.ts` and only downward through layers
@@ -58,12 +58,11 @@ Add or update `*.spec.tsx` next to the component. Drive them through user-visibl
 
 ### Step 6. SDLC gates
 
-Run the project SDLC (the guide's "SDLC" section):
+Run the project SDLC (`docs/COMMON_CODE_STYLE_GUIDE.md`, section "SDLC") — step 3 (stale references, `docs/DEFERRED.md`), then:
 
-1. Check for stale references — `docs/README.md`, `CLAUDE.md`, ADRs; and if an alias was added, `tsconfig.web.json` and `vitest.config.ts` must be in sync
-2. Update `docs/DEFERRED.md` — delete rows this change resolved, add a row for anything you deliberately left out because the functionality it depends on does not exist yet
-3. `yarn typecheck`
-4. `yarn test`
+1. If an alias was added, `tsconfig.web.json` and `vitest.config.ts` must be in sync
+2. `yarn typecheck`
+3. `yarn test`
 
 `yarn format` runs automatically via the `PostToolUse` hook on every edit, so don't run it by hand unless the hook reported a failure. Fix everything these gates report before reporting completion.
 

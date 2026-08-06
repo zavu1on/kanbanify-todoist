@@ -2,7 +2,7 @@
 
 **Kanbanify Todoist** — desktop-приложение (Electron), UI-клиент для Todoist, который добавляет kanban-статусы для задач через встроенные теги. Приложение опирается только на функционал бесплатного тарифа Todoist.
 
-Текущий этап — разработка: спроектирована архитектура обоих процессов, реализованы экран входа, авторизация по токену и экран **Задачи** (списочное и kanban-отображение, drag-and-drop смены статуса).
+Текущий этап — разработка: спроектирована архитектура обоих процессов, реализованы экран входа, авторизация по токену, экран **Задачи** (списочное и kanban-отображение, drag-and-drop смены статуса) и управление **Проектами** (список в сайдбаре, создание, редактирование, архивация, удаление).
 
 
 ## Файловая структура
@@ -11,10 +11,10 @@
 docs/
 ├── README.md                    — навигационный хаб (этот файл)
 ├── SPECIFICATION.md             — техническое задание: экраны, сценарии, поведение
-├── FRONTEND_CODE_STYLE_GUIDE.md — архитектура (FSD), code style, рецепты и SDLC фронтенда
-├── BACKEND_CODE_STYLE_GUIDE.md  — архитектура (clean architecture), code style, рецепты и SDLC бэкенда
+├── COMMON_CODE_STYLE_GUIDE.md   — общее для обоих процессов: язык кода, форматирование, SDLC
+├── FRONTEND_CODE_STYLE_GUIDE.md — архитектура (FSD), code style и рецепты фронтенда
+├── BACKEND_CODE_STYLE_GUIDE.md  — архитектура (clean architecture), code style и рецепты бэкенда
 ├── DEFERRED.md                  — реестр отложенной работы: что не сделано и чем разблокируется
-├── TECH_DEBT.md                 — реестр технического долга: код, нарушающий принятую конвенцию
 └── decisions/                   — ADR (Architecture Decision Records)
     ├── README.md                — паттерн, процесс и шаблон ADR
     ├── 00-use-adr.md            — использование паттерна ADR
@@ -33,10 +33,10 @@ docs/
 | Что именно нельзя использовать из-за бесплатного тарифа Todoist | [`SPECIFICATION.md`](SPECIFICATION.md), раздел «Ограничения тарифа» |
 | Как устроен вход по токену и где он хранится | [`SPECIFICATION.md`](SPECIFICATION.md), раздел «Авторизация» |
 | Почему было принято то или иное архитектурное решение | [`decisions/`](decisions/) |
-| Архитектуру фронтенда (FSD), code style и SDLC | [`FRONTEND_CODE_STYLE_GUIDE.md`](FRONTEND_CODE_STYLE_GUIDE.md) |
-| Архитектуру бэкенда (clean architecture), code style и SDLC | [`BACKEND_CODE_STYLE_GUIDE.md`](BACKEND_CODE_STYLE_GUIDE.md) |
+| Порядок работы над задачей (SDLC), язык кода, форматирование | [`COMMON_CODE_STYLE_GUIDE.md`](COMMON_CODE_STYLE_GUIDE.md) |
+| Архитектуру фронтенда (FSD) и code style | [`FRONTEND_CODE_STYLE_GUIDE.md`](FRONTEND_CODE_STYLE_GUIDE.md) |
+| Архитектуру бэкенда (clean architecture) и code style | [`BACKEND_CODE_STYLE_GUIDE.md`](BACKEND_CODE_STYLE_GUIDE.md) |
 | Что осознанно отложено и какая фича это разблокирует | [`DEFERRED.md`](DEFERRED.md) |
-| Какой код нарушает принятую конвенцию и как его исправить | [`TECH_DEBT.md`](TECH_DEBT.md) |
 | Пошаговый рецепт, как добавить фичу на бэкенде или фронтенде | Раздел «Рецепт» в [`BACKEND_CODE_STYLE_GUIDE.md`](BACKEND_CODE_STYLE_GUIDE.md) и [`FRONTEND_CODE_STYLE_GUIDE.md`](FRONTEND_CODE_STYLE_GUIDE.md) |
 | AI-инфраструктуру проекта (скиллы, команды, MCP, агенты, хуки) | [`../CLAUDE.md`](../CLAUDE.md) |
 | Правила форматирования этой документации | Раздел ниже в этом файле |
