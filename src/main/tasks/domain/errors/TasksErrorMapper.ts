@@ -1,6 +1,6 @@
 import { InvalidTaskSessionError } from "./InvalidTaskSessionError";
-import { TodoistTasksConnectionError } from "./TodoistTasksConnectionError";
 import type { TasksError } from "./TasksError";
+import { TodoistTasksConnectionError } from "./TodoistTasksConnectionError";
 import { UnknownTasksError } from "./UnknownTasksError";
 
 export type TasksErrorKind = "auth" | "network" | "unknown";

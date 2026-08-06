@@ -6,8 +6,7 @@ import { findContainer } from "./findContainer";
 const buildTask = (
   id: string,
   level: TaskDTO["kanbanStatus"]["level"],
-): TaskDTO =>
-  ({ id, kanbanStatus: { level, hasConflict: false } }) as TaskDTO;
+): TaskDTO => ({ id, kanbanStatus: { level, hasConflict: false } }) as TaskDTO;
 
 describe("findContainer", () => {
   it("resolves a column id directly to itself", () => {

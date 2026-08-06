@@ -5,8 +5,7 @@ import { buildColumns } from "./buildColumns";
 const buildTask = (
   id: string,
   level: TaskDTO["kanbanStatus"]["level"],
-): TaskDTO =>
-  ({ id, kanbanStatus: { level, hasConflict: false } }) as TaskDTO;
+): TaskDTO => ({ id, kanbanStatus: { level, hasConflict: false } }) as TaskDTO;
 
 describe("buildColumns", () => {
   it("creates one entry per kanban status, even when empty", () => {

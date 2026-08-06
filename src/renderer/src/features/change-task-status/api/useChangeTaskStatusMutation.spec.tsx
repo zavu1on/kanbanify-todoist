@@ -34,10 +34,9 @@ describe("useChangeTaskStatusMutation", () => {
     const queryClient = buildQueryClient();
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
-    const { result } = renderHook(
-      () => useChangeTaskStatusMutation(queryKey),
-      { wrapper: buildWrapper(queryClient) },
-    );
+    const { result } = renderHook(() => useChangeTaskStatusMutation(queryKey), {
+      wrapper: buildWrapper(queryClient),
+    });
 
     await act(async () => {
       await result.current.mutateAsync({ taskId: "1", status: "in-progress" });
@@ -54,10 +53,9 @@ describe("useChangeTaskStatusMutation", () => {
     const queryClient = buildQueryClient();
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
-    const { result } = renderHook(
-      () => useChangeTaskStatusMutation(queryKey),
-      { wrapper: buildWrapper(queryClient) },
-    );
+    const { result } = renderHook(() => useChangeTaskStatusMutation(queryKey), {
+      wrapper: buildWrapper(queryClient),
+    });
 
     await act(async () => {
       await result.current.mutateAsync({ taskId: "1", status: "in-progress" });

@@ -11,8 +11,7 @@ vi.mock("@/features/change-task-status", () => ({
 const buildTask = (
   id: string,
   level: TaskDTO["kanbanStatus"]["level"],
-): TaskDTO =>
-  ({ id, kanbanStatus: { level, hasConflict: false } }) as TaskDTO;
+): TaskDTO => ({ id, kanbanStatus: { level, hasConflict: false } }) as TaskDTO;
 
 const queryKey = ["tasks", "list"];
 
@@ -24,9 +23,7 @@ describe("useDragOnDropHandlers", () => {
   it("tracks the dragged task on drag start", () => {
     const todoTask = buildTask("1", "todo");
     const tasks = [todoTask];
-    const { result } = renderHook(() =>
-      useDragOnDropHandlers(tasks, queryKey),
-    );
+    const { result } = renderHook(() => useDragOnDropHandlers(tasks, queryKey));
 
     act(() => {
       result.current.handleDragStart({ active: { id: "1" } } as never);
@@ -38,9 +35,7 @@ describe("useDragOnDropHandlers", () => {
   it("moves the drag preview into the hovered column, but not back into its own origin", () => {
     const todoTask = buildTask("1", "todo");
     const tasks = [todoTask];
-    const { result } = renderHook(() =>
-      useDragOnDropHandlers(tasks, queryKey),
-    );
+    const { result } = renderHook(() => useDragOnDropHandlers(tasks, queryKey));
 
     act(() => {
       result.current.handleDragStart({ active: { id: "1" } } as never);
@@ -70,9 +65,7 @@ describe("useDragOnDropHandlers", () => {
   it("commits a status change mutation when dropped on a different column", () => {
     const todoTask = buildTask("1", "todo");
     const tasks = [todoTask];
-    const { result } = renderHook(() =>
-      useDragOnDropHandlers(tasks, queryKey),
-    );
+    const { result } = renderHook(() => useDragOnDropHandlers(tasks, queryKey));
 
     act(() => {
       result.current.handleDragEnd({
@@ -91,9 +84,7 @@ describe("useDragOnDropHandlers", () => {
   it("does not mutate when dropped back on its own column", () => {
     const todoTask = buildTask("1", "todo");
     const tasks = [todoTask];
-    const { result } = renderHook(() =>
-      useDragOnDropHandlers(tasks, queryKey),
-    );
+    const { result } = renderHook(() => useDragOnDropHandlers(tasks, queryKey));
 
     act(() => {
       result.current.handleDragEnd({
@@ -108,9 +99,7 @@ describe("useDragOnDropHandlers", () => {
   it("does not mutate when dropped outside any droppable", () => {
     const todoTask = buildTask("1", "todo");
     const tasks = [todoTask];
-    const { result } = renderHook(() =>
-      useDragOnDropHandlers(tasks, queryKey),
-    );
+    const { result } = renderHook(() => useDragOnDropHandlers(tasks, queryKey));
 
     act(() => {
       result.current.handleDragEnd({
@@ -125,9 +114,7 @@ describe("useDragOnDropHandlers", () => {
   it("restores the original columns on drag cancel", () => {
     const todoTask = buildTask("1", "todo");
     const tasks = [todoTask];
-    const { result } = renderHook(() =>
-      useDragOnDropHandlers(tasks, queryKey),
-    );
+    const { result } = renderHook(() => useDragOnDropHandlers(tasks, queryKey));
 
     act(() => {
       result.current.handleDragStart({ active: { id: "1" } } as never);
