@@ -1,4 +1,4 @@
-import { Alert, Stack, Title } from "@mantine/core";
+import { Alert, Stack, Text, Title } from "@mantine/core";
 import { useHotkeys } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useQueryClient } from "@tanstack/react-query";
@@ -78,9 +78,16 @@ export const TasksPage: FC = () => {
 
   return (
     <Stack gap="md">
-      <Title order={2}>
-        {projectId ? (project?.name ?? "Project") : "Tasks"}
-      </Title>
+      <Stack gap={4}>
+        <Title order={2}>
+          {projectId ? (project?.name ?? "Project") : "Tasks"}
+        </Title>
+        {projectId && project?.description && (
+          <Text size="sm" c="dimmed">
+            {project.description}
+          </Text>
+        )}
+      </Stack>
 
       <TasksToolbar
         viewMode={viewMode}

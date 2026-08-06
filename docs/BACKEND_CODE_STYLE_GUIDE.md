@@ -16,13 +16,33 @@
 
 | Слой | Содержит |
 |---|---|
-| `domain/` | Сущности (`entities/`), value objects (`value-objects/`), доменные ошибки (`errors/`), IPC-контракты (`contracts/`) |
-| `application/` | Интерфейсы портов (`ports/`), DTO (`dtos/`), use-case'ы (`use-cases/`) |
+| `domain/` | Сущности (`entities/`), value objects (`value-objects/`), доменные ошибки (`errors/`), мапперы (`mappers/`), DTO сущностей для IPC (`dtos/`), IPC-контракты (`contracts/`) |
+| `application/` | Интерфейсы портов (`ports/`), DTO входа/выхода use-case'ов (`dtos/`), use-case'ы (`use-cases/`) |
 | `infrastructure/` | Реализация портов (SDK-клиенты, файловое хранилище, IPC-контроллеры) |
+
+Два разных `dtos/` не дублируют друг друга: `application/dtos/` — вход/выход use-case'а внутри main-процесса (`CreateProjectInput`), никогда не пересекает IPC как есть. `domain/dtos/` — исходящая наружу проекция доменной сущности (`ProjectDTO`), формируется мапером и живёт в `domain/`, потому что «какие поля сущности видны снаружи» — это домену принадлежащее решение, а не деталь конкретного use-case'а.
 
 Правило зависимостей — только внутрь: `infrastructure` знает про `application` и `domain`, `application` знает про `domain`, `domain` не знает ни про что снаружи. `infrastructure` реализует интерфейсы портов из `application/ports`, а не наоборот.
 
 Порт может использоваться use-case'ами другого модуля — так, `ITokenStore`/`SafeStorageTokenStore` живут в `auth` (токен по смыслу принадлежит авторизации), а `tasks`-модуль импортирует порт оттуда напрямую (`auth/application/ports/ITokenStore`), не заводя свою копию. Модуль, которому конкретный порт принадлежит, определяется семантикой (что это за данные и кто ответственен за их жизненный цикл), а не тем, кто первым в нём нуждался.
+
+**Бизнес-логика живёт исключительно в доменных сущностях** (`domain/entities/`) — не в use-case'е и не в гейтвее. Use-case — это оркестрация: он через порт находит/мэпит сущность, вызывает её метод, а затем сохраняет результат через порт. Сама логика (валидация, разрешение конфликтов, инварианты вроде «нельзя архивировать Inbox-проект») описывается только методом сущности и покрывается unit-тестом на эту сущность — не на use-case, который лишь проверяет факт делегирования:
+
+```ts
+// domain/entities/Project.ts
+archive(): void {
+  if (this.isInboxProject) throw new InboxProjectProtectedError("archive");
+}
+
+// application/use-cases/ArchiveProjectUseCase.ts
+async execute(projectId: string): Promise<void> {
+  const project = this.projectMapper.toDomain(await this.projectGateway.getProject(token, projectId), 0);
+  project.archive(); // бизнес-правило и его исключение — только здесь
+  await this.projectGateway.archive(token, projectId);
+}
+```
+
+После применения изменений сущность сохраняется через порт методом `upsert`/`save`. Специфичные методы порта (`delete`, `archive`) допустимы, когда суть действия выходит за рамки классического обновления состояния (удаление/архивация — не PATCH, а отдельный API-вызов) — в этом случае метод сущности (`archive()`/`delete()`) всё равно вызывается первым, чтобы провалидировать инвариант, а специфичный метод порта делает вызов.
 
 Сборка зависимостей (DI) — вручную, без DI-фреймворка. Единственное место, где создаются конкретные реализации и передаются друг другу как зависимости, — `src/main/index.ts`:
 
@@ -88,14 +108,50 @@ export { accessTokenSchema } from "./domain/value-objects/AccessToken";
   }
   ```
   Если у класса в итоге остались бы только статические методы, biome (`noStaticOnlyClass`) не даст оформить это классом — так и должно быть: значит, у него по ошибке нет состояния/инстанс-метода. Для мапперов решение — метод `toDomain`/`toDomainError` делай **инстанс-методом**, а не `static` (даже если он не читает поля), и создавай маппер через `new` там, где он используется (`private readonly taskMapper = new TaskMapper()` в гейтвее). Это не «настоящее» состояние, но проходит правило и держит мапперы в общем ряду с сущностями/VO как классы, а не как исключение из него
-- Value objects — приватный конструктор + статическая фабрика `safeParse` (для валидируемого ввода, возвращает discriminated union `{ success: true; data } | { success: false; error }`, а не бросает исключение) либо `of`/`fromApiValue` (для доверенного ввода, без валидации):
+- **Value objects** — приватный конструктор; поля — либо `readonly`, либо `private` с публичным геттером. VO **не содержит бизнес-логики** — только представляет значение (валидация формата при конструировании — не бизнес-логика, это внутри допустимо). Фабричный метод — одна штука, название свободное и подобранное по смыслу: `safeParse` для валидируемого ввода (возвращает discriminated union `{ success: true; data } | { success: false; error }`, а не бросает исключение), `of`/`fromApiValue`/`fromSafe` для уже доверенного ввода (без валидации, не перепроверяет то, что уже провалидировано раньше):
   ```ts
   export class AccessToken {
     private constructor(readonly value: string) {}
+    static of(value: string): AccessToken {
+      return new AccessToken(value);
+    }
     static safeParse(raw: string): AccessTokenParseSuccess | AccessTokenParseFailure { ... }
   }
   ```
-- Сущности — классы с `readonly`-полями, задаваемыми через конструктор, без сеттеров
+- **Сущности** — приватный конструктор; поля — либо `readonly`, либо `private` с публичным геттером (поле, которое меняет метод сущности, — `private`, наружу отдаётся только через геттер, не сеттер). Вся бизнес-логика, которая меняет состояние сущности (валидация, разрешение конфликтов, применение изменений — см. «Архитектура» выше), — методами сущности. У сущности два статических фабричных метода, а не один конструктор на все случаи:
+  - `create` — для ещё не существующей сущности; валидирует инварианты и бросает доменную ошибку при нарушении
+  - `reconstitute` — для восстановления сущности из уже провалидированных данных (ответ API, персистентное хранилище — то, что даёт маппер/порт); инварианты повторно **не** проверяет, доверяет источнику
+  ```ts
+  export class Project {
+    private constructor(
+      private _id: string,
+      private _name: string,
+      private readonly _isInboxProject: boolean,
+    ) {}
+
+    get id(): string {
+      return this._id;
+    }
+    get name(): string {
+      return this._name;
+    }
+
+    static create(details: { name: string }): Project {
+      return new Project("", Project.parseName(details.name), false);
+    }
+
+    static reconstitute(source: { id: string; name: string; isInboxProject: boolean }): Project {
+      return new Project(source.id, source.name, source.isInboxProject);
+    }
+
+    rename(name: string): void {
+      this._name = Project.parseName(name); // мутация — через приватное поле, наружу только геттер
+    }
+
+    private static parseName(rawName: string): string { ... } // делегирует VO (см. пример `AccessToken` выше)
+  }
+  ```
+  Доменная логика сущностей и VO обязательно покрывается unit-тестами (см. «Тестирование»)
 - Use-case — класс, реализующий `UseCase<TInput, TOutput>` (`src/main/shared/UseCase.ts`), с методом `execute`; зависимости — через конструктор (`private readonly`)
 - DTO — простые `interface` или `class` с конструктором вида `constructor(readonly value: string) {}`  в `application/dtos/`, без методов
 
@@ -143,6 +199,12 @@ export { accessTokenSchema } from "./domain/value-objects/AccessToken";
   ```
   Импорт из `domain/contracts/` в `application/ports/` — только `import type`: он стирается при компиляции, так что `domain` не приобретает рантайм-зависимость от `application`, только разделяет форму типа. Это единственное исключение из правила зависимостей выше, и оно допустимо только для этого типа импорта
 - Zod-схемы полей, общие с фронтендом (например, `accessTokenSchema`), — тоже в `domain/value-objects/` соответствующего модуля и реэкспортируются через barrel; фронтенд не заводит свою копию
+- **Доменная сущность никогда не пересекает IPC как есть — только как DTO.** `ipcMain.handle`/`ipcRenderer.invoke` сериализуют возврат через structured clone, который копирует лишь собственные enumerable-свойства объекта верхнего уровня; геттеры, объявленные на прототипе класса (а у сущности с приватными полями это все публичные поля — см. «Сущности» выше), в клон не попадают, и на фронт бесшумно уходит объект без этих полей — без единой ошибки в рантайме, ошибка только в типах, которые продолжают врать о форме данных. Поэтому:
+  - На каждую сущность, которая пересекает IPC-границу, — плоский тип-DTO в `domain/dtos/<Entity>DTO.ts` (одни данные, без методов и геттеров), повторяющий её публичную форму
+  - Маппер сущности получает второй метод — `toDTO(entity): EntityDTO`, — рядом с `toDomain`, тем же классом: то, какие поля сущности видны наружу, это доменное знание, а не забота контроллера
+  - `domain/contracts/*Result.ts` ссылаются на `EntityDTO`, а не на класс сущности; `<Module>IpcController` вызывает `mapper.toDTO(entity)` перед `return`, никогда не отдаёт `entity` напрямую
+  - Barrel-файл (`<module>/index.ts`) экспортирует `EntityDTO`, а не класс сущности — фронтенду сама сущность (с приватными полями и методами) не нужна и не должна быть достижима
+  - Признак, что сущность безопасно уйдёт через structured clone без DTO, — только у сущностей с исключительно `readonly`-полями и без единого геттера (пример — `Task`, см. `domain/entities/Task.ts`); как только у сущности появляется приватное поле с геттером (например, ради мутирующего метода вроде `updateDetails`), DTO обязателен
 
 
 ## Рецепт: как добавить функциональность
@@ -151,17 +213,19 @@ export { accessTokenSchema } from "./domain/value-objects/AccessToken";
 
 ### Новый модуль (например, `tasks`)
 
-1. `domain/entities/` — сущность (`Task`), `readonly`-поля через конструктор
+1. `domain/entities/` — сущность (`Task`), приватный конструктор, поля `readonly`/`private`+геттер, фабрики `create`/`reconstitute` (см. «Naming и структура кода»)
 2. `domain/value-objects/` — value objects со `safeParse` и Zod-схемы, если поле валидируется и на фронте
 3. `domain/errors/` — базовый абстрактный `TasksError extends Error` + конкретные наследники под каждый различимый снаружи случай отказа
-4. `domain/contracts/` — сериализуемый discriminated union результата (`{ ok: true; ... } | { ok: false; error: { type; message } }`) и union типов ошибок
-5. `application/ports/` — интерфейс порта (`ITaskGateway`) с комментарием о том, какие ошибки он может бросить
-6. `application/dtos/` — DTO входа/выхода use-case'а, если он не совпадает с сущностью
-7. `application/use-cases/` — use-case, реализующий `UseCase<TInput, TOutput>`, зависимости через конструктор
-8. `infrastructure/` — реализация порта (SDK-клиент, хранилище) и `<Module>IpcController` с `register()`
-9. `<module>/index.ts` — barrel: **только** контракты и общие с фронтендом Zod-схемы
-10. `src/main/index.ts` — сборка зависимостей вручную в `registerIpcHandlers` и вызов `register()` у контроллера
-11. `src/preload/index.ts` — новый метод в объекте `api` под ключом модуля, возвращающий `ipcRenderer.invoke("module:action", ...)`, тип результата импортируется из `../main/<module>`
+4. `domain/mappers/` — маппер сущности: `toDomain` (сырой ответ API → сущность) и, если сущность пересекает IPC, `toDTO` (сущность → DTO, см. правило в «IPC-контракт и обработка ошибок»)
+5. `domain/dtos/` — плоский `<Entity>DTO`, если сущность отдаётся наружу через IPC-контракт (пропусти этот шаг, если у сущности только `readonly`-поля — тогда она сама уже безопасна для structured clone)
+6. `domain/contracts/` — сериализуемый discriminated union результата (`{ ok: true; ... } | { ok: false; error: { type; message } }`) и union типов ошибок; поле с сущностью типизируется как `<Entity>DTO`, не как класс сущности
+7. `application/ports/` — интерфейс порта (`ITaskGateway`) с комментарием о том, какие ошибки он может бросить
+8. `application/dtos/` — DTO входа/выхода use-case'а, если он не совпадает с сущностью
+9. `application/use-cases/` — use-case, реализующий `UseCase<TInput, TOutput>`, зависимости через конструктор
+10. `infrastructure/` — реализация порта (SDK-клиент, хранилище) и `<Module>IpcController` с `register()`; контроллер мапит сущность в DTO через `mapper.toDTO(entity)` перед `return`
+11. `<module>/index.ts` — barrel: **только** контракты, DTO и общие с фронтендом Zod-схемы
+12. `src/main/index.ts` — сборка зависимостей вручную в `registerIpcHandlers` и вызов `register()` у контроллера
+13. `src/preload/index.ts` — новый метод в объекте `api` под ключом модуля, возвращающий `ipcRenderer.invoke("module:action", ...)`, тип результата импортируется из `../main/<module>`
 
 Типизация `window.api` (`src/preload/global.d.ts`) выводится из объекта `api` автоматически — руками её править не нужно.
 
@@ -181,7 +245,8 @@ export { accessTokenSchema } from "./domain/value-objects/AccessToken";
 - Импортировать `electron` в `domain/` или `application/` — эти слои не знают о рантайме
 - Заставлять `application` зависеть от `infrastructure`: use-case принимает интерфейс порта, а не конкретный класс
 - Собирать зависимости где-либо, кроме `src/main/index.ts`
-- Реэкспортировать из barrel'а use-case'ы, сущности с методами, реализации портов — наружу уходят только контракты и схемы
+- Реэкспортировать из barrel'а use-case'ы, сущности с методами, реализации портов — наружу уходят только контракты, DTO и схемы
+- Возвращать доменную сущность напрямую в `domain/contracts/*Result.ts` или из `<Module>IpcController` — только через `mapper.toDTO(entity)` (см. «IPC-контракт и обработка ошибок»)
 - Писать бизнес-логику в `src/preload` — там только проброс `ipcRenderer.invoke`
 - Опираться на <u>deadline</u>, <u>duration</u> и прочие Pro-функции Todoist
 

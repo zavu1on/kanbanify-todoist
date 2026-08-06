@@ -1,3 +1,4 @@
+import type { ProjectDTO } from "../dtos/ProjectDTO";
 import { Project } from "../entities/Project";
 
 /** The subset of the Todoist API project shape this app reads — kept structural
@@ -5,8 +6,11 @@ import { Project } from "../entities/Project";
 export type ProjectApiSource = {
   id: string;
   name: string;
+  description: string;
   color: string;
+  parentId: string | null;
   isInboxProject: boolean;
+  isArchived: boolean;
 };
 
 /**
@@ -17,12 +21,22 @@ export type ProjectApiSource = {
  */
 export class ProjectMapper {
   toDomain(source: ProjectApiSource, activeTaskCount: number): Project {
-    return new Project(
-      source.id,
-      source.name,
-      source.color,
-      source.isInboxProject,
-      activeTaskCount,
-    );
+    return Project.reconstitute({ ...source, activeTaskCount });
+  }
+
+  /** `name`/`description`/`color` are prototype getters on `Project`, so
+   * Electron's IPC transport (structured clone) drops them — this is the
+   * plain shape that actually survives the trip to the renderer. */
+  toDTO(project: Project): ProjectDTO {
+    return {
+      id: project.id,
+      name: project.name,
+      description: project.description,
+      color: project.color,
+      parentId: project.parentId,
+      isInboxProject: project.isInboxProject,
+      isArchived: project.isArchived,
+      activeTaskCount: project.activeTaskCount,
+    };
   }
 }

@@ -38,3 +38,15 @@ Object.defineProperty(window, "matchMedia", {
     dispatchEvent: () => false,
   }),
 });
+
+// jsdom does not implement ResizeObserver; Mantine's ScrollArea (used by Select's
+// dropdown) relies on it to size the scroll viewport.
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+Object.defineProperty(window, "ResizeObserver", {
+  writable: true,
+  value: ResizeObserverStub,
+});

@@ -7,7 +7,11 @@ import { LogoutUseCase } from "./auth/application/use-cases/LogoutUseCase";
 import { AuthIpcController } from "./auth/infrastructure/AuthIpcController";
 import { SafeStorageTokenStore } from "./auth/infrastructure/SafeStorageTokenStore";
 import { TodoistUserGateway } from "./auth/infrastructure/TodoistUserGateway";
+import { ArchiveProjectUseCase } from "./projects/application/use-cases/ArchiveProjectUseCase";
+import { CreateProjectUseCase } from "./projects/application/use-cases/CreateProjectUseCase";
+import { DeleteProjectUseCase } from "./projects/application/use-cases/DeleteProjectUseCase";
 import { ListProjectsUseCase } from "./projects/application/use-cases/ListProjectsUseCase";
+import { UpdateProjectUseCase } from "./projects/application/use-cases/UpdateProjectUseCase";
 import { ProjectsIpcController } from "./projects/infrastructure/ProjectsIpcController";
 import { TodoistProjectGateway } from "./projects/infrastructure/TodoistProjectGateway";
 import { CountUnfinishedTasksUseCase } from "./tasks/application/use-cases/CountUnfinishedTasksUseCase";
@@ -55,8 +59,30 @@ const registerIpcHandlers = () => {
     taskGateway,
     tokenStore,
   );
+  const createProjectUseCase = new CreateProjectUseCase(
+    projectGateway,
+    tokenStore,
+  );
+  const updateProjectUseCase = new UpdateProjectUseCase(
+    projectGateway,
+    tokenStore,
+  );
+  const archiveProjectUseCase = new ArchiveProjectUseCase(
+    projectGateway,
+    tokenStore,
+  );
+  const deleteProjectUseCase = new DeleteProjectUseCase(
+    projectGateway,
+    tokenStore,
+  );
 
-  new ProjectsIpcController(listProjectsUseCase).register();
+  new ProjectsIpcController(
+    listProjectsUseCase,
+    createProjectUseCase,
+    updateProjectUseCase,
+    archiveProjectUseCase,
+    deleteProjectUseCase,
+  ).register();
 };
 
 const createWindow = () => {
@@ -76,6 +102,8 @@ const createWindow = () => {
   } else {
     window.loadFile(path.join(__dirname, "../renderer/index.html"));
   }
+
+  window.webContents.openDevTools();
 };
 
 app.whenReady().then(() => {

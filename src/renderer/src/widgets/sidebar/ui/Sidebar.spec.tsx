@@ -136,8 +136,11 @@ describe("Sidebar", () => {
         {
           id: "1",
           name: "Work",
+          description: "",
           color: "blue",
+          parentId: null,
           isInboxProject: false,
+          isArchived: false,
           activeTaskCount: 1,
         },
       ],

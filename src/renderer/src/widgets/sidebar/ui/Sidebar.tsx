@@ -1,15 +1,26 @@
-import { AppShell, Divider, Group, Stack, Text } from "@mantine/core";
+import {
+  ActionIcon,
+  AppShell,
+  Divider,
+  Group,
+  Stack,
+  Text,
+  Tooltip,
+} from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import {
   CalendarDaysIcon,
   LayoutGridIcon,
   ListIcon,
   PlusIcon,
+  RefreshCwIcon,
   SearchIcon,
   SunIcon,
 } from "lucide-animated";
 import type { FC } from "react";
 import { useSession } from "@/app/SessionContext";
 import { useProjectsQuery } from "@/entities/project";
+import { ProjectFormModal } from "@/features/manage-project";
 import logo from "@/shared/ui/kanbanify-logo.svg";
 import { useTaskCountQuery } from "../api/useTaskCountQuery";
 import { type AnimatedIcon, SidebarNavLink } from "./SidebarNavLink";
@@ -30,6 +41,8 @@ const NAV_ITEMS: NavItem[] = [
 
 export const Sidebar: FC = () => {
   const session = useSession();
+  const [isAddProjectOpen, { open: openAddProject, close: closeAddProject }] =
+    useDisclosure(false);
   const taskCountQuery = useTaskCountQuery();
   const taskCount = taskCountQuery.data?.ok
     ? taskCountQuery.data.count
@@ -65,24 +78,52 @@ export const Sidebar: FC = () => {
         {projectsQuery.isPending ? (
           <SidebarProjectsSkeleton />
         ) : (
-          projects.length > 0 && (
-            <>
-              <Divider my="sm" />
-              <Stack gap={2}>
-                {projects.map((project) => (
-                  <SidebarProjectLink
-                    key={project.id}
-                    id={project.id}
-                    name={project.name}
-                    color={project.color}
-                    activeTaskCount={project.activeTaskCount}
-                  />
-                ))}
-              </Stack>
-            </>
-          )
+          <>
+            <Divider my="sm" />
+            <Group justify="space-between" px="md" mb={4}>
+              <Text size="xs" fw={600} c="dimmed" tt="uppercase">
+                Projects
+              </Text>
+              <Group gap={4}>
+                <Tooltip label="Refresh projects">
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size="sm"
+                    loading={projectsQuery.isRefetching}
+                    aria-label="Refresh projects"
+                    onClick={() => projectsQuery.refetch()}
+                  >
+                    <RefreshCwIcon size={14} />
+                  </ActionIcon>
+                </Tooltip>
+                <Tooltip label="Add project">
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size="sm"
+                    aria-label="Add project"
+                    onClick={openAddProject}
+                  >
+                    <PlusIcon size={14} />
+                  </ActionIcon>
+                </Tooltip>
+              </Group>
+            </Group>
+            <Stack gap={2}>
+              {projects.map((project) => (
+                <SidebarProjectLink key={project.id} project={project} />
+              ))}
+            </Stack>
+          </>
         )}
       </AppShell.Section>
+
+      {/* Mounted only while open — a fresh instance each time means the form
+          always starts blank (see `ProjectActionsMenu`'s edit modal). */}
+      {isAddProjectOpen && (
+        <ProjectFormModal opened={isAddProjectOpen} onClose={closeAddProject} />
+      )}
 
       <AppShell.Section p="sm">
         {session.status === "authenticated" && (

@@ -4,7 +4,15 @@ import type {
   LogoutResult,
   SessionCheckResult,
 } from "../main/auth";
-import type { ProjectsListResult } from "../main/projects";
+import type {
+  ArchiveProjectResult,
+  CreateProjectRequest,
+  CreateProjectResult,
+  DeleteProjectResult,
+  ProjectsListResult,
+  UpdateProjectRequest,
+  UpdateProjectResult,
+} from "../main/projects";
 import type {
   KanbanStatusLevel,
   TasksCountResult,
@@ -36,6 +44,17 @@ const api = {
   projects: {
     list: (): Promise<ProjectsListResult> =>
       ipcRenderer.invoke("projects:list"),
+    create: (input: CreateProjectRequest): Promise<CreateProjectResult> =>
+      ipcRenderer.invoke("projects:create", input),
+    update: (
+      id: string,
+      input: UpdateProjectRequest,
+    ): Promise<UpdateProjectResult> =>
+      ipcRenderer.invoke("projects:update", id, input),
+    archive: (id: string): Promise<ArchiveProjectResult> =>
+      ipcRenderer.invoke("projects:archive", id),
+    delete: (id: string): Promise<DeleteProjectResult> =>
+      ipcRenderer.invoke("projects:delete", id),
   },
 };
 

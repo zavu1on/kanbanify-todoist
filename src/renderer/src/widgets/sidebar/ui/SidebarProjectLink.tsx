@@ -1,36 +1,35 @@
-import { Badge, NavLink, Paper } from "@mantine/core";
+import { Badge, Group, NavLink, Paper } from "@mantine/core";
 import type { FC } from "react";
 import { Link, useLocation } from "react-router";
 import { getProjectColorHex } from "@/entities/project";
+import { ProjectActionsMenu } from "@/features/manage-project";
+import type { ProjectDTO } from "@/main/projects";
 
 type SidebarProjectLinkProps = {
-  id: string;
-  name: string;
-  color: string;
-  activeTaskCount: number;
+  project: ProjectDTO;
 };
 
 export const SidebarProjectLink: FC<SidebarProjectLinkProps> = ({
-  id,
-  name,
-  color,
-  activeTaskCount,
+  project,
 }) => {
   const location = useLocation();
-  const to = `/projects/${id}`;
+  const to = `/projects/${project.id}`;
 
   return (
     <NavLink
-      label={name}
+      label={project.name}
       leftSection={
-        <Paper radius="xl" w={8} h={8} bg={getProjectColorHex(color)} />
+        <Paper radius="xl" w={8} h={8} bg={getProjectColorHex(project.color)} />
       }
       rightSection={
-        activeTaskCount > 0 && (
-          <Badge variant="light" circle>
-            {activeTaskCount}
-          </Badge>
-        )
+        <Group gap={4} wrap="nowrap">
+          {project.activeTaskCount > 0 && (
+            <Badge variant="light" circle>
+              {project.activeTaskCount}
+            </Badge>
+          )}
+          <ProjectActionsMenu project={project} />
+        </Group>
       }
       active={location.pathname === to}
       component={Link}

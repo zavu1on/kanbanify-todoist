@@ -1,0 +1,25 @@
+/** Display names for Todoist's `ColorKey` set (see `todoist-sdk` skill's
+ * `reference/labels.md`) — paired with `getProjectColorHex` for the swatch,
+ * used to build the color `Select`'s options. */
+export const PROJECT_COLOR_OPTIONS = [
+  { value: "berry_red", label: "Berry Red" },
+  { value: "red", label: "Red" },
+  { value: "orange", label: "Orange" },
+  { value: "yellow", label: "Yellow" },
+  { value: "olive_green", label: "Olive Green" },
+  { value: "lime_green", label: "Lime Green" },
+  { value: "green", label: "Green" },
+  { value: "mint_green", label: "Mint Green" },
+  { value: "teal", label: "Teal" },
+  { value: "sky_blue", label: "Sky Blue" },
+  { value: "light_blue", label: "Light Blue" },
+  { value: "blue", label: "Blue" },
+  { value: "grape", label: "Grape" },
+  { value: "violet", label: "Violet" },
+  { value: "lavender", label: "Lavender" },
+  { value: "magenta", label: "Magenta" },
+  { value: "salmon", label: "Salmon" },
+  { value: "charcoal", label: "Charcoal" },
+  { value: "grey", label: "Grey" },
+  { value: "taupe", label: "Taupe" },
+] as const;
