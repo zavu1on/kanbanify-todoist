@@ -9,10 +9,11 @@ export type KanbanStatusLevel = (typeof KANBAN_STATUS_LEVELS)[number];
 /**
  * Reserved Todoist label names that carry kanban status, ordered left-to-right
  * exactly as the kanban columns appear (see SPECIFICATION.md "Kanban-статус").
- * The order here IS the tie-break rule: `resolve` below picks the rightmost
- * entry present on a task, so keep this array in column order, not any other.
+ * The order here IS the tie-break rule used by `Task.resolveStatus`: the
+ * rightmost entry present on a task wins, so keep this array in column
+ * order, not any other.
  */
-const RESERVED_LABELS = [
+export const RESERVED_LABELS = [
   "todo",
   "in-progress",
   "completed",
@@ -22,6 +23,8 @@ const RESERVED_LABELS = [
  * Kanban status isn't a native Todoist field (community-tier API has none) — it's
  * encoded as a reserved label on the task. This is the single place that reads or
  * writes that encoding; nothing else should touch reserved label names directly.
+ * Conflict resolution across a task's labels is `Task`'s job (see
+ * `Task.resolveStatus`), not this VO's — this class only represents the value.
  */
 export class KanbanStatus {
   private constructor(
@@ -30,22 +33,8 @@ export class KanbanStatus {
     readonly hasConflict: boolean,
   ) {}
 
-  static of(level: KanbanStatusLevel): KanbanStatus {
-    return new KanbanStatus(level, false);
-  }
-
-  /**
-   * A task can end up with more than one reserved label if labels were edited
-   * outside this app. When that happens the rightmost column wins — `completed`
-   * beats `in-progress` beats `todo`.
-   */
-  static resolve(labels: string[]): KanbanStatus {
-    const present = RESERVED_LABELS.filter((reserved) =>
-      labels.includes(reserved),
-    );
-    if (present.length === 0) return new KanbanStatus("none", false);
-
-    return new KanbanStatus(present[present.length - 1], present.length > 1);
+  static of(level: KanbanStatusLevel, hasConflict = false): KanbanStatus {
+    return new KanbanStatus(level, hasConflict);
   }
 
   /** Labels with every reserved kanban label removed — status is surfaced separately. */

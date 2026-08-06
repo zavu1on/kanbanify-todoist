@@ -13,12 +13,12 @@ const parseToken = (rawValue: string): AccessToken => {
 
 describe("LoginUseCase", () => {
   it("fetches the user and stores the token, without a warning when encrypted", async () => {
-    const user = new AuthenticatedUser(
-      "1",
-      "Jane Doe",
-      "jane@example.com",
-      null,
-    );
+    const user = AuthenticatedUser.reconstitute({
+      id: "1",
+      fullName: "Jane Doe",
+      email: "jane@example.com",
+      avatarUrl: null,
+    });
     const userGateway: ITodoistUserGateway = {
       fetchCurrentUser: vi.fn().mockResolvedValue(user),
     };
@@ -38,12 +38,12 @@ describe("LoginUseCase", () => {
   });
 
   it("surfaces a storage warning when the token could not be encrypted", async () => {
-    const user = new AuthenticatedUser(
-      "1",
-      "Jane Doe",
-      "jane@example.com",
-      null,
-    );
+    const user = AuthenticatedUser.reconstitute({
+      id: "1",
+      fullName: "Jane Doe",
+      email: "jane@example.com",
+      avatarUrl: null,
+    });
     const userGateway: ITodoistUserGateway = {
       fetchCurrentUser: vi.fn().mockResolvedValue(user),
     };

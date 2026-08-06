@@ -15,12 +15,12 @@ import {
 import { PlusIcon } from "lucide-animated";
 import type { FC } from "react";
 import { KANBAN_COLUMN_LABELS } from "@/entities/task";
-import type { KanbanStatusLevel, Task } from "@/main/tasks";
+import type { KanbanStatusLevel, TaskDTO } from "@/main/tasks";
 import { DraggableTaskCard } from "./DraggableTaskCard";
 
 type KanbanColumnProps = {
   status: KanbanStatusLevel;
-  tasks: Task[];
+  tasks: TaskDTO[];
   isDropTarget: boolean;
   hideProject?: boolean;
 };

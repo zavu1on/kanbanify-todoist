@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
-import type { Task } from "@/main/tasks";
+import type { TaskDTO } from "@/main/tasks";
 import { buildColumns } from "./buildColumns";
 import { findContainer } from "./findContainer";
 
-const buildTask = (id: string, level: Task["kanbanStatus"]["level"]): Task =>
-  ({ id, kanbanStatus: { level, hasConflict: false } }) as Task;
+const buildTask = (
+  id: string,
+  level: TaskDTO["kanbanStatus"]["level"],
+): TaskDTO =>
+  ({ id, kanbanStatus: { level, hasConflict: false } }) as TaskDTO;
 
 describe("findContainer", () => {
   it("resolves a column id directly to itself", () => {

@@ -11,9 +11,12 @@ import type { UpdateTaskStatusResult } from "../domain/contracts/UpdateTaskStatu
 import { InvalidTaskSessionError } from "../domain/errors/InvalidTaskSessionError";
 import { TasksError } from "../domain/errors/TasksError";
 import { TodoistTasksConnectionError } from "../domain/errors/TodoistTasksConnectionError";
+import { TaskMapper } from "../domain/mappers/TaskMapper";
 import { KanbanStatus } from "../domain/value-objects/KanbanStatus";
 
 export class TasksIpcController implements IpcController {
+  private readonly taskMapper = new TaskMapper();
+
   constructor(
     private readonly listTasksUseCase: ListTasksUseCase,
     private readonly updateTaskStatusUseCase: UpdateTaskStatusUseCase,
@@ -52,7 +55,11 @@ export class TasksIpcController implements IpcController {
         cursor,
         projectId,
       );
-      return { ok: true, tasks, nextCursor };
+      return {
+        ok: true,
+        tasks: tasks.map((task) => this.taskMapper.toDTO(task)),
+        nextCursor,
+      };
     } catch (error) {
       return {
         ok: false,
@@ -85,7 +92,7 @@ export class TasksIpcController implements IpcController {
       const task = await this.updateTaskStatusUseCase.execute(
         new UpdateTaskStatusInput(taskId, status),
       );
-      return { ok: true, task };
+      return { ok: true, task: this.taskMapper.toDTO(task) };
     } catch (error) {
       return {
         ok: false,

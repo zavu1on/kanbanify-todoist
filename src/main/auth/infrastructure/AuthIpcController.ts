@@ -11,8 +11,11 @@ import { AuthError } from "../domain/errors/AuthError";
 import { InvalidAccessTokenError } from "../domain/errors/InvalidAccessTokenError";
 import { TodoistAuthConnectionError } from "../domain/errors/TodoistAuthConnectionError";
 import { AccessToken } from "../domain/value-objects/AccessToken";
+import { AuthenticatedUserMapper } from "../domain/mappers/AuthenticatedUserMapper";
 
 export class AuthIpcController implements IpcController {
+  private readonly userMapper = new AuthenticatedUserMapper();
+
   constructor(
     private readonly loginUseCase: LoginUseCase,
     private readonly checkSessionUseCase: CheckSessionUseCase,
@@ -48,7 +51,11 @@ export class AuthIpcController implements IpcController {
       const { user, tokenStorageWarning } = await this.loginUseCase.execute(
         parsedToken.data,
       );
-      return { ok: true, user, tokenStorageWarning };
+      return {
+        ok: true,
+        user: this.userMapper.toDTO(user),
+        tokenStorageWarning,
+      };
     } catch (error) {
       return {
         ok: false,
@@ -64,7 +71,10 @@ export class AuthIpcController implements IpcController {
     try {
       const output = await this.checkSessionUseCase.execute();
       return output.status === "authenticated"
-        ? { status: "authenticated", user: output.user }
+        ? {
+            status: "authenticated",
+            user: this.userMapper.toDTO(output.user),
+          }
         : { status: "no_token" };
     } catch (error) {
       return {

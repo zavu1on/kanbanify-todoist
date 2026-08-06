@@ -1,5 +1,5 @@
+import type { TaskDTO } from "../dtos/TaskDTO";
 import { Task } from "../entities/Task";
-import { KanbanStatus } from "../value-objects/KanbanStatus";
 import { Priority } from "../value-objects/Priority";
 import { TaskDue } from "../value-objects/TaskDue";
 
@@ -16,23 +16,40 @@ export type TaskApiSource = {
 
 /**
  * Maps a raw Todoist API task into the domain `Task` — resolving kanban status
- * and priority off the wire format is domain logic, so it lives here rather
- * than in the infrastructure gateway that fetches the raw task.
+ * and priority off the wire format is domain logic, so it lives in `Task`
+ * (see `Task.reconstitute`), not here.
  */
 export class TaskMapper {
   toDomain(source: TaskApiSource): Task {
-    const status = KanbanStatus.resolve(source.labels);
-
-    return new Task(
-      source.id,
-      source.content,
-      source.projectId,
-      Priority.fromApiValue(source.priority),
-      source.due
+    return Task.reconstitute({
+      id: source.id,
+      title: source.content,
+      projectId: source.projectId,
+      priority: Priority.fromApiValue(source.priority),
+      due: source.due
         ? TaskDue.of(source.due.date, source.due.datetime ?? null)
         : null,
-      status,
-      KanbanStatus.stripReserved(source.labels),
-    );
+      rawLabels: source.labels,
+    });
+  }
+
+  /** `kanbanStatus` is a prototype getter on `Task`, so Electron's IPC transport
+   * (structured clone) would drop it — this is the plain shape that actually
+   * survives the trip to the renderer. */
+  toDTO(task: Task): TaskDTO {
+    return {
+      id: task.id,
+      title: task.title,
+      projectId: task.projectId,
+      priority: task.priority.level,
+      due: task.due
+        ? { date: task.due.date, datetime: task.due.datetime }
+        : null,
+      kanbanStatus: {
+        level: task.kanbanStatus.level,
+        hasConflict: task.kanbanStatus.hasConflict,
+      },
+      labels: task.labels,
+    };
   }
 }

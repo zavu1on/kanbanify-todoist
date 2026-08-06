@@ -2,7 +2,7 @@ import { Badge, Card, Group, Paper, Stack, Text, Tooltip } from "@mantine/core";
 import { BadgeAlertIcon, ClockIcon } from "lucide-animated";
 import type { FC } from "react";
 import { useProjectsQuery } from "@/entities/project";
-import type { Task } from "@/main/tasks";
+import type { TaskDTO } from "@/main/tasks";
 import { getDueDisplay } from "../lib/dueDate";
 import {
   KANBAN_COLUMN_LABELS,
@@ -11,7 +11,7 @@ import {
 import { PRIORITY_MARKER_COLORS } from "../lib/priority";
 
 type TaskCardProps = {
-  task: Task;
+  task: TaskDTO;
   // The kanban board already conveys status via the column — pass this to
   // drop the redundant status badge there.
   hideKanbanStatus?: boolean;
@@ -26,9 +26,9 @@ export const TaskCard: FC<TaskCardProps> = ({
   hideProject,
 }) => {
   const due = task.due ? getDueDisplay(task.due) : null;
-  const priorityColor = PRIORITY_MARKER_COLORS[task.priority.level];
-  const showKanbanStatus =
-    !hideKanbanStatus && task.kanbanStatus.level !== "none";
+  const priorityColor = PRIORITY_MARKER_COLORS[task.priority];
+  const kanbanStatusLevel = task.kanbanStatus.level;
+  const showKanbanStatus = !hideKanbanStatus && kanbanStatusLevel !== "none";
 
   const projectsQuery = useProjectsQuery();
   const project = projectsQuery.data?.ok
@@ -42,7 +42,7 @@ export const TaskCard: FC<TaskCardProps> = ({
       <Stack gap={6}>
         <Group gap={6} wrap="nowrap" align="flex-start">
           {priorityColor && (
-            <Tooltip label={task.priority.level.toUpperCase()}>
+            <Tooltip label={task.priority.toUpperCase()}>
               <Paper radius="xl" w={8} h={8} mt={6} bg={priorityColor} />
             </Tooltip>
           )}
@@ -76,7 +76,7 @@ export const TaskCard: FC<TaskCardProps> = ({
               <Badge
                 size="sm"
                 variant="light"
-                color={KANBAN_STATUS_COLORS[task.kanbanStatus.level]}
+                color={KANBAN_STATUS_COLORS[kanbanStatusLevel]}
                 rightSection={
                   task.kanbanStatus.hasConflict && (
                     <Tooltip label="Multiple kanban labels on this task — showing the rightmost column">
@@ -85,7 +85,7 @@ export const TaskCard: FC<TaskCardProps> = ({
                   )
                 }
               >
-                {KANBAN_COLUMN_LABELS[task.kanbanStatus.level]}
+                {KANBAN_COLUMN_LABELS[kanbanStatusLevel]}
               </Badge>
             )}
 

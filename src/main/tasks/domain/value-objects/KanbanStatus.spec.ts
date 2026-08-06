@@ -1,26 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { KanbanStatus } from "./KanbanStatus";
 
-describe("KanbanStatus.resolve", () => {
-  it("returns none without conflict when no reserved label is present", () => {
-    const status = KanbanStatus.resolve(["errand"]);
-    expect(status.level).toBe("none");
-    expect(status.hasConflict).toBe(false);
-  });
-
-  it("returns the single reserved label as status", () => {
-    const status = KanbanStatus.resolve(["errand", "in-progress"]);
-    expect(status.level).toBe("in-progress");
-    expect(status.hasConflict).toBe(false);
-  });
-
-  it("picks the rightmost column and flags a conflict when several reserved labels are present", () => {
-    const status = KanbanStatus.resolve(["todo", "completed", "in-progress"]);
-    expect(status.level).toBe("completed");
-    expect(status.hasConflict).toBe(true);
-  });
-});
-
 describe("KanbanStatus.stripReserved", () => {
   it("removes every reserved label but keeps ordinary ones", () => {
     expect(KanbanStatus.stripReserved(["errand", "todo", "urgent"])).toEqual([

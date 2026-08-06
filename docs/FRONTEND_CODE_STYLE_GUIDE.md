@@ -138,7 +138,7 @@ export { LoginPage } from "./ui/LoginPage";
 - Результат IPC-вызова — discriminated union, а не throw:
   ```ts
   type LoginResult =
-    | { ok: true; user: AuthenticatedUser }
+    | { ok: true; user: AuthenticatedUserDTO }
     | { ok: false; error: AuthError };
   ```
   Обрабатывается через `if (result.ok)`, ошибка показывается через `form.setFieldError` или `notifications.show`

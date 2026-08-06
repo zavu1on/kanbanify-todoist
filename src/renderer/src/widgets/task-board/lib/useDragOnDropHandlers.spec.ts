@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Task } from "@/main/tasks";
+import type { TaskDTO } from "@/main/tasks";
 import { useDragOnDropHandlers } from "./useDragOnDropHandlers";
 
 const mutate = vi.fn();
@@ -8,8 +8,11 @@ vi.mock("@/features/change-task-status", () => ({
   useChangeTaskStatusMutation: () => ({ mutate }),
 }));
 
-const buildTask = (id: string, level: Task["kanbanStatus"]["level"]): Task =>
-  ({ id, kanbanStatus: { level, hasConflict: false } }) as Task;
+const buildTask = (
+  id: string,
+  level: TaskDTO["kanbanStatus"]["level"],
+): TaskDTO =>
+  ({ id, kanbanStatus: { level, hasConflict: false } }) as TaskDTO;
 
 const queryKey = ["tasks", "list"];
 

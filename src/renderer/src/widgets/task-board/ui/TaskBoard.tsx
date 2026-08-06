@@ -3,12 +3,12 @@ import { Group } from "@mantine/core";
 import type { QueryKey } from "@tanstack/react-query";
 import type { FC } from "react";
 import { TaskCard } from "@/entities/task";
-import { KANBAN_STATUS_LEVELS, type Task } from "@/main/tasks";
+import { KANBAN_STATUS_LEVELS, type TaskDTO } from "@/main/tasks";
 import { useDragOnDropHandlers } from "../lib/useDragOnDropHandlers";
 import { KanbanColumn } from "./KanbanColumn";
 
 type TaskBoardProps = {
-  tasks: Task[];
+  tasks: TaskDTO[];
   // The cache entry these tasks came from — status changes write their
   // optimistic update there (see `useChangeTaskStatusMutation`).
   queryKey: QueryKey;

@@ -1,10 +1,10 @@
 import {
   KANBAN_STATUS_LEVELS,
   type KanbanStatusLevel,
-  type Task,
+  type TaskDTO,
 } from "@/main/tasks";
 
-export type ColumnsByStatus = Map<KanbanStatusLevel, Task[]>;
+export type ColumnsByStatus = Map<KanbanStatusLevel, TaskDTO[]>;
 
 /**
  * Groups tasks by kanban status. Without `previous`, column order just
@@ -20,10 +20,10 @@ export type ColumnsByStatus = Map<KanbanStatusLevel, Task[]>;
  * silently discard.
  */
 export const buildColumns = (
-  tasks: Task[],
+  tasks: TaskDTO[],
   previous?: ColumnsByStatus,
 ): ColumnsByStatus => {
-  const columns = new Map<KanbanStatusLevel, Task[]>(
+  const columns = new Map<KanbanStatusLevel, TaskDTO[]>(
     KANBAN_STATUS_LEVELS.map((status) => [status, []]),
   );
 

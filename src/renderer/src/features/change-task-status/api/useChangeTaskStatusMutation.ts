@@ -6,7 +6,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { tasksListQueryKey } from "@/entities/task";
-import type { KanbanStatusLevel, Task, TasksListResult } from "@/main/tasks";
+import type { KanbanStatusLevel, TaskDTO, TasksListResult } from "@/main/tasks";
 import { updateTaskStatus } from "./updateTaskStatus";
 
 type TasksPages = InfiniteData<TasksListResult>;
@@ -47,13 +47,13 @@ export const useChangeTaskStatusMutation = (queryKey: QueryKey) => {
                       task.id === taskId
                         ? {
                             ...task,
-                            // IPC data never carries class methods, so `KanbanStatus`
-                            // is really just `{ level, hasConflict }` on this side —
-                            // this stand-in matches what a real refetch would deliver.
+                            // A real refetch would resolve any conflict server-side —
+                            // an optimistic move always lands with none, since the
+                            // task hasn't actually been touched outside this app.
                             kanbanStatus: {
                               level: status,
                               hasConflict: false,
-                            } as Task["kanbanStatus"],
+                            } as TaskDTO["kanbanStatus"],
                           }
                         : task,
                     ),

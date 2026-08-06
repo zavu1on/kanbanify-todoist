@@ -2,10 +2,10 @@ import { Button, Stack } from "@mantine/core";
 import { PlusIcon } from "lucide-animated";
 import type { FC } from "react";
 import { TaskCard } from "@/entities/task";
-import type { Task } from "@/main/tasks";
+import type { TaskDTO } from "@/main/tasks";
 
 type TaskListViewProps = {
-  tasks: Task[];
+  tasks: TaskDTO[];
   hideProject?: boolean;
 };
 

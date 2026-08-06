@@ -2,6 +2,7 @@
  * Public API of the `auth` module — the only surface other processes
  */
 export type { AuthErrorType } from "./domain/contracts/AuthFailure";
+export type { AuthenticatedUserDTO } from "./domain/dtos/AuthenticatedUserDTO";
 export type { LoginResult } from "./domain/contracts/LoginResult";
 export type { LogoutResult } from "./domain/contracts/LogoutResult";
 export type { SessionCheckResult } from "./domain/contracts/SessionCheckResult";

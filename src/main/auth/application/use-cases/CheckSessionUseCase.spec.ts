@@ -22,12 +22,12 @@ describe("CheckSessionUseCase", () => {
   });
 
   it("returns authenticated with the fetched user when the stored token is valid", async () => {
-    const user = new AuthenticatedUser(
-      "1",
-      "Jane Doe",
-      "jane@example.com",
-      null,
-    );
+    const user = AuthenticatedUser.reconstitute({
+      id: "1",
+      fullName: "Jane Doe",
+      email: "jane@example.com",
+      avatarUrl: null,
+    });
     const userGateway: ITodoistUserGateway = {
       fetchCurrentUser: vi.fn().mockResolvedValue(user),
     };

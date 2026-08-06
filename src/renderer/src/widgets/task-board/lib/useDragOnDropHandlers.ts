@@ -6,15 +6,15 @@ import type {
 import type { QueryKey } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useChangeTaskStatusMutation } from "@/features/change-task-status";
-import type { KanbanStatusLevel, Task } from "@/main/tasks";
+import type { KanbanStatusLevel, TaskDTO } from "@/main/tasks";
 import { buildColumns } from "./buildColumns";
 import { findContainer } from "./findContainer";
 
-export const useDragOnDropHandlers = (tasks: Task[], queryKey: QueryKey) => {
+export const useDragOnDropHandlers = (tasks: TaskDTO[], queryKey: QueryKey) => {
   const changeStatusMutation = useChangeTaskStatusMutation(queryKey);
 
   const [columns, setColumns] = useState(() => buildColumns(tasks));
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [activeTask, setActiveTask] = useState<TaskDTO | null>(null);
   // Tracks the column currently under the pointer so `KanbanColumn` can
   // highlight it — kept separate from `isOver` on each column's own
   // droppable, which would also fire while a card hovers back over the

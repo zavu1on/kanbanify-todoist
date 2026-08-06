@@ -3,22 +3,20 @@ import type { ITokenStore } from "../../../auth/application/ports/ITokenStore";
 import { AccessToken } from "../../../auth/domain/value-objects/AccessToken";
 import { Task } from "../../domain/entities/Task";
 import { InvalidTaskSessionError } from "../../domain/errors/InvalidTaskSessionError";
-import { KanbanStatus } from "../../domain/value-objects/KanbanStatus";
 import { Priority } from "../../domain/value-objects/Priority";
 import { TaskDue } from "../../domain/value-objects/TaskDue";
 import type { ITaskGateway, TaskListPage } from "../ports/ITaskGateway";
 import { ListTasksUseCase } from "./ListTasksUseCase";
 
 const buildTask = (id: string, due: TaskDue | null): Task =>
-  new Task(
+  Task.reconstitute({
     id,
-    `task-${id}`,
-    "project-1",
-    Priority.fromApiValue(4),
+    title: `task-${id}`,
+    projectId: "project-1",
+    priority: Priority.fromApiValue(4),
     due,
-    KanbanStatus.resolve([]),
-    [],
-  );
+    rawLabels: [],
+  });
 
 const buildTokenStore = (accessToken: AccessToken | null): ITokenStore => ({
   save: vi.fn(),
@@ -28,7 +26,8 @@ const buildTokenStore = (accessToken: AccessToken | null): ITokenStore => ({
 
 const buildGateway = (page: TaskListPage): ITaskGateway => ({
   listTasks: vi.fn().mockResolvedValue(page),
-  updateTaskStatus: vi.fn(),
+  getTask: vi.fn(),
+  save: vi.fn(),
 });
 
 describe("ListTasksUseCase", () => {

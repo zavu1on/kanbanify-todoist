@@ -1,11 +1,13 @@
 import dayjs from "dayjs";
-import type { TaskDue } from "@/main/tasks";
+import type { TaskDTO } from "@/main/tasks";
 
 export type DueDisplay = {
   label: string;
   isOverdue: boolean;
   isDueToday: boolean;
 };
+
+type TaskDue = NonNullable<TaskDTO["due"]>;
 
 /**
  * Mirrors the "просрочено" rule from SPECIFICATION.md ("Срок"): a task is

@@ -15,7 +15,7 @@ const buildTokenStore = (accessToken: AccessToken | null): ITokenStore => ({
 const buildGateway = (pages: TaskListPage[]): ITaskGateway => {
   const listTasks = vi.fn();
   for (const page of pages) listTasks.mockResolvedValueOnce(page);
-  return { listTasks, updateTaskStatus: vi.fn() };
+  return { listTasks, getTask: vi.fn(), save: vi.fn() };
 };
 
 describe("CountUnfinishedTasksUseCase", () => {

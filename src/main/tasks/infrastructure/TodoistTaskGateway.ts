@@ -5,8 +5,6 @@ import type {
 } from "../application/ports/ITaskGateway";
 import type { Task } from "../domain/entities/Task";
 import { TaskMapper } from "../domain/mappers/TaskMapper";
-import type { KanbanStatusLevel } from "../domain/value-objects/KanbanStatus";
-import { KanbanStatus } from "../domain/value-objects/KanbanStatus";
 import { TodoistTasksErrorClassifier } from "./TodoistTasksErrorClassifier";
 
 /** Todoist caps list pages at 200 (see SPECIFICATION.md "Задачи"). */
@@ -36,19 +34,20 @@ export class TodoistTaskGateway implements ITaskGateway {
     });
   }
 
-  async updateTaskStatus(
-    accessToken: string,
-    taskId: string,
-    status: KanbanStatusLevel,
-  ): Promise<Task> {
+  async getTask(accessToken: string, taskId: string): Promise<Task> {
     return this.errorClassifier.wrap(async () => {
       const api = new TodoistApi(accessToken);
-      // Reserved labels carry kanban status, so changing it is read-modify-write
-      // on the label list, preserving every other label already on the task.
-      const current = await api.getTask(taskId);
-      const labels = KanbanStatus.of(status).applyTo(current.labels);
-      const updated = await api.updateTask(taskId, { labels });
+      const task = await api.getTask(taskId);
+      return this.taskMapper.toDomain(task);
+    });
+  }
 
+  async save(accessToken: string, task: Task): Promise<Task> {
+    return this.errorClassifier.wrap(async () => {
+      const api = new TodoistApi(accessToken);
+      const updated = await api.updateTask(task.id, {
+        labels: task.rawLabels,
+      });
       return this.taskMapper.toDomain(updated);
     });
   }

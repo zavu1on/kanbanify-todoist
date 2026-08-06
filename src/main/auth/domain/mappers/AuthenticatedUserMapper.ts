@@ -1,3 +1,4 @@
+import type { AuthenticatedUserDTO } from "../dtos/AuthenticatedUserDTO";
 import { AuthenticatedUser } from "../entities/AuthenticatedUser";
 
 /** The subset of the Todoist API user shape this app reads — kept structural
@@ -12,11 +13,20 @@ export type AuthenticatedUserApiSource = {
 /** Maps a raw Todoist API user into the domain `AuthenticatedUser`. */
 export class AuthenticatedUserMapper {
   toDomain(source: AuthenticatedUserApiSource): AuthenticatedUser {
-    return new AuthenticatedUser(
-      source.id,
-      source.fullName,
-      source.email,
-      source.avatarMedium ?? null,
-    );
+    return AuthenticatedUser.reconstitute({
+      id: source.id,
+      fullName: source.fullName,
+      email: source.email,
+      avatarUrl: source.avatarMedium ?? null,
+    });
+  }
+
+  toDTO(user: AuthenticatedUser): AuthenticatedUserDTO {
+    return {
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+    };
   }
 }

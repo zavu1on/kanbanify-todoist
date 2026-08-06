@@ -2,10 +2,10 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { FC } from "react";
 import { TaskCard } from "@/entities/task";
-import type { Task } from "@/main/tasks";
+import type { TaskDTO } from "@/main/tasks";
 
 type DraggableTaskCardProps = {
-  task: Task;
+  task: TaskDTO;
   hideProject?: boolean;
 };
 

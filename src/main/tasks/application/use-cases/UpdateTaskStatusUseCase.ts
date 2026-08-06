@@ -17,10 +17,13 @@ export class UpdateTaskStatusUseCase
     const accessToken = await this.tokenStore.load();
     if (accessToken === null) throw new InvalidTaskSessionError();
 
-    return this.taskGateway.updateTaskStatus(
+    const task = await this.taskGateway.getTask(
       accessToken.value,
       input.taskId,
-      input.status,
     );
+    // The reserved-label read-modify-write is entity logic — see `Task.changeStatus`.
+    task.changeStatus(input.status);
+
+    return this.taskGateway.save(accessToken.value, task);
   }
 }
