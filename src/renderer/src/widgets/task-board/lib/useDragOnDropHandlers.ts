@@ -3,14 +3,15 @@ import type {
   DragOverEvent,
   DragStartEvent,
 } from "@dnd-kit/core";
+import type { QueryKey } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useChangeTaskStatusMutation } from "@/features/change-task-status";
 import type { KanbanStatusLevel, Task } from "@/main/tasks";
 import { buildColumns } from "./buildColumns";
 import { findContainer } from "./findContainer";
 
-export const useDragOnDropHandlers = (tasks: Task[]) => {
-  const changeStatusMutation = useChangeTaskStatusMutation();
+export const useDragOnDropHandlers = (tasks: Task[], queryKey: QueryKey) => {
+  const changeStatusMutation = useChangeTaskStatusMutation(queryKey);
 
   const [columns, setColumns] = useState(() => buildColumns(tasks));
   const [activeTask, setActiveTask] = useState<Task | null>(null);

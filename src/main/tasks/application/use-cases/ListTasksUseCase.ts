@@ -25,11 +25,18 @@ export class ListTasksUseCase implements UseCase<string | null, TaskListPage> {
     private readonly tokenStore: ITokenStore,
   ) {}
 
-  async execute(cursor: string | null): Promise<TaskListPage> {
+  async execute(
+    cursor: string | null,
+    projectId?: string,
+  ): Promise<TaskListPage> {
     const accessToken = await this.tokenStore.load();
     if (accessToken === null) throw new InvalidTaskSessionError();
 
-    const page = await this.taskGateway.listTasks(accessToken.value, cursor);
+    const page = await this.taskGateway.listTasks(
+      accessToken.value,
+      cursor,
+      projectId,
+    );
     return { ...page, tasks: [...page.tasks].sort(byDueDate) };
   }
 }

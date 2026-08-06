@@ -56,8 +56,26 @@ describe("ListTasksUseCase", () => {
     expect(gateway.listTasks).toHaveBeenCalledWith(
       "a-valid-token-value-000000000000",
       "current-cursor",
+      undefined,
     );
     expect(result).toEqual(page);
+  });
+
+  it("forwards an optional projectId to scope the list to one project", async () => {
+    const page: TaskListPage = { tasks: [], nextCursor: null };
+    const gateway = buildGateway(page);
+    const useCase = new ListTasksUseCase(
+      gateway,
+      buildTokenStore(AccessToken.of("a-valid-token-value-000000000000")),
+    );
+
+    await useCase.execute(null, "project-1");
+
+    expect(gateway.listTasks).toHaveBeenCalledWith(
+      "a-valid-token-value-000000000000",
+      null,
+      "project-1",
+    );
   });
 
   it("sorts tasks by due date — overdue to farthest, undated last", async () => {

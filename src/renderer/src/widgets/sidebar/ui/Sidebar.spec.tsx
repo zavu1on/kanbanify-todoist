@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { SessionProvider } from "@/app/SessionContext";
+import type { ProjectsListResult } from "@/main/projects";
+import type { TasksCountResult } from "@/main/tasks";
 import { Sidebar } from "./Sidebar";
 
 const renderSidebar = () => {
@@ -38,6 +40,9 @@ describe("Sidebar", () => {
         tasks: {
           count: vi.fn(),
         },
+        projects: {
+          list: vi.fn().mockResolvedValue({ ok: true, projects: [] }),
+        },
       },
     });
   });
@@ -47,6 +52,28 @@ describe("Sidebar", () => {
     renderSidebar();
 
     expect(await screen.findByText("7")).toBeInTheDocument();
+  });
+
+  it("shows a loading skeleton for the task count badge until it resolves", async () => {
+    let resolveCount: (value: TasksCountResult) => void = () => {};
+    window.api.tasks.count = vi.fn(
+      () =>
+        new Promise<TasksCountResult>((resolve) => {
+          resolveCount = resolve;
+        }),
+    );
+    renderSidebar();
+
+    expect(
+      screen.getByRole("status", { name: "Loading Tasks count" }),
+    ).toBeInTheDocument();
+
+    resolveCount({ ok: true, count: 7 });
+
+    expect(await screen.findByText("7")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("status", { name: "Loading Tasks count" }),
+    ).not.toBeInTheDocument();
   });
 
   it("does not show a count badge when the count request fails", async () => {
@@ -60,5 +87,79 @@ describe("Sidebar", () => {
       expect(window.api.tasks.count).toHaveBeenCalled();
     });
     expect(screen.queryByText("7")).not.toBeInTheDocument();
+  });
+
+  it("lists projects with their active task count after the divider", async () => {
+    window.api.projects.list = vi.fn().mockResolvedValue({
+      ok: true,
+      projects: [
+        {
+          id: "1",
+          name: "Inbox",
+          color: "grey",
+          isInboxProject: true,
+          activeTaskCount: 0,
+        },
+        {
+          id: "2",
+          name: "Work",
+          color: "blue",
+          isInboxProject: false,
+          activeTaskCount: 4,
+        },
+      ],
+    });
+    renderSidebar();
+
+    expect(await screen.findByText("Work")).toBeInTheDocument();
+    expect(screen.getByText("4")).toBeInTheDocument();
+    expect(screen.getByText("Inbox")).toBeInTheDocument();
+  });
+
+  it("shows a loading skeleton for the projects list until it resolves", async () => {
+    let resolveProjects: (value: ProjectsListResult) => void = () => {};
+    window.api.projects.list = vi.fn(
+      () =>
+        new Promise<ProjectsListResult>((resolve) => {
+          resolveProjects = resolve;
+        }),
+    );
+    renderSidebar();
+
+    expect(
+      screen.getByRole("status", { name: "Loading projects" }),
+    ).toBeInTheDocument();
+
+    resolveProjects({
+      ok: true,
+      projects: [
+        {
+          id: "1",
+          name: "Work",
+          color: "blue",
+          isInboxProject: false,
+          activeTaskCount: 1,
+        },
+      ],
+    });
+
+    expect(await screen.findByText("Work")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("status", { name: "Loading projects" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not show a project list when there are no projects", async () => {
+    window.api.projects.list = vi
+      .fn()
+      .mockResolvedValue({ ok: true, projects: [] });
+    renderSidebar();
+
+    await waitFor(() => {
+      expect(window.api.projects.list).toHaveBeenCalled();
+    });
+    expect(
+      screen.queryByRole("link", { name: /work/i }),
+    ).not.toBeInTheDocument();
   });
 });

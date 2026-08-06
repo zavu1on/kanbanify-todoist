@@ -4,6 +4,7 @@ import type {
   LogoutResult,
   SessionCheckResult,
 } from "../main/auth";
+import type { ProjectsListResult } from "../main/projects";
 import type {
   KanbanStatusLevel,
   TasksCountResult,
@@ -20,14 +21,21 @@ const api = {
     logout: (): Promise<LogoutResult> => ipcRenderer.invoke("auth:logout"),
   },
   tasks: {
-    list: (cursor: string | null): Promise<TasksListResult> =>
-      ipcRenderer.invoke("tasks:list", cursor),
+    list: (
+      cursor: string | null,
+      projectId?: string,
+    ): Promise<TasksListResult> =>
+      ipcRenderer.invoke("tasks:list", cursor, projectId),
     updateStatus: (
       taskId: string,
       status: KanbanStatusLevel,
     ): Promise<UpdateTaskStatusResult> =>
       ipcRenderer.invoke("tasks:updateStatus", taskId, status),
     count: (): Promise<TasksCountResult> => ipcRenderer.invoke("tasks:count"),
+  },
+  projects: {
+    list: (): Promise<ProjectsListResult> =>
+      ipcRenderer.invoke("projects:list"),
   },
 };
 

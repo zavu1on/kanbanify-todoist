@@ -4,7 +4,9 @@ import { notifications } from "@mantine/notifications";
 import { useQueryClient } from "@tanstack/react-query";
 import type { FC } from "react";
 import { useState } from "react";
-import { tasksListQueryKey } from "@/entities/task";
+import { useParams } from "react-router";
+import { useProjectsQuery } from "@/entities/project";
+import { projectTasksListQueryKey, tasksListQueryKey } from "@/entities/task";
 import { TaskBoard } from "@/widgets/task-board";
 import { TaskListView } from "@/widgets/task-list";
 import { useTasksQuery } from "../api/useTasksQuery";
@@ -12,10 +14,23 @@ import { loadViewMode, saveViewMode, type ViewMode } from "../model/viewMode";
 import { TasksSkeleton } from "./TasksSkeleton";
 import { TasksToolbar } from "./TasksToolbar";
 
+/** Renders both the all-tasks "Tasks" screen (`/tasks`) and a project's page
+ * (`/projects/:projectId`) — SPECIFICATION.md "Сайдбар": a project page
+ * "полностью повторяет страницу Задачи", just scoped to one project. */
 export const TasksPage: FC = () => {
+  const { projectId } = useParams<{ projectId?: string }>();
   const [viewMode, setViewMode] = useState<ViewMode>(loadViewMode);
   const queryClient = useQueryClient();
-  const tasksQuery = useTasksQuery();
+  const tasksQuery = useTasksQuery(projectId);
+  const projectsQuery = useProjectsQuery();
+  const project =
+    projectId && projectsQuery.data?.ok
+      ? projectsQuery.data.projects.find((p) => p.id === projectId)
+      : undefined;
+
+  const queryKey = projectId
+    ? projectTasksListQueryKey(projectId)
+    : tasksListQueryKey;
 
   const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode);
@@ -26,7 +41,7 @@ export const TasksPage: FC = () => {
   // resetQueries drops every already-loaded page and starts back at page 1,
   // unlike `refetch()`, which would re-fetch all of them.
   const handleRefetch = () => {
-    queryClient.resetQueries({ queryKey: tasksListQueryKey });
+    queryClient.resetQueries({ queryKey });
   };
 
   useHotkeys([["mod+R", handleRefetch]]);
@@ -63,7 +78,9 @@ export const TasksPage: FC = () => {
 
   return (
     <Stack gap="md">
-      <Title order={2}>Tasks</Title>
+      <Title order={2}>
+        {projectId ? (project?.name ?? "Project") : "Tasks"}
+      </Title>
 
       <TasksToolbar
         viewMode={viewMode}
@@ -82,9 +99,13 @@ export const TasksPage: FC = () => {
           {initialLoadError.message}
         </Alert>
       ) : viewMode === "list" ? (
-        <TaskListView tasks={tasks} />
+        <TaskListView tasks={tasks} hideProject={!!projectId} />
       ) : (
-        <TaskBoard tasks={tasks} />
+        <TaskBoard
+          tasks={tasks}
+          queryKey={queryKey}
+          hideProject={!!projectId}
+        />
       )}
     </Stack>
   );

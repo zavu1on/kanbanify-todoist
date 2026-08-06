@@ -23,8 +23,11 @@ export class TasksIpcController implements IpcController {
   register(): void {
     ipcMain.handle(
       "tasks:list",
-      (_event, cursor: unknown): Promise<TasksListResult> =>
-        this.list(typeof cursor === "string" ? cursor : null),
+      (_event, cursor: unknown, projectId: unknown): Promise<TasksListResult> =>
+        this.list(
+          typeof cursor === "string" ? cursor : null,
+          typeof projectId === "string" ? projectId : undefined,
+        ),
     );
     ipcMain.handle(
       "tasks:updateStatus",
@@ -40,9 +43,15 @@ export class TasksIpcController implements IpcController {
     );
   }
 
-  private async list(cursor: string | null): Promise<TasksListResult> {
+  private async list(
+    cursor: string | null,
+    projectId?: string,
+  ): Promise<TasksListResult> {
     try {
-      const { tasks, nextCursor } = await this.listTasksUseCase.execute(cursor);
+      const { tasks, nextCursor } = await this.listTasksUseCase.execute(
+        cursor,
+        projectId,
+      );
       return { ok: true, tasks, nextCursor };
     } catch (error) {
       return {

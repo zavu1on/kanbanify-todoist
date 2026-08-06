@@ -1,6 +1,7 @@
 import { Badge, Card, Group, Paper, Stack, Text, Tooltip } from "@mantine/core";
 import { BadgeAlertIcon, ClockIcon } from "lucide-animated";
 import type { FC } from "react";
+import { useProjectsQuery } from "@/entities/project";
 import type { Task } from "@/main/tasks";
 import { getDueDisplay } from "../lib/dueDate";
 import {
@@ -14,13 +15,27 @@ type TaskCardProps = {
   // The kanban board already conveys status via the column — pass this to
   // drop the redundant status badge there.
   hideKanbanStatus?: boolean;
+  // Every card on a project's page belongs to that same project — pass this
+  // there to drop the redundant project chip.
+  hideProject?: boolean;
 };
 
-export const TaskCard: FC<TaskCardProps> = ({ task, hideKanbanStatus }) => {
+export const TaskCard: FC<TaskCardProps> = ({
+  task,
+  hideKanbanStatus,
+  hideProject,
+}) => {
   const due = task.due ? getDueDisplay(task.due) : null;
   const priorityColor = PRIORITY_MARKER_COLORS[task.priority.level];
   const showKanbanStatus =
     !hideKanbanStatus && task.kanbanStatus.level !== "none";
+
+  const projectsQuery = useProjectsQuery();
+  const project = projectsQuery.data?.ok
+    ? projectsQuery.data.projects.find((p) => p.id === task.projectId)
+    : undefined;
+  // Cards inside Inbox never show a project chip (SPECIFICATION.md "Карточка задачи").
+  const showProject = !hideProject && project && !project.isInboxProject;
 
   return (
     <Card withBorder radius="md" p="sm">
@@ -36,7 +51,7 @@ export const TaskCard: FC<TaskCardProps> = ({ task, hideKanbanStatus }) => {
           </Text>
         </Group>
 
-        {(due || showKanbanStatus || task.labels.length > 0) && (
+        {(due || showKanbanStatus || showProject || task.labels.length > 0) && (
           <Group gap={6}>
             {due && (
               <Badge
@@ -71,6 +86,12 @@ export const TaskCard: FC<TaskCardProps> = ({ task, hideKanbanStatus }) => {
                 }
               >
                 {KANBAN_COLUMN_LABELS[task.kanbanStatus.level]}
+              </Badge>
+            )}
+
+            {showProject && (
+              <Badge size="sm" variant="dot" color="gray">
+                #{project.name}
               </Badge>
             )}
 

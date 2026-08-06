@@ -19,12 +19,14 @@ export class TodoistTaskGateway implements ITaskGateway {
   async listTasks(
     accessToken: string,
     cursor: string | null,
+    projectId?: string,
   ): Promise<TaskListPage> {
     return this.errorClassifier.wrap(async () => {
       const api = new TodoistApi(accessToken);
       const { results, nextCursor } = await api.getTasks({
         cursor,
         limit: PAGE_SIZE,
+        projectId,
       });
 
       return {

@@ -1,4 +1,4 @@
-import { Badge, NavLink } from "@mantine/core";
+import { Badge, NavLink, Skeleton } from "@mantine/core";
 import {
   type ComponentType,
   type FC,
@@ -26,6 +26,7 @@ type SidebarNavLinkProps = {
   icon: AnimatedIcon;
   to: string;
   badge?: number;
+  isBadgeLoading?: boolean;
 };
 
 export const SidebarNavLink: FC<SidebarNavLinkProps> = ({
@@ -33,6 +34,7 @@ export const SidebarNavLink: FC<SidebarNavLinkProps> = ({
   icon: Icon,
   to,
   badge,
+  isBadgeLoading,
 }) => {
   const iconRef = useRef<AnimatedIconHandle>(null);
   const location = useLocation();
@@ -42,7 +44,15 @@ export const SidebarNavLink: FC<SidebarNavLinkProps> = ({
       label={label}
       leftSection={<Icon ref={iconRef} size={18} animateOnHover={false} />}
       rightSection={
-        badge === undefined ? undefined : (
+        isBadgeLoading ? (
+          <Skeleton
+            height={20}
+            width={20}
+            circle
+            role="status"
+            aria-label={`Loading ${label} count`}
+          />
+        ) : badge === undefined ? undefined : (
           <Badge variant="light" circle>
             {badge}
           </Badge>

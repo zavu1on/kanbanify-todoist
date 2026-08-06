@@ -1,5 +1,6 @@
 import { closestCorners, DndContext, DragOverlay } from "@dnd-kit/core";
 import { Group } from "@mantine/core";
+import type { QueryKey } from "@tanstack/react-query";
 import type { FC } from "react";
 import { TaskCard } from "@/entities/task";
 import { KANBAN_STATUS_LEVELS, type Task } from "@/main/tasks";
@@ -8,9 +9,17 @@ import { KanbanColumn } from "./KanbanColumn";
 
 type TaskBoardProps = {
   tasks: Task[];
+  // The cache entry these tasks came from — status changes write their
+  // optimistic update there (see `useChangeTaskStatusMutation`).
+  queryKey: QueryKey;
+  hideProject?: boolean;
 };
 
-export const TaskBoard: FC<TaskBoardProps> = ({ tasks }) => {
+export const TaskBoard: FC<TaskBoardProps> = ({
+  tasks,
+  queryKey,
+  hideProject,
+}) => {
   const {
     columns,
     activeTask,
@@ -19,7 +28,7 @@ export const TaskBoard: FC<TaskBoardProps> = ({ tasks }) => {
     handleDragOver,
     handleDragEnd,
     handleDragCancel,
-  } = useDragOnDropHandlers(tasks);
+  } = useDragOnDropHandlers(tasks, queryKey);
 
   return (
     <DndContext
@@ -41,12 +50,19 @@ export const TaskBoard: FC<TaskBoardProps> = ({ tasks }) => {
             status={status}
             tasks={columns.get(status) ?? []}
             isDropTarget={dropTargetStatus === status}
+            hideProject={hideProject}
           />
         ))}
       </Group>
 
       <DragOverlay>
-        {activeTask && <TaskCard task={activeTask} hideKanbanStatus />}
+        {activeTask && (
+          <TaskCard
+            task={activeTask}
+            hideKanbanStatus
+            hideProject={hideProject}
+          />
+        )}
       </DragOverlay>
     </DndContext>
   );

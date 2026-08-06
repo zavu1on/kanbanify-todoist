@@ -22,12 +22,14 @@ type KanbanColumnProps = {
   status: KanbanStatusLevel;
   tasks: Task[];
   isDropTarget: boolean;
+  hideProject?: boolean;
 };
 
 export const KanbanColumn: FC<KanbanColumnProps> = ({
   status,
   tasks,
   isDropTarget,
+  hideProject,
 }) => {
   const { setNodeRef } = useDroppable({ id: status });
 
@@ -72,7 +74,11 @@ export const KanbanColumn: FC<KanbanColumnProps> = ({
             strategy={verticalListSortingStrategy}
           >
             {tasks.map((task) => (
-              <DraggableTaskCard key={task.id} task={task} />
+              <DraggableTaskCard
+                key={task.id}
+                task={task}
+                hideProject={hideProject}
+              />
             ))}
           </SortableContext>
         </Stack>

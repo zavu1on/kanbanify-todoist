@@ -6,13 +6,14 @@ import type { Task } from "@/main/tasks";
 
 type TaskListViewProps = {
   tasks: Task[];
+  hideProject?: boolean;
 };
 
-export const TaskListView: FC<TaskListViewProps> = ({ tasks }) => {
+export const TaskListView: FC<TaskListViewProps> = ({ tasks, hideProject }) => {
   return (
     <Stack gap="xs">
       {tasks.map((task) => (
-        <TaskCard key={task.id} task={task} />
+        <TaskCard key={task.id} task={task} hideProject={hideProject} />
       ))}
 
       {/* Rendering only — task creation ships as a separate feature. */}

@@ -1,4 +1,4 @@
-import { AppShell, Group, Stack, Text } from "@mantine/core";
+import { AppShell, Divider, Group, Stack, Text } from "@mantine/core";
 import {
   CalendarDaysIcon,
   LayoutGridIcon,
@@ -9,9 +9,12 @@ import {
 } from "lucide-animated";
 import type { FC } from "react";
 import { useSession } from "@/app/SessionContext";
+import { useProjectsQuery } from "@/entities/project";
 import logo from "@/shared/ui/kanbanify-logo.svg";
 import { useTaskCountQuery } from "../api/useTaskCountQuery";
 import { type AnimatedIcon, SidebarNavLink } from "./SidebarNavLink";
+import { SidebarProjectLink } from "./SidebarProjectLink";
+import { SidebarProjectsSkeleton } from "./SidebarProjectsSkeleton";
 import { UserCard } from "./UserCard";
 
 type NavItem = { label: string; icon: AnimatedIcon; to: string };
@@ -31,6 +34,8 @@ export const Sidebar: FC = () => {
   const taskCount = taskCountQuery.data?.ok
     ? taskCountQuery.data.count
     : undefined;
+  const projectsQuery = useProjectsQuery();
+  const projects = projectsQuery.data?.ok ? projectsQuery.data.projects : [];
 
   return (
     <AppShell.Navbar>
@@ -43,16 +48,40 @@ export const Sidebar: FC = () => {
         </Group>
       </AppShell.Section>
 
-      <AppShell.Section grow py="sm">
+      <AppShell.Section grow py="sm" style={{ overflowY: "auto" }}>
         <Stack gap={2}>
           {NAV_ITEMS.map((item) => (
             <SidebarNavLink
               key={item.label}
               {...item}
               badge={item.label === "Tasks" ? taskCount : undefined}
+              isBadgeLoading={
+                item.label === "Tasks" && taskCountQuery.isPending
+              }
             />
           ))}
         </Stack>
+
+        {projectsQuery.isPending ? (
+          <SidebarProjectsSkeleton />
+        ) : (
+          projects.length > 0 && (
+            <>
+              <Divider my="sm" />
+              <Stack gap={2}>
+                {projects.map((project) => (
+                  <SidebarProjectLink
+                    key={project.id}
+                    id={project.id}
+                    name={project.name}
+                    color={project.color}
+                    activeTaskCount={project.activeTaskCount}
+                  />
+                ))}
+              </Stack>
+            </>
+          )
+        )}
       </AppShell.Section>
 
       <AppShell.Section p="sm">

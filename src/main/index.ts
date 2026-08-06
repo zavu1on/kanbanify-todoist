@@ -7,6 +7,9 @@ import { LogoutUseCase } from "./auth/application/use-cases/LogoutUseCase";
 import { AuthIpcController } from "./auth/infrastructure/AuthIpcController";
 import { SafeStorageTokenStore } from "./auth/infrastructure/SafeStorageTokenStore";
 import { TodoistUserGateway } from "./auth/infrastructure/TodoistUserGateway";
+import { ListProjectsUseCase } from "./projects/application/use-cases/ListProjectsUseCase";
+import { ProjectsIpcController } from "./projects/infrastructure/ProjectsIpcController";
+import { TodoistProjectGateway } from "./projects/infrastructure/TodoistProjectGateway";
 import { CountUnfinishedTasksUseCase } from "./tasks/application/use-cases/CountUnfinishedTasksUseCase";
 import { ListTasksUseCase } from "./tasks/application/use-cases/ListTasksUseCase";
 import { UpdateTaskStatusUseCase } from "./tasks/application/use-cases/UpdateTaskStatusUseCase";
@@ -45,6 +48,15 @@ const registerIpcHandlers = () => {
     updateTaskStatusUseCase,
     countUnfinishedTasksUseCase,
   ).register();
+
+  const projectGateway = new TodoistProjectGateway();
+  const listProjectsUseCase = new ListProjectsUseCase(
+    projectGateway,
+    taskGateway,
+    tokenStore,
+  );
+
+  new ProjectsIpcController(listProjectsUseCase).register();
 };
 
 const createWindow = () => {

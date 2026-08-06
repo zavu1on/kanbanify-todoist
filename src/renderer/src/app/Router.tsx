@@ -14,6 +14,7 @@ const appRouter = createHashRouter([
     children: [
       { index: true, element: <DashboardPage /> },
       { path: "tasks", element: <TasksPage /> },
+      { path: "projects/:projectId", element: <TasksPage /> },
     ],
   },
 ]);

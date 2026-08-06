@@ -6,9 +6,13 @@ import type { Task } from "@/main/tasks";
 
 type DraggableTaskCardProps = {
   task: Task;
+  hideProject?: boolean;
 };
 
-export const DraggableTaskCard: FC<DraggableTaskCardProps> = ({ task }) => {
+export const DraggableTaskCard: FC<DraggableTaskCardProps> = ({
+  task,
+  hideProject,
+}) => {
   const {
     attributes,
     listeners,
@@ -34,7 +38,7 @@ export const DraggableTaskCard: FC<DraggableTaskCardProps> = ({ task }) => {
         cursor: "grab",
       }}
     >
-      <TaskCard task={task} hideKanbanStatus />
+      <TaskCard task={task} hideKanbanStatus hideProject={hideProject} />
     </div>
   );
 };
