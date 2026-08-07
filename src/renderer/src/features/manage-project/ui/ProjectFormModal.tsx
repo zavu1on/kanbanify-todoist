@@ -5,12 +5,13 @@ import {
   Paper,
   Select,
   Stack,
+  Text,
   Textarea,
   TextInput,
 } from "@mantine/core";
 import { schemaResolver, useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
-import type { FC } from "react";
+import { type FC, useState } from "react";
 import {
   getProjectColorHex,
   PROJECT_COLOR_OPTIONS,
@@ -19,7 +20,6 @@ import {
 import type { ProjectDTO } from "@/main/projects";
 import { useCreateProjectMutation } from "../api/useCreateProjectMutation";
 import { useUpdateProjectMutation } from "../api/useUpdateProjectMutation";
-import { getProjectErrorMessage } from "../model/getProjectErrorMessage";
 import { NO_PARENT_VALUE, projectFormSchema } from "../model/projectFormSchema";
 
 type ProjectFormModalProps = {
@@ -40,6 +40,9 @@ export const ProjectFormModal: FC<ProjectFormModalProps> = ({
   project,
 }) => {
   const isEditMode = project !== undefined;
+  // Mounted fresh on every open (see `ProjectActionsMenu`), so this always
+  // starts closed — no reset effect needed.
+  const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
   const projectsQuery = useProjectsQuery();
   const projects = projectsQuery.data?.ok ? projectsQuery.data.projects : [];
   const parentProject = project
@@ -48,7 +51,6 @@ export const ProjectFormModal: FC<ProjectFormModalProps> = ({
 
   const createMutation = useCreateProjectMutation();
   const updateMutation = useUpdateProjectMutation();
-  const isPending = createMutation.isPending || updateMutation.isPending;
 
   const form = useForm({
     initialValues: {
@@ -60,60 +62,41 @@ export const ProjectFormModal: FC<ProjectFormModalProps> = ({
     validate: schemaResolver(projectFormSchema, { sync: true }),
   });
 
+  const requestClose = () => {
+    if (form.isDirty()) {
+      setIsDiscardConfirmOpen(true);
+      return;
+    }
+    onClose();
+  };
+
+  // Optimistic: fire the mutation and close right away instead of waiting
+  // for the IPC round trip — the caller (`useCreateProjectMutation` /
+  // `useUpdateProjectMutation`) writes the change into the cache immediately,
+  // rolls it back, and shows an error notification if the call fails. The
+  // form is gone by then, so success/failure feedback lives entirely in the
+  // mutation hooks, not here.
   const handleSubmit = form.onSubmit(
-    async (values) => {
-      try {
-        const result = isEditMode
-          ? await updateMutation.mutateAsync({
-              id: project.id,
-              input: {
-                name: values.name.trim(),
-                description: values.description.trim(),
-                color: values.color,
-              },
-            })
-          : await createMutation.mutateAsync({
-              name: values.name.trim(),
-              description: values.description.trim(),
-              color: values.color,
-              parentId:
-                values.parentId === NO_PARENT_VALUE ? null : values.parentId,
-            });
-
-        if (!result.ok) {
-          if (result.error.type === "invalid_name") {
-            form.setFieldError(
-              "name",
-              getProjectErrorMessage(result.error.type),
-            );
-            return;
-          }
-          notifications.show({
-            color: "red",
-            title: isEditMode
-              ? "Couldn't save project"
-              : "Couldn't add project",
-            message: getProjectErrorMessage(result.error.type),
-          });
-          return;
-        }
-
-        notifications.show({
-          color: "green",
-          title: isEditMode ? "Project updated" : "Project added",
-          message: `"${result.project.name}" ${isEditMode ? "was updated" : "was added"}.`,
+    (values) => {
+      if (isEditMode) {
+        updateMutation.mutate({
+          id: project.id,
+          input: {
+            name: values.name.trim(),
+            description: values.description.trim(),
+            color: values.color,
+          },
         });
-        onClose();
-      } catch {
-        // A rejected `mutateAsync` (rather than an `{ ok: false }` result) means
-        // the IPC call itself failed unexpectedly — surface it instead of
-        // leaving the user staring at a button that silently did nothing.
-        notifications.show({
-          color: "red",
-          title: isEditMode ? "Couldn't save project" : "Couldn't add project",
-          message: "Something went wrong. Please try again.",
+      } else {
+        createMutation.mutate({
+          name: values.name.trim(),
+          description: values.description.trim(),
+          color: values.color,
+          parentId:
+            values.parentId === NO_PARENT_VALUE ? null : values.parentId,
         });
       }
+      onClose();
     },
     (errors) => {
       // Without this, a validation failure on a field not rendered in this
@@ -141,7 +124,7 @@ export const ProjectFormModal: FC<ProjectFormModalProps> = ({
   return (
     <Modal
       opened={opened}
-      onClose={onClose}
+      onClose={requestClose}
       title={isEditMode ? "Edit project" : "Add project"}
     >
       <form onSubmit={handleSubmit}>
@@ -194,17 +177,17 @@ export const ProjectFormModal: FC<ProjectFormModalProps> = ({
           )}
 
           <Group justify="flex-end">
-            <Button type="button" variant="default" onClick={onClose}>
+            <Button type="button" variant="default" onClick={requestClose}>
               Cancel
             </Button>
             <Button
-              type="submit"
-              loading={isPending}
-              // A click on this button doesn't reach the browser's native
-              // click-to-submit behavior in this environment (verified via
-              // devtools: the click's default action ends up prevented
-              // before it reaches the form), so trigger submission
-              // explicitly instead of relying on it.
+              // `type="button"` (not "submit") — submission goes exclusively
+              // through the explicit `requestSubmit()` below. A `type="submit"`
+              // button here double-fired `handleSubmit` per click in some
+              // environments (native submit + this handler), which used to be
+              // harmless (duplicate `invalidateQueries` calls) but would
+              // double-fire the optimistic mutation above.
+              type="button"
               onClick={(event) => event.currentTarget.form?.requestSubmit()}
             >
               {isEditMode ? "Save" : "Add"}
@@ -212,6 +195,30 @@ export const ProjectFormModal: FC<ProjectFormModalProps> = ({
           </Group>
         </Stack>
       </form>
+
+      <Modal
+        opened={isDiscardConfirmOpen}
+        onClose={() => setIsDiscardConfirmOpen(false)}
+        title="Discard changes?"
+        size="sm"
+      >
+        <Stack gap="md">
+          <Text size="sm">
+            You have unsaved changes. Closing now will discard them.
+          </Text>
+          <Group justify="flex-end">
+            <Button
+              variant="default"
+              onClick={() => setIsDiscardConfirmOpen(false)}
+            >
+              Keep editing
+            </Button>
+            <Button color="red" onClick={onClose}>
+              Discard
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Modal>
   );
 };

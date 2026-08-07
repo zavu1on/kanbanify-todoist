@@ -34,11 +34,6 @@ export const DeleteProjectModal: FC<DeleteProjectModalProps> = ({
       return;
     }
 
-    notifications.show({
-      color: "green",
-      title: "Project deleted",
-      message: `"${project.name}" and all of its tasks were permanently deleted.`,
-    });
     onClose();
   };
 
