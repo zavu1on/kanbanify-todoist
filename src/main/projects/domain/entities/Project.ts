@@ -27,13 +27,13 @@ export type ProjectUpdateDetails = {
 };
 
 export class Project {
-  private _name: string;
+  private _name: ProjectName;
   private _description: string;
   private _color: string;
 
   private constructor(
     readonly id: string,
-    name: string,
+    name: ProjectName,
     description: string,
     color: string,
     readonly parentId: string | null,
@@ -47,7 +47,7 @@ export class Project {
   }
 
   get name(): string {
-    return this._name;
+    return this._name.value;
   }
 
   get description(): string {
@@ -80,7 +80,7 @@ export class Project {
   static reconstitute(source: ProjectReconstituteSource): Project {
     return new Project(
       source.id,
-      source.name,
+      ProjectName.of(source.name),
       source.description,
       source.color,
       source.parentId,
@@ -112,9 +112,9 @@ export class Project {
     if (this.isInboxProject) throw new InboxProjectProtectedError("delete");
   }
 
-  private static parseName(rawName: string): string {
+  private static parseName(rawName: string): ProjectName {
     const result = ProjectName.safeParse(rawName);
     if (!result.success) throw new InvalidProjectNameError(result.error);
-    return result.data.value;
+    return result.data;
   }
 }

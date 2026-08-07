@@ -29,4 +29,10 @@ export class ProjectName {
 
     return { success: true, data: new ProjectName(result.data) };
   }
+
+  /** Trusted constructor for already-valid data (a mapped API response) —
+   * skips validation, unlike `safeParse`. */
+  static of(value: string): ProjectName {
+    return new ProjectName(value);
+  }
 }

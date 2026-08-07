@@ -129,6 +129,8 @@ export { accessTokenSchema } from "./domain/value-objects/AccessToken";
   - `create` — для ещё не существующей сущности; валидирует инварианты и бросает доменную ошибку при нарушении
   - `reconstitute` — для восстановления сущности из уже провалидированных данных (ответ API, персистентное хранилище — то, что даёт маппер/порт); инварианты повторно **не** проверяет, доверяет источнику
 
+  **Если для поля заведён VO, поле сущности хранит именно VO, а не примитив, из которого он собран.** Наружу (геттер, DTO) поле может отдаваться и как примитив (`.value`) — это вопрос формы на границе, а не типа хранения. Но внутри сущности само поле, конструктор и фабричные методы работают с VO: так инвариант, который проверяет VO, нельзя случайно обойти, присвоив полю непровалидированную сырую строку в обход фабрики.
+
   **Аргумент фабричного/мутирующего метода из более чем двух полей — именованный тип, объявленный тут же, в файле сущности** (`export type <Method><Entity>...`), не инлайновый object-literal-тип в сигнатуре. Инлайновый тип на 3+ поля нечитаем в сигнатуре и не переиспользуется тестом, который строит те же данные:
   ```ts
   export type ProjectCreateDetails = { name: string; description: string };
@@ -141,7 +143,7 @@ export { accessTokenSchema } from "./domain/value-objects/AccessToken";
   export class Project {
     private constructor(
       private _id: string,
-      private _name: string,
+      private _name: ProjectName, // VO — не string, хотя source.name/details.name приходят строкой
       private readonly _isInboxProject: boolean,
     ) {}
 
@@ -149,7 +151,7 @@ export { accessTokenSchema } from "./domain/value-objects/AccessToken";
       return this._id;
     }
     get name(): string {
-      return this._name;
+      return this._name.value;
     }
 
     static create(details: ProjectCreateDetails): Project {
@@ -157,14 +159,19 @@ export { accessTokenSchema } from "./domain/value-objects/AccessToken";
     }
 
     static reconstitute(source: ProjectReconstituteSource): Project {
-      return new Project(source.id, source.name, source.isInboxProject);
+      // source.name уже провалидирован раньше — ProjectName.of(), не safeParse()
+      return new Project(source.id, ProjectName.of(source.name), source.isInboxProject);
     }
 
     rename(name: string): void {
       this._name = Project.parseName(name); // мутация — через приватное поле, наружу только геттер
     }
 
-    private static parseName(rawName: string): string { ... } // делегирует VO (см. пример `AccessToken` выше)
+    private static parseName(rawName: string): ProjectName {
+      const result = ProjectName.safeParse(rawName);
+      if (!result.success) throw new InvalidProjectNameError(result.error);
+      return result.data; // делегирует VO (см. пример `AccessToken` выше)
+    }
   }
   ```
   Ровно два поля можно оставить инлайновым типом — граница именно «больше двух», не «больше одного»: пара полей ещё читается на одной строке сигнатуры, третье поле уже нет.
