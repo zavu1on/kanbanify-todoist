@@ -14,6 +14,7 @@ import { ListProjectsUseCase } from "./projects/application/use-cases/ListProjec
 import { UpdateProjectUseCase } from "./projects/application/use-cases/UpdateProjectUseCase";
 import { ProjectsIpcController } from "./projects/infrastructure/ProjectsIpcController";
 import { TodoistProjectGateway } from "./projects/infrastructure/TodoistProjectGateway";
+import { CompleteTaskUseCase } from "./tasks/application/use-cases/CompleteTaskUseCase";
 import { CountUnfinishedTasksUseCase } from "./tasks/application/use-cases/CountUnfinishedTasksUseCase";
 import { ListTasksUseCase } from "./tasks/application/use-cases/ListTasksUseCase";
 import { UpdateTaskStatusUseCase } from "./tasks/application/use-cases/UpdateTaskStatusUseCase";
@@ -46,11 +47,13 @@ const registerIpcHandlers = () => {
     taskGateway,
     tokenStore,
   );
+  const completeTaskUseCase = new CompleteTaskUseCase(taskGateway, tokenStore);
 
   new TasksIpcController(
     listTasksUseCase,
     updateTaskStatusUseCase,
     countUnfinishedTasksUseCase,
+    completeTaskUseCase,
   ).register();
 
   const projectGateway = new TodoistProjectGateway();
@@ -102,8 +105,6 @@ const createWindow = () => {
   } else {
     window.loadFile(path.join(__dirname, "../renderer/index.html"));
   }
-
-  window.webContents.openDevTools();
 };
 
 app.whenReady().then(() => {

@@ -1,14 +1,18 @@
 import { ipcMain } from "electron";
 import type { IpcController } from "../../shared/IpcController";
+import { CompleteTaskInput } from "../application/dtos/CompleteTaskInput";
 import { UpdateTaskStatusInput } from "../application/dtos/UpdateTaskStatusInput";
+import type { CompleteTaskUseCase } from "../application/use-cases/CompleteTaskUseCase";
 import type { CountUnfinishedTasksUseCase } from "../application/use-cases/CountUnfinishedTasksUseCase";
 import type { ListTasksUseCase } from "../application/use-cases/ListTasksUseCase";
 import type { UpdateTaskStatusUseCase } from "../application/use-cases/UpdateTaskStatusUseCase";
+import type { CompleteTaskResult } from "../domain/contracts/CompleteTaskResult";
 import type { TasksCountResult } from "../domain/contracts/TasksCountResult";
 import type { TasksErrorType } from "../domain/contracts/TasksFailure";
 import type { TasksListResult } from "../domain/contracts/TasksListResult";
 import type { UpdateTaskStatusResult } from "../domain/contracts/UpdateTaskStatusResult";
 import { InvalidTaskSessionError } from "../domain/errors/InvalidTaskSessionError";
+import { TaskAlreadyCompletedError } from "../domain/errors/TaskAlreadyCompletedError";
 import { TasksError } from "../domain/errors/TasksError";
 import { TodoistTasksConnectionError } from "../domain/errors/TodoistTasksConnectionError";
 import { TaskMapper } from "../domain/mappers/TaskMapper";
@@ -21,6 +25,7 @@ export class TasksIpcController implements IpcController {
     private readonly listTasksUseCase: ListTasksUseCase,
     private readonly updateTaskStatusUseCase: UpdateTaskStatusUseCase,
     private readonly countUnfinishedTasksUseCase: CountUnfinishedTasksUseCase,
+    private readonly completeTaskUseCase: CompleteTaskUseCase,
   ) {}
 
   register(): void {
@@ -43,6 +48,11 @@ export class TasksIpcController implements IpcController {
     ipcMain.handle(
       "tasks:count",
       (): Promise<TasksCountResult> => this.count(),
+    );
+    ipcMain.handle(
+      "tasks:complete",
+      (_event, taskId: unknown): Promise<CompleteTaskResult> =>
+        this.complete(taskId),
     );
   }
 
@@ -104,6 +114,28 @@ export class TasksIpcController implements IpcController {
     }
   }
 
+  private async complete(taskId: unknown): Promise<CompleteTaskResult> {
+    if (typeof taskId !== "string") {
+      return {
+        ok: false,
+        error: { type: "unknown", message: "Invalid task complete request" },
+      };
+    }
+
+    try {
+      await this.completeTaskUseCase.execute(new CompleteTaskInput(taskId));
+      return { ok: true };
+    } catch (error) {
+      return {
+        ok: false,
+        error: {
+          type: this.getErrorType(error),
+          message: this.getMessageFromError(error),
+        },
+      };
+    }
+  }
+
   private async count(): Promise<TasksCountResult> {
     try {
       const count = await this.countUnfinishedTasksUseCase.execute();
@@ -122,6 +154,7 @@ export class TasksIpcController implements IpcController {
   private getErrorType(error: unknown): TasksErrorType {
     if (error instanceof InvalidTaskSessionError) return "auth_error";
     if (error instanceof TodoistTasksConnectionError) return "network_error";
+    if (error instanceof TaskAlreadyCompletedError) return "already_completed";
     return "unknown";
   }
 

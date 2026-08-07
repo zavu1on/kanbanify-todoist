@@ -23,6 +23,7 @@ type KanbanColumnProps = {
   tasks: TaskDTO[];
   isDropTarget: boolean;
   hideProject?: boolean;
+  onComplete: (taskId: string) => void;
 };
 
 export const KanbanColumn: FC<KanbanColumnProps> = ({
@@ -30,6 +31,7 @@ export const KanbanColumn: FC<KanbanColumnProps> = ({
   tasks,
   isDropTarget,
   hideProject,
+  onComplete,
 }) => {
   const { setNodeRef } = useDroppable({ id: status });
 
@@ -78,6 +80,7 @@ export const KanbanColumn: FC<KanbanColumnProps> = ({
                 key={task.id}
                 task={task}
                 hideProject={hideProject}
+                onComplete={onComplete}
               />
             ))}
           </SortableContext>

@@ -2,6 +2,7 @@
  * Public API of the `tasks` module — the only surface other processes see.
  */
 
+export type { CompleteTaskResult } from "./domain/contracts/CompleteTaskResult";
 export type { TasksCountResult } from "./domain/contracts/TasksCountResult";
 export type { TasksErrorType } from "./domain/contracts/TasksFailure";
 export type { TasksListResult } from "./domain/contracts/TasksListResult";

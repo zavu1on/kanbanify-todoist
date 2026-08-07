@@ -106,7 +106,11 @@ export const TasksPage: FC = () => {
           {initialLoadError.message}
         </Alert>
       ) : viewMode === "list" ? (
-        <TaskListView tasks={tasks} hideProject={!!projectId} />
+        <TaskListView
+          tasks={tasks}
+          queryKey={queryKey}
+          hideProject={!!projectId}
+        />
       ) : (
         <TaskBoard
           tasks={tasks}

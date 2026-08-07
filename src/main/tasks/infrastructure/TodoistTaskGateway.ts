@@ -51,4 +51,11 @@ export class TodoistTaskGateway implements ITaskGateway {
       return this.taskMapper.toDomain(updated);
     });
   }
+
+  async close(accessToken: string, taskId: string): Promise<void> {
+    return this.errorClassifier.wrap(async () => {
+      const api = new TodoistApi(accessToken);
+      await api.closeTask(taskId);
+    });
+  }
 }

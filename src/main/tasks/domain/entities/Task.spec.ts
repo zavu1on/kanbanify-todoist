@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { TaskAlreadyCompletedError } from "../errors/TaskAlreadyCompletedError";
 import { Priority } from "../value-objects/Priority";
 import { Task } from "./Task";
 
-const buildTask = (rawLabels: string[]) =>
+const buildTask = (rawLabels: string[], checked = false) =>
   Task.reconstitute({
     id: "1",
     title: "Write report",
@@ -10,6 +11,7 @@ const buildTask = (rawLabels: string[]) =>
     priority: Priority.fromApiValue(4),
     due: null,
     rawLabels,
+    checked,
   });
 
 describe("Task.reconstitute", () => {
@@ -62,5 +64,22 @@ describe("Task#changeStatus", () => {
     task.changeStatus("none");
 
     expect(task.rawLabels).toEqual(["errand"]);
+  });
+});
+
+describe("Task#complete", () => {
+  it("marks the task checked without touching kanbanStatus", () => {
+    const task = buildTask(["todo"], false);
+
+    task.complete();
+
+    expect(task.checked).toBe(true);
+    expect(task.kanbanStatus.level).toBe("todo");
+  });
+
+  it("throws TaskAlreadyCompletedError when the task is already checked", () => {
+    const task = buildTask(["todo"], true);
+
+    expect(() => task.complete()).toThrow(TaskAlreadyCompletedError);
   });
 });

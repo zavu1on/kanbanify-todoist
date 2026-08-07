@@ -28,4 +28,9 @@ export interface ITaskGateway {
    * change is a full label overwrite, not a partial patch.
    * @throws {import("../../domain/errors/TasksError").TasksError} */
   save(accessToken: string, task: Task): Promise<Task>;
+
+  /** Completes a task via Todoist's dedicated close endpoint — `checked` isn't
+   * settable through `updateTask`, so this is separate from `save`.
+   * @throws {import("../../domain/errors/TasksError").TasksError} */
+  close(accessToken: string, taskId: string): Promise<void>;
 }

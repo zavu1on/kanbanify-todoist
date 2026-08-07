@@ -4,8 +4,8 @@ import { AccessToken } from "../../../auth/domain/value-objects/AccessToken";
 import { InvalidProjectNameError } from "../../domain/errors/InvalidProjectNameError";
 import { InvalidProjectSessionError } from "../../domain/errors/InvalidProjectSessionError";
 import type { ProjectApiSource } from "../../domain/mappers/ProjectMapper";
-import type { IProjectGateway } from "../ports/IProjectGateway";
 import { CreateProjectInput } from "../dtos/CreateProjectInput";
+import type { IProjectGateway } from "../ports/IProjectGateway";
 import { CreateProjectUseCase } from "./CreateProjectUseCase";
 
 const buildTokenStore = (accessToken: AccessToken | null): ITokenStore => ({

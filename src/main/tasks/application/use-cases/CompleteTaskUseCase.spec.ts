@@ -3,20 +3,21 @@ import type { ITokenStore } from "../../../auth/application/ports/ITokenStore";
 import { AccessToken } from "../../../auth/domain/value-objects/AccessToken";
 import { Task } from "../../domain/entities/Task";
 import { InvalidTaskSessionError } from "../../domain/errors/InvalidTaskSessionError";
+import { TaskAlreadyCompletedError } from "../../domain/errors/TaskAlreadyCompletedError";
 import { Priority } from "../../domain/value-objects/Priority";
-import { UpdateTaskStatusInput } from "../dtos/UpdateTaskStatusInput";
+import { CompleteTaskInput } from "../dtos/CompleteTaskInput";
 import type { ITaskGateway } from "../ports/ITaskGateway";
-import { UpdateTaskStatusUseCase } from "./UpdateTaskStatusUseCase";
+import { CompleteTaskUseCase } from "./CompleteTaskUseCase";
 
-const buildTask = (rawLabels: string[]) =>
+const buildTask = (checked = false) =>
   Task.reconstitute({
     id: "task-1",
     title: "Write report",
     projectId: "project-1",
     priority: Priority.fromApiValue(4),
     due: null,
-    rawLabels,
-    checked: false,
+    rawLabels: ["errand", "todo"],
+    checked,
   });
 
 const buildTokenStore = (accessToken: AccessToken | null): ITokenStore => ({
@@ -28,43 +29,54 @@ const buildTokenStore = (accessToken: AccessToken | null): ITokenStore => ({
 const buildGateway = (task: Task): ITaskGateway => ({
   listTasks: vi.fn(),
   getTask: vi.fn().mockResolvedValue(task),
-  save: vi.fn().mockImplementation((_token, saved: Task) => saved),
+  save: vi.fn(),
   close: vi.fn(),
 });
 
-describe("UpdateTaskStatusUseCase", () => {
+describe("CompleteTaskUseCase", () => {
   it("throws InvalidTaskSessionError when no token is stored", async () => {
-    const useCase = new UpdateTaskStatusUseCase(
-      buildGateway(buildTask([])),
+    const useCase = new CompleteTaskUseCase(
+      buildGateway(buildTask()),
       buildTokenStore(null),
     );
 
     await expect(
-      useCase.execute(new UpdateTaskStatusInput("task-1", "in-progress")),
+      useCase.execute(new CompleteTaskInput("task-1")),
     ).rejects.toThrow(InvalidTaskSessionError);
   });
 
-  it("loads the task, applies the status change on the entity, and persists it", async () => {
-    const task = buildTask(["errand", "todo"]);
+  it("loads the task, marks it completed on the entity, and closes it via the gateway", async () => {
+    const task = buildTask();
     const gateway = buildGateway(task);
-    const useCase = new UpdateTaskStatusUseCase(
+    const useCase = new CompleteTaskUseCase(
       gateway,
       buildTokenStore(AccessToken.of("a-valid-token-value-000000000000")),
     );
 
-    const result = await useCase.execute(
-      new UpdateTaskStatusInput("task-1", "completed"),
-    );
+    await useCase.execute(new CompleteTaskInput("task-1"));
 
     expect(gateway.getTask).toHaveBeenCalledWith(
       "a-valid-token-value-000000000000",
       "task-1",
     );
-    expect(gateway.save).toHaveBeenCalledWith(
+    expect(task.checked).toBe(true);
+    expect(gateway.close).toHaveBeenCalledWith(
       "a-valid-token-value-000000000000",
-      task,
+      "task-1",
     );
-    expect(result.kanbanStatus.level).toBe("completed");
-    expect(result.rawLabels).toEqual(["errand", "completed"]);
+  });
+
+  it("throws TaskAlreadyCompletedError and does not call the gateway when the task is already checked", async () => {
+    const task = buildTask(true);
+    const gateway = buildGateway(task);
+    const useCase = new CompleteTaskUseCase(
+      gateway,
+      buildTokenStore(AccessToken.of("a-valid-token-value-000000000000")),
+    );
+
+    await expect(
+      useCase.execute(new CompleteTaskInput("task-1")),
+    ).rejects.toThrow(TaskAlreadyCompletedError);
+    expect(gateway.close).not.toHaveBeenCalled();
   });
 });

@@ -1,3 +1,4 @@
+import { TaskAlreadyCompletedError } from "../errors/TaskAlreadyCompletedError";
 import {
   KanbanStatus,
   type KanbanStatusLevel,
@@ -13,10 +14,12 @@ export type TaskReconstituteSource = {
   priority: Priority;
   due: TaskDue | null;
   rawLabels: string[];
+  checked: boolean;
 };
 
 export class Task {
   private _kanbanStatus: KanbanStatus;
+  private _checked: boolean;
 
   private constructor(
     readonly id: string,
@@ -27,14 +30,23 @@ export class Task {
     kanbanStatus: KanbanStatus,
     /** Reserved kanban labels are stripped — see `Task.resolveStatus`. */
     readonly labels: string[],
+    checked: boolean,
   ) {
     this._kanbanStatus = kanbanStatus;
+    this._checked = checked;
   }
 
   /** Resolved via `Task.resolveStatus` at construction time — never read
    * `labels` directly for status. */
   get kanbanStatus(): KanbanStatus {
     return this._kanbanStatus;
+  }
+
+  /** Whether this task is completed in Todoist itself — independent of
+   * `kanbanStatus` (see SPECIFICATION.md "Доменная модель": a `completed`
+   * kanban label does not imply this is true). */
+  get checked(): boolean {
+    return this._checked;
   }
 
   /** This task's full Todoist label list — its non-reserved labels plus the
@@ -56,6 +68,7 @@ export class Task {
       source.due,
       Task.resolveStatus(source.rawLabels),
       KanbanStatus.stripReserved(source.rawLabels),
+      source.checked,
     );
   }
 
@@ -64,6 +77,15 @@ export class Task {
    * the change; this method only updates the in-memory status. */
   changeStatus(newLevel: KanbanStatusLevel): void {
     this._kanbanStatus = KanbanStatus.of(newLevel);
+  }
+
+  /** Marks this task done in Todoist itself — deliberately leaves `kanbanStatus`
+   * untouched, since the two are independent axes (see `checked`) and this app
+   * never syncs them automatically.
+   * @throws {TaskAlreadyCompletedError} if the task is already checked. */
+  complete(): void {
+    if (this._checked) throw new TaskAlreadyCompletedError();
+    this._checked = true;
   }
 
   /**

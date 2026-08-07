@@ -16,6 +16,7 @@ const buildTask = (id: string, due: TaskDue | null): Task =>
     priority: Priority.fromApiValue(4),
     due,
     rawLabels: [],
+    checked: false,
   });
 
 const buildTokenStore = (accessToken: AccessToken | null): ITokenStore => ({
@@ -28,6 +29,7 @@ const buildGateway = (page: TaskListPage): ITaskGateway => ({
   listTasks: vi.fn().mockResolvedValue(page),
   getTask: vi.fn(),
   save: vi.fn(),
+  close: vi.fn(),
 });
 
 describe("ListTasksUseCase", () => {

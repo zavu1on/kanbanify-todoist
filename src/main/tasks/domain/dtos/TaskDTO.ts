@@ -13,4 +13,5 @@ export type TaskDTO = {
   due: { date: string; datetime: string | null } | null;
   kanbanStatus: { level: KanbanStatusLevel; hasConflict: boolean };
   labels: string[];
+  checked: boolean;
 };

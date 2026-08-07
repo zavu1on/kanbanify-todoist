@@ -12,6 +12,7 @@ export type TaskApiSource = {
   priority: number;
   due: { date: string; datetime?: string | null } | null;
   labels: string[];
+  checked: boolean;
 };
 
 /**
@@ -30,6 +31,7 @@ export class TaskMapper {
         ? TaskDue.of(source.due.date, source.due.datetime ?? null)
         : null,
       rawLabels: source.labels,
+      checked: source.checked,
     });
   }
 
@@ -50,6 +52,7 @@ export class TaskMapper {
         hasConflict: task.kanbanStatus.hasConflict,
       },
       labels: task.labels,
+      checked: task.checked,
     };
   }
 }

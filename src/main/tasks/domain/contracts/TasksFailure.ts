@@ -1,4 +1,8 @@
-export type TasksErrorType = "auth_error" | "network_error" | "unknown";
+export type TasksErrorType =
+  | "auth_error"
+  | "network_error"
+  | "already_completed"
+  | "unknown";
 
 /** The `{ ok: false }` shape shared by every `tasks:*` IPC contract — extracted
  * once so `TasksListResult`/`UpdateTaskStatusResult` don't each redeclare it. */

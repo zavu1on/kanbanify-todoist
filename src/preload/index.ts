@@ -14,6 +14,7 @@ import type {
   UpdateProjectResult,
 } from "../main/projects";
 import type {
+  CompleteTaskResult,
   KanbanStatusLevel,
   TasksCountResult,
   TasksListResult,
@@ -40,6 +41,8 @@ const api = {
     ): Promise<UpdateTaskStatusResult> =>
       ipcRenderer.invoke("tasks:updateStatus", taskId, status),
     count: (): Promise<TasksCountResult> => ipcRenderer.invoke("tasks:count"),
+    complete: (taskId: string): Promise<CompleteTaskResult> =>
+      ipcRenderer.invoke("tasks:complete", taskId),
   },
   projects: {
     list: (): Promise<ProjectsListResult> =>

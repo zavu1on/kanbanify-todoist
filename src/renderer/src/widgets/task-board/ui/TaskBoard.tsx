@@ -3,6 +3,7 @@ import { Group } from "@mantine/core";
 import type { QueryKey } from "@tanstack/react-query";
 import type { FC } from "react";
 import { TaskCard } from "@/entities/task";
+import { useCompleteTaskMutation } from "@/features/complete-task";
 import { KANBAN_STATUS_LEVELS, type TaskDTO } from "@/main/tasks";
 import { useDragOnDropHandlers } from "../lib/useDragOnDropHandlers";
 import { KanbanColumn } from "./KanbanColumn";
@@ -29,6 +30,7 @@ export const TaskBoard: FC<TaskBoardProps> = ({
     handleDragEnd,
     handleDragCancel,
   } = useDragOnDropHandlers(tasks, queryKey);
+  const completeTaskMutation = useCompleteTaskMutation(queryKey);
 
   return (
     <DndContext
@@ -51,6 +53,7 @@ export const TaskBoard: FC<TaskBoardProps> = ({
             tasks={columns.get(status) ?? []}
             isDropTarget={dropTargetStatus === status}
             hideProject={hideProject}
+            onComplete={(taskId) => completeTaskMutation.mutate({ taskId })}
           />
         ))}
       </Group>
