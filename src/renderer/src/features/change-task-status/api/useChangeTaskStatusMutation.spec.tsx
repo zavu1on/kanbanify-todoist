@@ -42,7 +42,10 @@ describe("useChangeTaskStatusMutation", () => {
       await result.current.mutateAsync({ taskId: "1", status: "in-progress" });
     });
 
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["tasks", "list"] });
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: ["tasks", "list"],
+      refetchType: "none",
+    });
   });
 
   it("does not invalidate other pages when the status change fails", async () => {

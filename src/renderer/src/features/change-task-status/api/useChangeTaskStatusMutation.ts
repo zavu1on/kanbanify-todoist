@@ -85,8 +85,15 @@ export const useChangeTaskStatusMutation = (queryKey: QueryKey) => {
       // tasks-list page (fuzzy match on the shared `tasksListQueryKey` prefix,
       // see FRONTEND_CODE_STYLE_GUIDE.md "Загрузка данных и состояние") so the
       // status change shows up elsewhere (e.g. the global "Tasks" screen after
-      // a move on a project's page) without waiting out `staleTime`.
-      queryClient.invalidateQueries({ queryKey: tasksListQueryKey });
+      // a move on a project's page). `refetchType: "none"` only marks them
+      // stale instead of refetching now — the query on screen already has the
+      // optimistic write from `onMutate`, and forcing a refetch here is what
+      // caused visual jumps during fast drag-and-drop (invalidated queries
+      // refetch on their next mount regardless of `staleTime`).
+      queryClient.invalidateQueries({
+        queryKey: tasksListQueryKey,
+        refetchType: "none",
+      });
     },
   });
 };
