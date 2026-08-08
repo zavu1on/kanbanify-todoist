@@ -2,6 +2,11 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./app/App";
 
+if (import.meta.env.DEV) {
+  const { scan } = await import("react-scan");
+  scan();
+}
+
 const container = document.getElementById("root");
 
 if (!container) {
