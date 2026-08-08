@@ -42,7 +42,14 @@ const buildTaskGateway = (
       return pages[pageIndex] ?? { tasks: [], nextCursor: null };
     },
   );
-  return { listTasks, getTask: vi.fn(), save: vi.fn(), close: vi.fn() };
+  return {
+    listTasks,
+    getTask: vi.fn(),
+    create: vi.fn(),
+    save: vi.fn(),
+    move: vi.fn(),
+    close: vi.fn(),
+  };
 };
 
 const token = AccessToken.of("a-valid-token-value-000000000000");

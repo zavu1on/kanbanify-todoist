@@ -33,6 +33,10 @@ type TaskCardProps = {
   // in `DragOverlay`, see TaskBoard.tsx) — the checkbox itself only renders
   // when this is passed.
   onComplete?: (taskId: string) => void;
+  // Opens the task detail modal (SPECIFICATION.md "Карточка задачи": "Клик по
+  // карточке открывает Детальное отображение задачи"). Omitted for the kanban
+  // drag preview, same reasoning as `onComplete`.
+  onClick?: () => void;
 };
 
 export const TaskCard: FC<TaskCardProps> = ({
@@ -40,6 +44,7 @@ export const TaskCard: FC<TaskCardProps> = ({
   hideKanbanStatus,
   hideProject,
   onComplete,
+  onClick,
 }) => {
   // Lets the exit animation play before the task actually leaves the list —
   // `onComplete` (the optimistic-removal mutation) fires from `onExited`,
@@ -66,7 +71,16 @@ export const TaskCard: FC<TaskCardProps> = ({
       onExited={() => onComplete?.(task.id)}
     >
       {(transitionStyles) => (
-        <Card withBorder radius="md" p="sm" style={transitionStyles}>
+        <Card
+          withBorder
+          radius="md"
+          p="sm"
+          style={{
+            ...transitionStyles,
+            cursor: onClick ? "pointer" : undefined,
+          }}
+          onClick={onClick}
+        >
           <Stack gap={6}>
             <Group gap={6} wrap="nowrap" align="flex-start">
               {onComplete && (
@@ -77,8 +91,11 @@ export const TaskCard: FC<TaskCardProps> = ({
                   aria-label={`Complete "${task.title}"`}
                   // Stops dnd-kit's drag sensor (attached via `listeners` on the
                   // card's outer element, see DraggableTaskCard.tsx) from picking
-                  // up the click and starting a drag instead of toggling.
+                  // up the click and starting a drag instead of toggling, and
+                  // stops the card's own `onClick` (opening the detail modal)
+                  // from firing on top of completing the task.
                   onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => event.stopPropagation()}
                   onChange={() => setCompleting(true)}
                 />
               )}

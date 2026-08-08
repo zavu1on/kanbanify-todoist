@@ -2,6 +2,7 @@ export type TasksErrorType =
   | "auth_error"
   | "network_error"
   | "already_completed"
+  | "invalid_title"
   | "unknown";
 
 /** The `{ ok: false }` shape shared by every `tasks:*` IPC contract — extracted

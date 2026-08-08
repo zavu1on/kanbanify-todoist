@@ -13,3 +13,17 @@ describe("Priority.fromApiValue", () => {
     expect(Priority.fromApiValue(apiValue).level).toBe(expectedLevel);
   });
 });
+
+describe("Priority#toApiValue", () => {
+  it.each([
+    ["p1", 4],
+    ["p2", 3],
+    ["p3", 2],
+    ["p4", 1],
+  ] as const)(
+    "maps interface level %s back to API value %i",
+    (level, apiValue) => {
+      expect(Priority.of(level).toApiValue()).toBe(apiValue);
+    },
+  );
+});

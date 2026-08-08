@@ -8,12 +8,14 @@ type DraggableTaskCardProps = {
   task: TaskDTO;
   hideProject?: boolean;
   onComplete: (taskId: string) => void;
+  onClick: () => void;
 };
 
 export const DraggableTaskCard: FC<DraggableTaskCardProps> = ({
   task,
   hideProject,
   onComplete,
+  onClick,
 }) => {
   const {
     attributes,
@@ -45,6 +47,7 @@ export const DraggableTaskCard: FC<DraggableTaskCardProps> = ({
         hideKanbanStatus
         hideProject={hideProject}
         onComplete={onComplete}
+        onClick={onClick}
       />
     </div>
   );

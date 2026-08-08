@@ -11,7 +11,9 @@ import {
 import type { FC } from "react";
 import { useSession } from "@/app/SessionContext";
 import { useProjectsQuery } from "@/entities/project";
+import { tasksListQueryKey } from "@/entities/task";
 import { ProjectFormModal } from "@/features/manage-project";
+import { TaskFormModal } from "@/features/manage-task";
 import logo from "@/shared/ui/kanbanify-logo.svg";
 import { useTaskCountQuery } from "../api/useTaskCountQuery";
 import { type AnimatedIcon, SidebarNavLink } from "./SidebarNavLink";
@@ -33,6 +35,8 @@ const NAV_ITEMS: NavItem[] = [
 export const Sidebar: FC = () => {
   const session = useSession();
   const [isAddProjectOpen, { open: openAddProject, close: closeAddProject }] =
+    useDisclosure(false);
+  const [isAddTaskOpen, { open: openAddTask, close: closeAddTask }] =
     useDisclosure(false);
   const taskCountQuery = useTaskCountQuery();
   const taskCount = taskCountQuery.data?.ok
@@ -62,6 +66,7 @@ export const Sidebar: FC = () => {
               isBadgeLoading={
                 item.label === "Tasks" && taskCountQuery.isPending
               }
+              onClick={item.label === "New task" ? openAddTask : undefined}
             />
           ))}
         </Stack>
@@ -82,6 +87,19 @@ export const Sidebar: FC = () => {
           always starts blank (see `ProjectActionsMenu`'s edit modal). */}
       {isAddProjectOpen && (
         <ProjectFormModal opened={isAddProjectOpen} onClose={closeAddProject} />
+      )}
+
+      {/* No page context from the sidebar — project defaults to Inbox, every
+          other field starts empty (SPECIFICATION.md "Добавление задачи").
+          Optimistic write lands in the global "Tasks" list cache since no
+          specific list is on screen; other cached lists get invalidated on
+          success (see `useCreateTaskMutation`). */}
+      {isAddTaskOpen && (
+        <TaskFormModal
+          opened={isAddTaskOpen}
+          onClose={closeAddTask}
+          queryKey={tasksListQueryKey}
+        />
       )}
 
       <AppShell.Section p="sm">

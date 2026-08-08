@@ -5,6 +5,11 @@ import type {
   SessionCheckResult,
 } from "../main/auth";
 import type {
+  CreateLabelRequest,
+  CreateLabelResult,
+  LabelsListResult,
+} from "../main/labels";
+import type {
   ArchiveProjectResult,
   CreateProjectRequest,
   CreateProjectResult,
@@ -15,9 +20,13 @@ import type {
 } from "../main/projects";
 import type {
   CompleteTaskResult,
+  CreateTaskRequest,
+  CreateTaskResult,
   KanbanStatusLevel,
   TasksCountResult,
   TasksListResult,
+  UpdateTaskRequest,
+  UpdateTaskResult,
   UpdateTaskStatusResult,
 } from "../main/tasks";
 
@@ -43,6 +52,18 @@ const api = {
     count: (): Promise<TasksCountResult> => ipcRenderer.invoke("tasks:count"),
     complete: (taskId: string): Promise<CompleteTaskResult> =>
       ipcRenderer.invoke("tasks:complete", taskId),
+    create: (input: CreateTaskRequest): Promise<CreateTaskResult> =>
+      ipcRenderer.invoke("tasks:create", input),
+    update: (
+      taskId: string,
+      input: UpdateTaskRequest,
+    ): Promise<UpdateTaskResult> =>
+      ipcRenderer.invoke("tasks:update", taskId, input),
+  },
+  labels: {
+    list: (): Promise<LabelsListResult> => ipcRenderer.invoke("labels:list"),
+    create: (input: CreateLabelRequest): Promise<CreateLabelResult> =>
+      ipcRenderer.invoke("labels:create", input),
   },
   projects: {
     list: (): Promise<ProjectsListResult> =>

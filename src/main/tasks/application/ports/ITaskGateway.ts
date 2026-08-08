@@ -22,12 +22,24 @@ export interface ITaskGateway {
   /** @throws {import("../../domain/errors/TasksError").TasksError} */
   getTask(accessToken: string, taskId: string): Promise<Task>;
 
-  /** Persists this task's full label set (`task.rawLabels` — its non-reserved
-   * labels plus the current status's reserved one, see `Task.changeStatus`).
-   * Todoist's `updateTask` has no scoped "set labels" endpoint, so a kanban-status
-   * change is a full label overwrite, not a partial patch.
+  /** Creates a brand-new task via Todoist's add endpoint — `task.id` is empty
+   * (see `Task.create`); the returned task carries the API-assigned id.
+   * @throws {import("../../domain/errors/TasksError").TasksError} */
+  create(accessToken: string, task: Task): Promise<Task>;
+
+  /** Persists this task's title, description, priority, due and full label set
+   * (`task.rawLabels` — its non-reserved labels plus the current status's
+   * reserved one, see `Task.changeStatus`). Todoist's `updateTask` has no scoped
+   * "set labels" endpoint, so a kanban-status change is a full label overwrite,
+   * not a partial patch. Does not persist `projectId` — Todoist's `updateTask`
+   * has no such field (see `move`).
    * @throws {import("../../domain/errors/TasksError").TasksError} */
   save(accessToken: string, task: Task): Promise<Task>;
+
+  /** Moves a task to a different project via Todoist's dedicated move endpoint —
+   * `projectId` isn't settable through `updateTask`, so this is separate from `save`.
+   * @throws {import("../../domain/errors/TasksError").TasksError} */
+  move(accessToken: string, taskId: string, projectId: string): Promise<Task>;
 
   /** Completes a task via Todoist's dedicated close endpoint — `checked` isn't
    * settable through `updateTask`, so this is separate from `save`.

@@ -7,8 +7,8 @@ import type { QueryKey } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useChangeTaskStatusMutation } from "@/features/change-task-status";
 import type { KanbanStatusLevel, TaskDTO } from "@/main/tasks";
-import { buildColumns } from "./buildColumns";
-import { findContainer } from "./findContainer";
+import { buildColumns } from "../lib/buildColumns";
+import { findContainer } from "../lib/findContainer";
 
 export const useDragOnDropHandlers = (tasks: TaskDTO[], queryKey: QueryKey) => {
   const changeStatusMutation = useChangeTaskStatusMutation(queryKey);

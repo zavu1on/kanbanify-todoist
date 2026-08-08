@@ -8,6 +8,7 @@ import type { PriorityLevel } from "../value-objects/Priority";
 export type TaskDTO = {
   id: string;
   title: string;
+  description: string;
   projectId: string;
   priority: PriorityLevel;
   due: { date: string; datetime: string | null } | null;

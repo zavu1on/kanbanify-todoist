@@ -15,4 +15,16 @@ export class Priority {
     const index = PRIORITY_LEVELS.length - apiValue;
     return new Priority(PRIORITY_LEVELS[index] ?? "p4");
   }
+
+  /** Trusted constructor from an already-validated interface-facing level
+   * (form input) — the counterpart of `fromApiValue` for the write direction. */
+  static of(level: PriorityLevel): Priority {
+    return new Priority(level);
+  }
+
+  /** Inverts back to Todoist's API numbering — see this class's doc comment;
+   * every write of priority must go through this, never hardcode the number. */
+  toApiValue(): number {
+    return PRIORITY_LEVELS.length - PRIORITY_LEVELS.indexOf(this.level);
+  }
 }

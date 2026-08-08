@@ -110,12 +110,14 @@ export const TasksPage: FC = () => {
           tasks={tasks}
           queryKey={queryKey}
           hideProject={!!projectId}
+          projectId={projectId}
         />
       ) : (
         <TaskBoard
           tasks={tasks}
           queryKey={queryKey}
           hideProject={!!projectId}
+          projectId={projectId}
         />
       )}
     </Stack>

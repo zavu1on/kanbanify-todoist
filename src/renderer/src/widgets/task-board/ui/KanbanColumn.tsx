@@ -24,6 +24,8 @@ type KanbanColumnProps = {
   isDropTarget: boolean;
   hideProject?: boolean;
   onComplete: (taskId: string) => void;
+  onTaskClick: (task: TaskDTO) => void;
+  onAddTask: () => void;
 };
 
 export const KanbanColumn: FC<KanbanColumnProps> = ({
@@ -32,6 +34,8 @@ export const KanbanColumn: FC<KanbanColumnProps> = ({
   isDropTarget,
   hideProject,
   onComplete,
+  onTaskClick,
+  onAddTask,
 }) => {
   const { setNodeRef } = useDroppable({ id: status });
 
@@ -58,12 +62,13 @@ export const KanbanColumn: FC<KanbanColumnProps> = ({
           </Badge>
         </Group>
 
-        {/* Creates a task pre-filled with this column's status — rendering only,
-         * per this feature's scope (task creation ships separately). */}
+        {/* Creates a task pre-filled with this column's status (SPECIFICATION.md
+         * "Kanban-режим"). */}
         <ActionIcon
           variant="subtle"
           color="gray"
           aria-label={`Add task to ${KANBAN_COLUMN_LABELS[status]}`}
+          onClick={onAddTask}
         >
           <PlusIcon size={16} animateOnHover={false} />
         </ActionIcon>
@@ -81,6 +86,7 @@ export const KanbanColumn: FC<KanbanColumnProps> = ({
                 task={task}
                 hideProject={hideProject}
                 onComplete={onComplete}
+                onClick={() => onTaskClick(task)}
               />
             ))}
           </SortableContext>

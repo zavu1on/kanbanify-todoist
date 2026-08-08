@@ -12,6 +12,7 @@ const buildTask = (id: string, due: TaskDue | null): Task =>
   Task.reconstitute({
     id,
     title: `task-${id}`,
+    description: "",
     projectId: "project-1",
     priority: Priority.fromApiValue(4),
     due,
@@ -28,7 +29,9 @@ const buildTokenStore = (accessToken: AccessToken | null): ITokenStore => ({
 const buildGateway = (page: TaskListPage): ITaskGateway => ({
   listTasks: vi.fn().mockResolvedValue(page),
   getTask: vi.fn(),
+  create: vi.fn(),
   save: vi.fn(),
+  move: vi.fn(),
   close: vi.fn(),
 });
 

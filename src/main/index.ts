@@ -7,6 +7,10 @@ import { LogoutUseCase } from "./auth/application/use-cases/LogoutUseCase";
 import { AuthIpcController } from "./auth/infrastructure/AuthIpcController";
 import { SafeStorageTokenStore } from "./auth/infrastructure/SafeStorageTokenStore";
 import { TodoistUserGateway } from "./auth/infrastructure/TodoistUserGateway";
+import { CreateLabelUseCase } from "./labels/application/use-cases/CreateLabelUseCase";
+import { ListLabelsUseCase } from "./labels/application/use-cases/ListLabelsUseCase";
+import { LabelsIpcController } from "./labels/infrastructure/LabelsIpcController";
+import { TodoistLabelGateway } from "./labels/infrastructure/TodoistLabelGateway";
 import { ArchiveProjectUseCase } from "./projects/application/use-cases/ArchiveProjectUseCase";
 import { CreateProjectUseCase } from "./projects/application/use-cases/CreateProjectUseCase";
 import { DeleteProjectUseCase } from "./projects/application/use-cases/DeleteProjectUseCase";
@@ -16,7 +20,9 @@ import { ProjectsIpcController } from "./projects/infrastructure/ProjectsIpcCont
 import { TodoistProjectGateway } from "./projects/infrastructure/TodoistProjectGateway";
 import { CompleteTaskUseCase } from "./tasks/application/use-cases/CompleteTaskUseCase";
 import { CountUnfinishedTasksUseCase } from "./tasks/application/use-cases/CountUnfinishedTasksUseCase";
+import { CreateTaskUseCase } from "./tasks/application/use-cases/CreateTaskUseCase";
 import { ListTasksUseCase } from "./tasks/application/use-cases/ListTasksUseCase";
+import { UpdateTaskUseCase } from "./tasks/application/use-cases/UpdateTaskUseCase";
 import { UpdateTaskStatusUseCase } from "./tasks/application/use-cases/UpdateTaskStatusUseCase";
 import { TasksIpcController } from "./tasks/infrastructure/TasksIpcController";
 import { TodoistTaskGateway } from "./tasks/infrastructure/TodoistTaskGateway";
@@ -48,12 +54,16 @@ const registerIpcHandlers = () => {
     tokenStore,
   );
   const completeTaskUseCase = new CompleteTaskUseCase(taskGateway, tokenStore);
+  const createTaskUseCase = new CreateTaskUseCase(taskGateway, tokenStore);
+  const updateTaskUseCase = new UpdateTaskUseCase(taskGateway, tokenStore);
 
   new TasksIpcController(
     listTasksUseCase,
     updateTaskStatusUseCase,
     countUnfinishedTasksUseCase,
     completeTaskUseCase,
+    createTaskUseCase,
+    updateTaskUseCase,
   ).register();
 
   const projectGateway = new TodoistProjectGateway();
@@ -86,6 +96,12 @@ const registerIpcHandlers = () => {
     archiveProjectUseCase,
     deleteProjectUseCase,
   ).register();
+
+  const labelGateway = new TodoistLabelGateway();
+  const listLabelsUseCase = new ListLabelsUseCase(labelGateway, tokenStore);
+  const createLabelUseCase = new CreateLabelUseCase(labelGateway, tokenStore);
+
+  new LabelsIpcController(listLabelsUseCase, createLabelUseCase).register();
 };
 
 const createWindow = () => {

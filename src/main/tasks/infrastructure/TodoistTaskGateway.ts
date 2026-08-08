@@ -42,13 +42,62 @@ export class TodoistTaskGateway implements ITaskGateway {
     });
   }
 
+  async create(accessToken: string, task: Task): Promise<Task> {
+    return this.errorClassifier.wrap(async () => {
+      const api = new TodoistApi(accessToken);
+      const base = {
+        content: task.title,
+        description: task.description,
+        projectId: task.projectId,
+        priority: task.priority.toApiValue(),
+        labels: task.rawLabels,
+      };
+      // `AddTaskArgs.dueDate`/`dueDatetime` are mutually exclusive (see
+      // `TaskDue`'s doc comment) — the SDK's XOR type only accepts an object
+      // literal with exactly one of the two keys present, so each branch
+      // builds its own literal rather than spreading a shared value.
+      const created = task.due?.datetime
+        ? await api.addTask({ ...base, dueDatetime: task.due.datetime })
+        : task.due
+          ? await api.addTask({ ...base, dueDate: task.due.date })
+          : await api.addTask(base);
+      return this.taskMapper.toDomain(created);
+    });
+  }
+
   async save(accessToken: string, task: Task): Promise<Task> {
     return this.errorClassifier.wrap(async () => {
       const api = new TodoistApi(accessToken);
-      const updated = await api.updateTask(task.id, {
+      const base = {
+        content: task.title,
+        description: task.description,
+        priority: task.priority.toApiValue(),
         labels: task.rawLabels,
-      });
+      };
+      // Same XOR constraint as `create` — plus `dueString: null`, the SDK's
+      // alias for clearing the due date, since an omitted `due*` field means
+      // "leave unchanged", not "clear" (see `ITaskGateway.save`'s doc comment).
+      const updated = task.due?.datetime
+        ? await api.updateTask(task.id, {
+            ...base,
+            dueDatetime: task.due.datetime,
+          })
+        : task.due
+          ? await api.updateTask(task.id, { ...base, dueDate: task.due.date })
+          : await api.updateTask(task.id, { ...base, dueString: null });
       return this.taskMapper.toDomain(updated);
+    });
+  }
+
+  async move(
+    accessToken: string,
+    taskId: string,
+    projectId: string,
+  ): Promise<Task> {
+    return this.errorClassifier.wrap(async () => {
+      const api = new TodoistApi(accessToken);
+      const moved = await api.moveTask(taskId, { projectId });
+      return this.taskMapper.toDomain(moved);
     });
   }
 

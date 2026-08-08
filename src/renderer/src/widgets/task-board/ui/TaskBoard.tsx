@@ -1,25 +1,42 @@
-import { closestCorners, DndContext, DragOverlay } from "@dnd-kit/core";
+import {
+  closestCorners,
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import { Group } from "@mantine/core";
 import type { QueryKey } from "@tanstack/react-query";
-import type { FC } from "react";
+import { type FC, useState } from "react";
 import { TaskCard } from "@/entities/task";
 import { useCompleteTaskMutation } from "@/features/complete-task";
-import { KANBAN_STATUS_LEVELS, type TaskDTO } from "@/main/tasks";
-import { useDragOnDropHandlers } from "../lib/useDragOnDropHandlers";
+import { type TaskFormDefaults, TaskFormModal } from "@/features/manage-task";
+import {
+  KANBAN_STATUS_LEVELS,
+  type KanbanStatusLevel,
+  type TaskDTO,
+} from "@/main/tasks";
+import { useDragOnDropHandlers } from "../models/useDragOnDropHandlers";
 import { KanbanColumn } from "./KanbanColumn";
 
 type TaskBoardProps = {
   tasks: TaskDTO[];
-  // The cache entry these tasks came from — status changes write their
-  // optimistic update there (see `useChangeTaskStatusMutation`).
+  // The cache entry these tasks came from — status changes and add/edit write
+  // their optimistic updates there (see `useChangeTaskStatusMutation`,
+  // `TaskFormModal`).
   queryKey: QueryKey;
   hideProject?: boolean;
+  // Pre-fills a new task's project (see SPECIFICATION.md "Добавление задачи")
+  // — absent on the global "Tasks" page, set on a project's page.
+  projectId?: string;
 };
 
 export const TaskBoard: FC<TaskBoardProps> = ({
   tasks,
   queryKey,
   hideProject,
+  projectId,
 }) => {
   const {
     columns,
@@ -31,9 +48,25 @@ export const TaskBoard: FC<TaskBoardProps> = ({
     handleDragCancel,
   } = useDragOnDropHandlers(tasks, queryKey);
   const completeTaskMutation = useCompleteTaskMutation(queryKey);
+  const [editingTask, setEditingTask] = useState<TaskDTO | null>(null);
+  const [createDefaults, setCreateDefaults] = useState<TaskFormDefaults | null>(
+    null,
+  );
+
+  const handleAddTask = (status: KanbanStatusLevel) => {
+    setCreateDefaults({ projectId, kanbanStatus: status });
+  };
+
+  // Without an activation distance, dnd-kit treats every pointerdown as a
+  // drag start (even a plain click) and swallows the click event that would
+  // otherwise follow — which is what opens the task modal.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  );
 
   return (
     <DndContext
+      sensors={sensors}
       collisionDetection={closestCorners}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
@@ -54,6 +87,8 @@ export const TaskBoard: FC<TaskBoardProps> = ({
             isDropTarget={dropTargetStatus === status}
             hideProject={hideProject}
             onComplete={(taskId) => completeTaskMutation.mutate({ taskId })}
+            onTaskClick={setEditingTask}
+            onAddTask={() => handleAddTask(status)}
           />
         ))}
       </Group>
@@ -64,9 +99,28 @@ export const TaskBoard: FC<TaskBoardProps> = ({
             task={activeTask}
             hideKanbanStatus
             hideProject={hideProject}
+            // Prevent task completing when task is dragging
+            onComplete={() => {}}
           />
         )}
       </DragOverlay>
+
+      {/* Mounted only while open — a fresh instance each time means
+          `useForm`'s initialValues (seeded from `task`/`defaults`) get
+          recomputed per click instead of being stuck at whatever they were
+          on the modal's first-ever mount (see `Sidebar`'s "New task" modal). */}
+      {(editingTask || createDefaults !== null) && (
+        <TaskFormModal
+          opened
+          onClose={() => {
+            setEditingTask(null);
+            setCreateDefaults(null);
+          }}
+          queryKey={queryKey}
+          task={editingTask ?? undefined}
+          defaults={createDefaults ?? { projectId }}
+        />
+      )}
     </DndContext>
   );
 };

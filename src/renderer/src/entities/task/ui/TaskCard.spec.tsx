@@ -7,6 +7,7 @@ import { TaskCard } from "./TaskCard";
 const task: TaskDTO = {
   id: "1",
   title: "Write report",
+  description: "",
   projectId: "project-1",
   priority: "p4",
   due: null,

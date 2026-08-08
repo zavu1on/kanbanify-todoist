@@ -8,6 +8,7 @@ import { TaskDue } from "../value-objects/TaskDue";
 export type TaskApiSource = {
   id: string;
   content: string;
+  description: string;
   projectId: string;
   priority: number;
   due: { date: string; datetime?: string | null } | null;
@@ -25,6 +26,7 @@ export class TaskMapper {
     return Task.reconstitute({
       id: source.id,
       title: source.content,
+      description: source.description,
       projectId: source.projectId,
       priority: Priority.fromApiValue(source.priority),
       due: source.due
@@ -42,6 +44,7 @@ export class TaskMapper {
     return {
       id: task.id,
       title: task.title,
+      description: task.description,
       projectId: task.projectId,
       priority: task.priority.level,
       due: task.due

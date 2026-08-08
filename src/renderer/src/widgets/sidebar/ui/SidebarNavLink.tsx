@@ -27,6 +27,9 @@ type SidebarNavLinkProps = {
   to: string;
   badge?: number;
   isBadgeLoading?: boolean;
+  // Overrides the "#" placeholder's no-op click — used for items that open a
+  // modal instead of navigating (e.g. "New task", see `Sidebar`).
+  onClick?: () => void;
 };
 
 export const SidebarNavLink: FC<SidebarNavLinkProps> = ({
@@ -35,6 +38,7 @@ export const SidebarNavLink: FC<SidebarNavLinkProps> = ({
   to,
   badge,
   isBadgeLoading,
+  onClick,
 }) => {
   const iconRef = useRef<AnimatedIconHandle>(null);
   const location = useLocation();
@@ -61,7 +65,14 @@ export const SidebarNavLink: FC<SidebarNavLinkProps> = ({
       active={location.pathname === to}
       component={Link}
       to={to}
-      onClick={to === "#" ? (e) => e.preventDefault() : undefined}
+      onClick={
+        to === "#"
+          ? (e) => {
+              e.preventDefault();
+              onClick?.();
+            }
+          : undefined
+      }
       onMouseEnter={() => iconRef.current?.startAnimation()}
       onMouseLeave={() => iconRef.current?.stopAnimation()}
     />

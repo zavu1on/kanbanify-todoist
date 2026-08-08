@@ -39,12 +39,27 @@ describe("Sidebar", () => {
         },
         tasks: {
           count: vi.fn(),
+          create: vi.fn(),
+        },
+        labels: {
+          list: vi.fn().mockResolvedValue({ ok: true, labels: [] }),
         },
         projects: {
           list: vi.fn().mockResolvedValue({ ok: true, projects: [] }),
         },
       },
     });
+  });
+
+  it("opens the new task modal when the 'New task' link is clicked", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByRole("link", { name: "New task" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "New task" }),
+    ).toBeInTheDocument();
   });
 
   it("shows the unfinished task count next to the Tasks link", async () => {
