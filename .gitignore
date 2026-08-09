@@ -11,3 +11,6 @@ dist
 
 # Local todos
 TODO.md
+
+# Short-lived task specs, not for commit
+docs/feat/*

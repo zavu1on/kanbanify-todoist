@@ -8,6 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Полное описание экранов и сценариев — [`docs/SPECIFICATION.md`](docs/SPECIFICATION.md). Навигация по всей документации — [`docs/README.md`](docs/README.md), начинай оттуда, если нужен контекст за пределами этого файла. Конвенции кода — [`docs/COMMON_CODE_STYLE_GUIDE.md`](docs/COMMON_CODE_STYLE_GUIDE.md) и два процессных руководства рядом с ним. Обоснование выбора стека — [`docs/decisions/01-tech-stack.md`](docs/decisions/01-tech-stack.md), обоснование архитектурных конвенций — [`docs/decisions/02-architecture.md`](docs/decisions/02-architecture.md).
 
+`docs/feat/*` — черновые короткоживущие мини-ТЗ пользователя, не в git (см. `.gitignore`) и не часть документации проекта. **Не читай файлы из этой папки** ни проактивно, ни через `docs/README.md` — если задача упомянута со ссылкой на файл в `docs/feat/`, работай по тексту, который пользователь дал в самом промпте.
+
 ### Структура репозитория и архитектура
 
 Электрон-приложение (`electron-vite`) с тремя процессами, каждый — в своей директории под `src/`:
