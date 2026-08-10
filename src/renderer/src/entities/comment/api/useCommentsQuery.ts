@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { STALE_TIME } from "@/shared/api/queryConfig";
 import { commentsListQueryKey } from "../model/queryKeys";
 import { listComments } from "./listComments";
 
@@ -11,5 +12,5 @@ export const useCommentsQuery = (taskId: string) =>
   useQuery({
     queryKey: commentsListQueryKey(taskId),
     queryFn: () => listComments(taskId),
-    staleTime: 60_000,
+    staleTime: STALE_TIME,
   });

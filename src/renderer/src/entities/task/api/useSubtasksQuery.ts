@@ -1,4 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { STALE_TIME } from "@/shared/api/queryConfig";
 import { subtasksListQueryKey } from "../model/queryKeys";
 import { listSubtasks } from "./listSubtasks";
 
@@ -23,5 +24,5 @@ export const useSubtasksQuery = (parentId: string) =>
     queryFn: ({ pageParam }) => listSubtasks(pageParam, parentId),
     initialPageParam: null as string | null,
     getNextPageParam: () => undefined,
-    staleTime: 60_000,
+    staleTime: STALE_TIME,
   });

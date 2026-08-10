@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { STALE_TIME } from "@/shared/api/queryConfig";
 import { labelsListQueryKey } from "../model/queryKeys";
 import { listLabels } from "./listLabels";
 
@@ -8,5 +9,5 @@ export const useLabelsQuery = () =>
   useQuery({
     queryKey: labelsListQueryKey,
     queryFn: listLabels,
-    staleTime: 60_000,
+    staleTime: STALE_TIME,
   });

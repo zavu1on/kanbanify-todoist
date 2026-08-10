@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { STALE_TIME } from "@/shared/api/queryConfig";
 import { projectsListQueryKey } from "../model/queryKeys";
 import { listProjects } from "./listProjects";
 
@@ -9,5 +10,5 @@ export const useProjectsQuery = () =>
   useQuery({
     queryKey: projectsListQueryKey,
     queryFn: listProjects,
-    staleTime: 60_000,
+    staleTime: STALE_TIME,
   });

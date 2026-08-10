@@ -1,5 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { projectTasksListQueryKey, tasksListQueryKey } from "@/entities/task";
+import { STALE_TIME } from "@/shared/api/queryConfig";
 import { listTasks } from "./listTasks";
 
 /**
@@ -33,5 +34,5 @@ export const useTasksQuery = (projectId?: string) =>
     // useChangeTaskStatusMutation), so a background refetch on every remount
     // just burns an IPC round trip for data that's usually still current —
     // "Refetch" stays available for an explicit forced reload.
-    staleTime: 60_000,
+    staleTime: STALE_TIME,
   });
