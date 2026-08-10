@@ -10,6 +10,7 @@ import {
   DeleteTaskConfirmModal,
   useDeleteTaskMutation,
 } from "@/features/delete-task";
+import { CommentsSection } from "@/features/manage-comment";
 import type {
   KanbanStatusLevel as KanbanStatusLevelType,
   PriorityLevel,
@@ -290,6 +291,7 @@ export const TaskFormFrame: FC<TaskFormFrameProps> = ({
                 onAddSubtask={onAddSubtask}
               />
             }
+            commentsSection={task && <CommentsSection taskId={task.id} />}
           />
 
           <Group justify="flex-end">

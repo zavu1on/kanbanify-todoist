@@ -48,6 +48,10 @@ type TaskFormFieldsProps = {
   // left column, below the title/description — passed in rather than owned
   // here so `TaskFormFields` stays about form fields, not IPC-backed data.
   subtasksSection?: ReactNode;
+  // The comments block — below the subtasks block (SPECIFICATION.md-adjacent
+  // COMMENTS.md: "Форма расположена под подзадачами"), same reasoning as
+  // `subtasksSection` for why it's passed in rather than owned here.
+  commentsSection?: ReactNode;
   // The task-completion checkbox (SPECIFICATION.md "Детальное отображение
   // задачи": "слева от названия") — owned by the caller since it drives a
   // mutation, `TaskFormFields` only reserves the slot next to the title.
@@ -72,6 +76,7 @@ export const TaskFormFields: FC<TaskFormFieldsProps> = ({
   hideKanbanStatus,
   disableProject,
   subtasksSection,
+  commentsSection,
   titleLeftSection,
 }) => (
   <Grid gap="lg">
@@ -122,6 +127,7 @@ export const TaskFormFields: FC<TaskFormFieldsProps> = ({
         />
 
         {subtasksSection}
+        {commentsSection}
       </Stack>
     </Grid.Col>
 

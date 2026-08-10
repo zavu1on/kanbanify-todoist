@@ -7,6 +7,12 @@ import { LogoutUseCase } from "./auth/application/use-cases/LogoutUseCase";
 import { AuthIpcController } from "./auth/infrastructure/AuthIpcController";
 import { SafeStorageTokenStore } from "./auth/infrastructure/SafeStorageTokenStore";
 import { TodoistUserGateway } from "./auth/infrastructure/TodoistUserGateway";
+import { CreateCommentUseCase } from "./comments/application/use-cases/CreateCommentUseCase";
+import { DeleteCommentUseCase } from "./comments/application/use-cases/DeleteCommentUseCase";
+import { ListCommentsUseCase } from "./comments/application/use-cases/ListCommentsUseCase";
+import { UpdateCommentUseCase } from "./comments/application/use-cases/UpdateCommentUseCase";
+import { CommentsIpcController } from "./comments/infrastructure/CommentsIpcController";
+import { TodoistCommentGateway } from "./comments/infrastructure/TodoistCommentGateway";
 import { CreateLabelUseCase } from "./labels/application/use-cases/CreateLabelUseCase";
 import { ListLabelsUseCase } from "./labels/application/use-cases/ListLabelsUseCase";
 import { LabelsIpcController } from "./labels/infrastructure/LabelsIpcController";
@@ -105,6 +111,31 @@ const registerIpcHandlers = () => {
   const createLabelUseCase = new CreateLabelUseCase(labelGateway, tokenStore);
 
   new LabelsIpcController(listLabelsUseCase, createLabelUseCase).register();
+
+  const commentGateway = new TodoistCommentGateway();
+  const listCommentsUseCase = new ListCommentsUseCase(
+    commentGateway,
+    tokenStore,
+  );
+  const createCommentUseCase = new CreateCommentUseCase(
+    commentGateway,
+    tokenStore,
+  );
+  const updateCommentUseCase = new UpdateCommentUseCase(
+    commentGateway,
+    tokenStore,
+  );
+  const deleteCommentUseCase = new DeleteCommentUseCase(
+    commentGateway,
+    tokenStore,
+  );
+
+  new CommentsIpcController(
+    listCommentsUseCase,
+    createCommentUseCase,
+    updateCommentUseCase,
+    deleteCommentUseCase,
+  ).register();
 };
 
 const createWindow = () => {
@@ -124,8 +155,6 @@ const createWindow = () => {
   } else {
     window.loadFile(path.join(__dirname, "../renderer/index.html"));
   }
-
-  window.webContents.openDevTools();
 };
 
 app.whenReady().then(() => {

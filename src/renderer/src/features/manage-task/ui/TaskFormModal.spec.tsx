@@ -114,6 +114,9 @@ describe("TaskFormModal", () => {
             ),
           complete: vi.fn(),
         },
+        comments: {
+          list: vi.fn().mockResolvedValue({ ok: true, comments: [] }),
+        },
       },
     });
   });

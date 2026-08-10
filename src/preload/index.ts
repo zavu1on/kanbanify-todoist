@@ -5,6 +5,14 @@ import type {
   SessionCheckResult,
 } from "../main/auth";
 import type {
+  CommentsListResult,
+  CreateCommentRequest,
+  CreateCommentResult,
+  DeleteCommentResult,
+  UpdateCommentRequest,
+  UpdateCommentResult,
+} from "../main/comments";
+import type {
   CreateLabelRequest,
   CreateLabelResult,
   LabelsListResult,
@@ -83,6 +91,19 @@ const api = {
       ipcRenderer.invoke("projects:archive", id),
     delete: (id: string): Promise<DeleteProjectResult> =>
       ipcRenderer.invoke("projects:delete", id),
+  },
+  comments: {
+    list: (taskId: string): Promise<CommentsListResult> =>
+      ipcRenderer.invoke("comments:list", taskId),
+    create: (input: CreateCommentRequest): Promise<CreateCommentResult> =>
+      ipcRenderer.invoke("comments:create", input),
+    update: (
+      commentId: string,
+      input: UpdateCommentRequest,
+    ): Promise<UpdateCommentResult> =>
+      ipcRenderer.invoke("comments:update", commentId, input),
+    delete: (commentId: string): Promise<DeleteCommentResult> =>
+      ipcRenderer.invoke("comments:delete", commentId),
   },
 };
 

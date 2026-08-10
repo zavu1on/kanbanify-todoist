@@ -39,7 +39,7 @@ export const SubtasksList: FC<SubtasksListProps> = ({
 
       {subtasksQuery.isPending ? (
         <Text size="sm" c="dimmed">
-          Loading…
+          Loading...
         </Text>
       ) : firstPage && !firstPage.ok ? (
         <Text size="sm" c="red">
