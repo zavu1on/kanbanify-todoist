@@ -1,48 +1,20 @@
-import { Button, Divider, Group, Modal, Stack } from "@mantine/core";
-import { schemaResolver, useForm } from "@mantine/form";
+import { Modal, UnstyledButton } from "@mantine/core";
 import type { QueryKey } from "@tanstack/react-query";
-import dayjs from "dayjs";
 import { type FC, useRef, useState } from "react";
-import { useLabelsQuery } from "@/entities/label";
-import { useProjectsQuery } from "@/entities/project";
-import {
-  DeleteTaskConfirmModal,
-  useDeleteTaskMutation,
-} from "@/features/delete-task";
-import type {
-  KanbanStatusLevel as KanbanStatusLevelType,
-  PriorityLevel,
-  TaskDTO,
-} from "@/main/tasks";
-import { KANBAN_STATUS_LEVELS } from "@/main/tasks";
-import { useCreateLabelMutation } from "../api/useCreateLabelMutation";
-import { useCreateTaskMutation } from "../api/useCreateTaskMutation";
-import { useUpdateTaskMutation } from "../api/useUpdateTaskMutation";
-import type { QuickAddContext } from "../lib/parseQuickAdd";
-import { taskFormSchema } from "../model/taskFormSchema";
-import { useDiscardConfirmation } from "../model/useDiscardConfirmation";
-import { useInboxProjectDefault } from "../model/useInboxProjectDefault";
-import { useLabelsFieldHandler } from "../model/useLabelsFieldHandler";
-import { useProjectMentionSuggestions } from "../model/useProjectMentionSuggestions";
-import { useQuickAddTitleSync } from "../model/useQuickAddTitleSync";
-import { useSubmitTaskForm } from "../model/useSubmitTaskForm";
-import { useTaskFieldTokenHandlers } from "../model/useTaskFieldTokenHandlers";
-import { DiscardChangesModal } from "./DiscardChangesModal";
-import { ReservedLabelModal } from "./ReservedLabelModal";
-import { TaskFormFields } from "./TaskFormFields";
+import { subtasksListQueryKey } from "@/entities/task";
+import type { TaskDTO } from "@/main/tasks";
+import { type TaskFormDefaults, TaskFormFrame } from "./TaskFormFrame";
 
-/** Reserved kanban labels (see `KANBAN_STATUS_LEVELS`) never go through the
- * Labels field or an `@label` quick-add token — they're only ever set via
- * the Kanban status control (SPECIFICATION.md "Детальное отображение задачи"). */
-const RESERVED_LABELS = KANBAN_STATUS_LEVELS.filter(
-  (level): level is Exclude<typeof level, "none"> => level !== "none",
-);
+export type { TaskFormDefaults };
 
-export type TaskFormDefaults = {
-  projectId?: string;
-  kanbanStatus?: KanbanStatusLevelType;
-  due?: { date: string; datetime: string | null } | null;
-};
+/** A pushed frame is always a subtask context — `task` present means editing
+ * an existing subtask, absent means creating a new one under `parentTask`
+ * (SPECIFICATION.md: "Подзадачи в режиме создания добавить нельзя", so a
+ * freshly created subtask can't itself be the parent of a pushed frame). */
+type StackFrame = { task?: TaskDTO; parentTask: TaskDTO };
+
+const frameKey = (frame: StackFrame): string =>
+  frame.task ? frame.task.id : `new-under-${frame.parentTask.id}`;
 
 type TaskFormModalProps = {
   opened: boolean;
@@ -57,6 +29,13 @@ type TaskFormModalProps = {
   defaults?: TaskFormDefaults;
 };
 
+/**
+ * Re-renders in place instead of opening a new modal when navigating into a
+ * subtask (SPECIFICATION.md "Детальное отображение задачи") — every frame
+ * (the root task and each subtask pushed on top) stays mounted for the
+ * modal's lifetime, only the top one visible, so a form's in-progress edits
+ * survive the round trip to a subtask and back (see `TaskFormFrame`).
+ */
 export const TaskFormModal: FC<TaskFormModalProps> = ({
   opened,
   onClose,
@@ -64,208 +43,78 @@ export const TaskFormModal: FC<TaskFormModalProps> = ({
   task,
   defaults,
 }) => {
-  const isEditMode = task !== undefined;
+  const [stack, setStack] = useState<StackFrame[]>([]);
+  // The currently visible frame's own dirty-check "leave" function — the
+  // modal's backdrop/✕ click and the breadcrumb link both go through
+  // whichever frame is on top, without the shell reaching into
+  // `useDiscardConfirmation` itself (see `TaskFormFrame`'s `registerLeave`).
+  const activeLeaveRef = useRef<() => void>(() => {});
 
-  const projectsQuery = useProjectsQuery();
-  const projects = projectsQuery.data?.ok ? projectsQuery.data.projects : [];
-  const inboxProject = projects.find((p) => p.isInboxProject);
-  const baselineProjectId = defaults?.projectId ?? inboxProject?.id ?? "";
+  const topFrame = stack.at(-1);
 
-  const labelsQuery = useLabelsQuery();
-  const knownLabels = labelsQuery.data?.ok ? labelsQuery.data.labels : [];
-
-  const createTaskMutation = useCreateTaskMutation(queryKey);
-  const updateTaskMutation = useUpdateTaskMutation(queryKey);
-  const createLabelMutation = useCreateLabelMutation();
-  const deleteTaskMutation = useDeleteTaskMutation(queryKey);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-
-  const quickAddContext: QuickAddContext = {
-    projects: projects.map((p) => ({ id: p.id, name: p.name })),
-    reservedLabels: RESERVED_LABELS,
-  };
-
-  // Seeded from the task's plain title on edit, same as create mode starting
-  // blank — everything else stays in its own field until a recognized token
-  // shows up in this text (see `useQuickAddTitleSync`).
-  const initialRawTitle = task?.title ?? "";
-  const formRef = useRef<HTMLFormElement>(null);
-
-  const form = useForm({
-    initialValues: {
-      description: task?.description ?? "",
-      projectId: task?.projectId ?? baselineProjectId,
-      priority: task?.priority ?? ("p4" as PriorityLevel),
-      dueDate: task?.due?.date ?? defaults?.due?.date ?? null,
-      dueTime: task?.due?.datetime
-        ? dayjs(task.due.datetime).format("HH:mm")
-        : defaults?.due?.datetime
-          ? dayjs(defaults.due.datetime).format("HH:mm")
-          : null,
-      kanbanStatus:
-        task?.kanbanStatus.level ?? defaults?.kanbanStatus ?? "none",
-      labels: task?.labels ?? [],
-    },
-    validate: schemaResolver(taskFormSchema, { sync: true }),
-  });
-
-  useInboxProjectDefault({
-    form,
-    isEditMode,
-    defaultProjectId: defaults?.projectId,
-    inboxProject,
-  });
-
-  const {
-    rawTitle,
-    quickAddSegments,
-    handleTitleTextChange,
-    resyncTitleToken,
-    applyRawTitle,
-  } = useQuickAddTitleSync({
-    initialRawTitle,
-    quickAddContext,
-    form,
-    knownLabels,
-    onUnknownLabel: (name) => createLabelMutation.mutate(name),
-  });
-
-  const {
-    handlePriorityChange,
-    handleProjectChange,
-    handleDueDateChange,
-    handleDueTimeChange,
-    handleKanbanStatusChange,
-  } = useTaskFieldTokenHandlers({ form, projects, resyncTitleToken });
-
-  const {
-    handleLabelsChange,
-    pendingReservedLabel,
-    confirmReservedLabel,
-    cancelReservedLabel,
-  } = useLabelsFieldHandler({
-    form,
-    rawTitle,
-    quickAddContext,
-    reservedLabels: RESERVED_LABELS,
-    knownLabels,
-    onUnknownLabel: (name) => createLabelMutation.mutate(name),
-    applyRawTitle,
-    resyncTitleToken,
-  });
-
-  const { projectSuggestions, selectProjectSuggestion } =
-    useProjectMentionSuggestions({ rawTitle, projects, form, applyRawTitle });
-
-  const {
-    isDiscardConfirmOpen,
-    cancelDiscard,
-    requestClose,
-    handleFormKeyDown,
-  } = useDiscardConfirmation({ form, rawTitle, initialRawTitle, onClose });
-
-  const handleSubmit = useSubmitTaskForm({
-    form,
-    isEditMode,
-    task,
-    rawTitle,
-    quickAddContext,
-    createTaskMutation,
-    updateTaskMutation,
-    onClose,
-  });
-
-  // Closes the detail modal first, then deletes optimistically — the delete
-  // mutation's cache write no longer needs to be reconciled with this modal
-  // being open on the task it just removed.
-  const handleConfirmDelete = () => {
-    setIsDeleteConfirmOpen(false);
-    onClose();
-    if (task) deleteTaskMutation.mutate({ taskId: task.id });
-  };
-
-  const projectOptions = projects.map((p) => ({ value: p.id, label: p.name }));
-  const labelOptions = knownLabels
-    .filter(
-      (l) =>
-        !(RESERVED_LABELS as readonly string[]).includes(l.name.toLowerCase()),
-    )
-    .map((l) => l.name);
+  const pushSubtask = (subtask: TaskDTO, parentTask: TaskDTO) =>
+    setStack((s) => [...s, { task: subtask, parentTask }]);
+  const pushNewSubtask = (parentTask: TaskDTO) =>
+    setStack((s) => [...s, { parentTask }]);
+  const popFrame = () => setStack((s) => s.slice(0, -1));
 
   return (
     <Modal
       opened={opened}
-      onClose={requestClose}
+      onClose={() => activeLeaveRef.current()}
       closeOnEscape={false}
-      title={isEditMode ? "Edit task" : "New task"}
-      size="lg"
+      title={
+        topFrame ? (
+          <UnstyledButton fw={600} onClick={() => activeLeaveRef.current()}>
+            ← {topFrame.parentTask.title}
+          </UnstyledButton>
+        ) : task ? (
+          "Edit task"
+        ) : (
+          "New task"
+        )
+      }
+      size="xl"
     >
-      <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleFormKeyDown}>
-        <Stack gap="md">
-          <TaskFormFields
-            form={form}
-            quickAddSegments={quickAddSegments}
-            onTitleTextChange={handleTitleTextChange}
-            onTitleSubmit={() => formRef.current?.requestSubmit()}
-            projectSuggestions={projectSuggestions}
-            onSelectProjectSuggestion={selectProjectSuggestion}
-            projectOptions={projectOptions}
-            onProjectChange={handleProjectChange}
-            onDueDateChange={handleDueDateChange}
-            onDueTimeChange={handleDueTimeChange}
-            onPriorityChange={handlePriorityChange}
-            onKanbanStatusChange={handleKanbanStatusChange}
-            labelOptions={labelOptions}
-            onLabelsChange={handleLabelsChange}
-          />
+      <div style={{ display: topFrame ? "none" : undefined }}>
+        <TaskFormFrame
+          queryKey={queryKey}
+          task={task}
+          defaults={defaults}
+          onOpenSubtask={(subtask) => task && pushSubtask(subtask, task)}
+          onAddSubtask={() => task && pushNewSubtask(task)}
+          onCloseModal={onClose}
+          registerLeave={(fn) => {
+            if (!topFrame) activeLeaveRef.current = fn;
+          }}
+        />
+      </div>
 
-          <Group justify="flex-end">
-            <Button type="button" variant="default" onClick={requestClose}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={(event) => event.currentTarget.form?.requestSubmit()}
-            >
-              {isEditMode ? "Save" : "Add"}
-            </Button>
-          </Group>
-
-          {isEditMode && (
-            <>
-              <Divider />
-              <Group justify="flex-end">
-                <Button
-                  type="button"
-                  color="red"
-                  variant="subtle"
-                  onClick={() => setIsDeleteConfirmOpen(true)}
-                >
-                  Delete
-                </Button>
-              </Group>
-            </>
-          )}
-        </Stack>
-      </form>
-
-      <DiscardChangesModal
-        opened={isDiscardConfirmOpen}
-        onCancel={cancelDiscard}
-        onDiscard={onClose}
-      />
-
-      <ReservedLabelModal
-        pendingLabel={pendingReservedLabel}
-        onCancel={cancelReservedLabel}
-        onConfirm={confirmReservedLabel}
-      />
-
-      <DeleteTaskConfirmModal
-        opened={isDeleteConfirmOpen}
-        onCancel={() => setIsDeleteConfirmOpen(false)}
-        onConfirm={handleConfirmDelete}
-      />
+      {stack.map((frame, index) => {
+        const isTop = index === stack.length - 1;
+        return (
+          <div
+            key={frameKey(frame)}
+            style={{ display: isTop ? undefined : "none" }}
+          >
+            <TaskFormFrame
+              queryKey={subtasksListQueryKey(frame.parentTask.id)}
+              task={frame.task}
+              parentTask={frame.parentTask}
+              defaults={{ projectId: frame.parentTask.projectId }}
+              onOpenSubtask={(subtask) =>
+                frame.task && pushSubtask(subtask, frame.task)
+              }
+              onAddSubtask={() => frame.task && pushNewSubtask(frame.task)}
+              onBack={popFrame}
+              onCloseModal={onClose}
+              registerLeave={(fn) => {
+                if (isTop) activeLeaveRef.current = fn;
+              }}
+            />
+          </div>
+        );
+      })}
     </Modal>
   );
 };

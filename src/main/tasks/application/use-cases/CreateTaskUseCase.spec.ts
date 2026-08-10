@@ -43,6 +43,7 @@ describe("CreateTaskUseCase", () => {
           null,
           "none",
           [],
+          null,
         ),
       ),
     ).rejects.toThrow(InvalidTaskSessionError);
@@ -61,6 +62,7 @@ describe("CreateTaskUseCase", () => {
         { date: "2026-08-10", datetime: null },
         "todo",
         ["errand"],
+        null,
       ),
     );
 
@@ -72,13 +74,42 @@ describe("CreateTaskUseCase", () => {
     expect(result.rawLabels).toEqual(["errand", "todo"]);
   });
 
+  it("passes parentId through to the entity for a subtask", async () => {
+    const gateway = buildGateway();
+    const useCase = new CreateTaskUseCase(gateway, buildTokenStore(token));
+
+    const result = await useCase.execute(
+      new CreateTaskInput(
+        "Sub-step",
+        "",
+        "project-1",
+        "p4",
+        null,
+        "none",
+        [],
+        "parent-1",
+      ),
+    );
+
+    expect(result.parentId).toBe("parent-1");
+  });
+
   it("throws InvalidTaskTitleError for an empty title without calling the gateway", async () => {
     const gateway = buildGateway();
     const useCase = new CreateTaskUseCase(gateway, buildTokenStore(token));
 
     await expect(
       useCase.execute(
-        new CreateTaskInput("   ", "", "project-1", "p4", null, "none", []),
+        new CreateTaskInput(
+          "   ",
+          "",
+          "project-1",
+          "p4",
+          null,
+          "none",
+          [],
+          null,
+        ),
       ),
     ).rejects.toThrow(InvalidTaskTitleError);
     expect(gateway.create).not.toHaveBeenCalled();

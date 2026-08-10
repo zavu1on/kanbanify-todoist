@@ -18,6 +18,7 @@ const buildTask = (id: string, due: TaskDue | null): Task =>
     due,
     rawLabels: [],
     checked: false,
+    parentId: null,
   });
 
 const buildTokenStore = (accessToken: AccessToken | null): ITokenStore => ({
@@ -62,6 +63,7 @@ describe("ListTasksUseCase", () => {
       "a-valid-token-value-000000000000",
       "current-cursor",
       undefined,
+      undefined,
     );
     expect(result).toEqual(page);
   });
@@ -80,7 +82,65 @@ describe("ListTasksUseCase", () => {
       "a-valid-token-value-000000000000",
       null,
       "project-1",
+      undefined,
     );
+  });
+
+  it("hides subtasks from a plain list (no parentId given)", async () => {
+    const topLevel = buildTask("top-level", null);
+    const subtask = Task.reconstitute({
+      id: "sub-1",
+      title: "sub-1",
+      description: "",
+      projectId: "project-1",
+      priority: Priority.fromApiValue(4),
+      due: null,
+      rawLabels: [],
+      checked: false,
+      parentId: "top-level",
+    });
+    const page: TaskListPage = {
+      tasks: [topLevel, subtask],
+      nextCursor: null,
+    };
+    const useCase = new ListTasksUseCase(
+      buildGateway(page),
+      buildTokenStore(AccessToken.of("a-valid-token-value-000000000000")),
+    );
+
+    const result = await useCase.execute(null);
+
+    expect(result.tasks.map((task) => task.id)).toEqual(["top-level"]);
+  });
+
+  it("forwards parentId to the gateway and keeps its subtasks unfiltered", async () => {
+    const subtask = Task.reconstitute({
+      id: "sub-1",
+      title: "sub-1",
+      description: "",
+      projectId: "project-1",
+      priority: Priority.fromApiValue(4),
+      due: null,
+      rawLabels: [],
+      checked: false,
+      parentId: "top-level",
+    });
+    const page: TaskListPage = { tasks: [subtask], nextCursor: null };
+    const gateway = buildGateway(page);
+    const useCase = new ListTasksUseCase(
+      gateway,
+      buildTokenStore(AccessToken.of("a-valid-token-value-000000000000")),
+    );
+
+    const result = await useCase.execute(null, undefined, "top-level");
+
+    expect(gateway.listTasks).toHaveBeenCalledWith(
+      "a-valid-token-value-000000000000",
+      null,
+      undefined,
+      "top-level",
+    );
+    expect(result.tasks.map((task) => task.id)).toEqual(["sub-1"]);
   });
 
   it("sorts tasks by due date — overdue to farthest, undated last", async () => {

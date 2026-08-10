@@ -21,6 +21,9 @@ export type TaskCreateDetails = {
   /** Non-reserved labels only — the reserved kanban label is derived from
    * `kanbanStatus`, never passed in directly (see `KanbanStatus.applyTo`). */
   labels: string[];
+  /** The parent task's id, or `null` for a top-level task — fixed at creation,
+   * there is no operation to reparent a task afterwards. */
+  parentId: string | null;
 };
 
 export type TaskUpdateDetails = {
@@ -40,6 +43,7 @@ export type TaskReconstituteSource = {
   due: TaskDue | null;
   rawLabels: string[];
   checked: boolean;
+  parentId: string | null;
 };
 
 export class Task {
@@ -51,6 +55,7 @@ export class Task {
   private _kanbanStatus: KanbanStatus;
   private _labels: string[];
   private _checked: boolean;
+  private readonly _parentId: string | null;
 
   private constructor(
     readonly id: string,
@@ -63,6 +68,7 @@ export class Task {
     /** Reserved kanban labels are stripped — see `Task.resolveStatus`. */
     labels: string[],
     checked: boolean,
+    parentId: string | null,
   ) {
     this._title = title;
     this._description = description;
@@ -72,6 +78,7 @@ export class Task {
     this._kanbanStatus = kanbanStatus;
     this._labels = labels;
     this._checked = checked;
+    this._parentId = parentId;
   }
 
   get title(): string {
@@ -111,6 +118,11 @@ export class Task {
     return this._checked;
   }
 
+  /** `null` for a top-level task — see `TaskCreateDetails.parentId`. */
+  get parentId(): string | null {
+    return this._parentId;
+  }
+
   /** This task's full Todoist label list — its non-reserved labels plus the
    * current status's reserved label (dropped for "none"). Used to persist a
    * status change (see `UpdateTaskStatusUseCase`, `ITaskGateway.save`). */
@@ -132,6 +144,7 @@ export class Task {
       KanbanStatus.of(details.kanbanStatus),
       KanbanStatus.stripReserved(details.labels),
       false,
+      details.parentId,
     );
   }
 
@@ -148,6 +161,7 @@ export class Task {
       Task.resolveStatus(source.rawLabels),
       KanbanStatus.stripReserved(source.rawLabels),
       source.checked,
+      source.parentId,
     );
   }
 

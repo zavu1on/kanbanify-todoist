@@ -43,8 +43,9 @@ const api = {
     list: (
       cursor: string | null,
       projectId?: string,
+      parentId?: string,
     ): Promise<TasksListResult> =>
-      ipcRenderer.invoke("tasks:list", cursor, projectId),
+      ipcRenderer.invoke("tasks:list", cursor, projectId, parentId),
     updateStatus: (
       taskId: string,
       status: KanbanStatusLevel,

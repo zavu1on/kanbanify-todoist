@@ -28,6 +28,7 @@ export class ListTasksUseCase implements UseCase<string | null, TaskListPage> {
   async execute(
     cursor: string | null,
     projectId?: string,
+    parentId?: string,
   ): Promise<TaskListPage> {
     const accessToken = await this.tokenStore.load();
     if (accessToken === null) throw new InvalidTaskSessionError();
@@ -36,7 +37,15 @@ export class ListTasksUseCase implements UseCase<string | null, TaskListPage> {
       accessToken.value,
       cursor,
       projectId,
+      parentId,
     );
-    return { ...page, tasks: [...page.tasks].sort(byDueDate) };
+    // Subtasks only ever appear when explicitly requested via `parentId` (a
+    // task's own subtasks list) — every other list (Tasks, a project page)
+    // hides them so they don't show up twice as standalone cards.
+    const tasks =
+      parentId === undefined
+        ? page.tasks.filter((task) => task.parentId === null)
+        : page.tasks;
+    return { ...page, tasks: [...tasks].sort(byDueDate) };
   }
 }

@@ -8,7 +8,7 @@ import { UpdateTaskInput } from "../dtos/UpdateTaskInput";
 import type { ITaskGateway } from "../ports/ITaskGateway";
 import { UpdateTaskUseCase } from "./UpdateTaskUseCase";
 
-const buildTask = (projectId: string) =>
+const buildTask = (projectId: string, parentId: string | null = null) =>
   Task.reconstitute({
     id: "task-1",
     title: "Write report",
@@ -18,6 +18,7 @@ const buildTask = (projectId: string) =>
     due: null,
     rawLabels: ["errand", "todo"],
     checked: false,
+    parentId,
   });
 
 const buildTokenStore = (accessToken: AccessToken | null): ITokenStore => ({
@@ -114,5 +115,32 @@ describe("UpdateTaskUseCase", () => {
       "task-1",
       "project-2",
     );
+  });
+
+  it("never moves a subtask, even when the input's projectId differs from its own", async () => {
+    // Todoist's move command accepts exactly one of project/section/parent —
+    // moving a subtask by project alone would silently detach it from its
+    // parent (see the use-case's comment), so a subtask's project stays
+    // whatever the parent gave it regardless of what the caller sends.
+    const task = buildTask("project-1", "parent-1");
+    const gateway = buildGateway(task);
+    const useCase = new UpdateTaskUseCase(gateway, buildTokenStore(token));
+
+    const result = await useCase.execute(
+      new UpdateTaskInput(
+        "task-1",
+        "Write report",
+        "",
+        "project-2",
+        "p4",
+        null,
+        "todo",
+        ["errand"],
+      ),
+    );
+
+    expect(gateway.move).not.toHaveBeenCalled();
+    expect(result.projectId).toBe("project-1");
+    expect(result.parentId).toBe("parent-1");
   });
 });

@@ -18,6 +18,7 @@ const buildTask = (rawLabels: string[]) =>
     due: null,
     rawLabels,
     checked: false,
+    parentId: null,
   });
 
 const buildTokenStore = (accessToken: AccessToken | null): ITokenStore => ({

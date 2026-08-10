@@ -14,6 +14,7 @@ const buildTask = (rawLabels: string[], checked = false) =>
     due: null,
     rawLabels,
     checked,
+    parentId: null,
   });
 
 describe("Task.reconstitute", () => {
@@ -96,6 +97,7 @@ describe("Task.create", () => {
       due: { date: "2026-08-10", datetime: null },
       kanbanStatus: "todo",
       labels: ["errand"],
+      parentId: null,
     });
 
     expect(task.id).toBe("");
@@ -106,6 +108,22 @@ describe("Task.create", () => {
     expect(task.kanbanStatus.level).toBe("todo");
     expect(task.labels).toEqual(["errand"]);
     expect(task.rawLabels).toEqual(["errand", "todo"]);
+    expect(task.parentId).toBeNull();
+  });
+
+  it("carries the given parentId for a subtask", () => {
+    const task = Task.create({
+      title: "Sub-step",
+      description: "",
+      projectId: "project-1",
+      priority: "p4",
+      due: null,
+      kanbanStatus: "none",
+      labels: [],
+      parentId: "parent-1",
+    });
+
+    expect(task.parentId).toBe("parent-1");
   });
 
   it("strips a reserved label passed in `labels` instead of deriving status from it", () => {
@@ -117,6 +135,7 @@ describe("Task.create", () => {
       due: null,
       kanbanStatus: "in-progress",
       labels: ["completed"],
+      parentId: null,
     });
 
     expect(task.labels).toEqual([]);
@@ -133,6 +152,7 @@ describe("Task.create", () => {
         due: null,
         kanbanStatus: "none",
         labels: [],
+        parentId: null,
       }),
     ).toThrow(InvalidTaskTitleError);
   });

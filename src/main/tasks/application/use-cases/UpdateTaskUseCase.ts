@@ -30,6 +30,14 @@ export class UpdateTaskUseCase implements UseCase<UpdateTaskInput, Task> {
     original.changeStatus(input.kanbanStatus);
 
     const saved = await this.taskGateway.save(accessToken.value, original);
+    // A subtask's project is inherited from its parent and never independently
+    // editable (SPECIFICATION.md: "созданная подзадача наследует проект
+    // родителя") — `move`'s underlying Todoist command accepts exactly one of
+    // project/section/parent, so moving a subtask by project alone would
+    // silently detach it from its parent. Ignore any `projectId` a caller
+    // supplies for a subtask rather than risk that, instead of trusting the
+    // frontend to never send one.
+    if (original.parentId !== null) return saved;
     // `save` never persists `projectId` (Todoist has no field for it on
     // `updateTask`, see `ITaskGateway.move`) — only pay for the extra API
     // call when the form actually changed the project.

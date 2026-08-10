@@ -41,6 +41,7 @@ export const useCreateTaskMutation = (queryKey: QueryKey) => {
         kanbanStatus: { level: input.kanbanStatus, hasConflict: false },
         labels: input.labels,
         checked: false,
+        parentId: input.parentId,
       };
 
       queryClient.setQueryData<TasksPages>(queryKey, (data) => {

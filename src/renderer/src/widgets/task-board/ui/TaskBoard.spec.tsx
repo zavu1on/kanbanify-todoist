@@ -14,6 +14,7 @@ const task: TaskDTO = {
   kanbanStatus: { level: "todo", hasConflict: false },
   labels: [],
   checked: false,
+  parentId: null,
 };
 
 const renderBoard = () => {
@@ -47,6 +48,12 @@ describe("TaskBoard", () => {
           create: vi.fn(),
           update: vi.fn(),
           updateStatus: vi.fn(),
+          list: vi.fn().mockResolvedValue({
+            ok: true,
+            tasks: [],
+            nextCursor: null,
+          }),
+          complete: vi.fn(),
         },
       },
     });

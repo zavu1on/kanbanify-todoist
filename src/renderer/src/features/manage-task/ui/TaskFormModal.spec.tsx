@@ -36,6 +36,20 @@ const existingTask: TaskDTO = {
   kanbanStatus: { level: "todo", hasConflict: false },
   labels: [],
   checked: false,
+  parentId: null,
+};
+
+const existingSubtask: TaskDTO = {
+  id: "task-2",
+  title: "Gather numbers",
+  description: "",
+  projectId: "inbox",
+  priority: "p4",
+  due: null,
+  kanbanStatus: { level: "todo", hasConflict: false },
+  labels: [],
+  checked: false,
+  parentId: "task-1",
 };
 
 const renderModal = (props: {
@@ -84,6 +98,21 @@ describe("TaskFormModal", () => {
           create: vi.fn(),
           update: vi.fn(),
           delete: vi.fn(),
+          list: vi
+            .fn()
+            .mockImplementation(
+              (
+                _cursor: string | null,
+                _projectId?: string,
+                parentId?: string,
+              ) =>
+                Promise.resolve({
+                  ok: true,
+                  tasks: parentId === existingTask.id ? [existingSubtask] : [],
+                  nextCursor: null,
+                }),
+            ),
+          complete: vi.fn(),
         },
       },
     });
@@ -352,5 +381,121 @@ describe("TaskFormModal", () => {
     );
     expect(onClose).not.toHaveBeenCalled();
     expect(window.api.tasks.delete).not.toHaveBeenCalled();
+  });
+
+  it("shows a disabled sub-tasks placeholder in create mode", async () => {
+    renderModal({});
+
+    expect(
+      await screen.findByText("Save this task first to add sub-tasks."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Add sub-task" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides the Kanban status field for a subtask, lists it under its parent, and navigates in on click", async () => {
+    const user = userEvent.setup();
+    renderModal({ task: existingTask });
+
+    await user.click(await screen.findByText("Gather numbers"));
+
+    expect(
+      await screen.findByRole("button", { name: "← Write report" }),
+    ).toBeInTheDocument();
+    // The root frame stays mounted (just hidden) so its own field survives —
+    // only the subtask frame must not add a second one.
+    expect(screen.getAllByText("Kanban status")).toHaveLength(1);
+  });
+
+  it("disables the Project field for a subtask — its project is inherited, not independently editable", async () => {
+    const user = userEvent.setup();
+    renderModal({ task: existingTask });
+
+    await user.click(await screen.findByText("Gather numbers"));
+    await screen.findByRole("button", { name: "← Write report" });
+
+    const projectInputs = screen.getAllByDisplayValue("Inbox");
+    expect(projectInputs[projectInputs.length - 1]).toBeDisabled();
+  });
+
+  it("returns to the parent instead of closing the modal when a subtask is completed from its own header checkbox", async () => {
+    window.api.tasks.complete = vi.fn().mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    const { onClose } = renderModal({ task: existingTask });
+
+    await user.click(await screen.findByText("Gather numbers"));
+    await screen.findByRole("button", { name: "← Write report" });
+
+    await user.click(
+      screen.getByRole("checkbox", { name: 'Complete "Gather numbers"' }),
+    );
+
+    await waitFor(() =>
+      expect(window.api.tasks.complete).toHaveBeenCalledWith("task-2"),
+    );
+    expect(onClose).not.toHaveBeenCalled();
+    expect(
+      await screen.findByRole("heading", { name: "Edit task" }),
+    ).toBeInTheDocument();
+  });
+
+  it("goes back to the parent on Cancel from a subtask, confirming first when dirty", async () => {
+    const user = userEvent.setup();
+    const { onClose } = renderModal({ task: existingTask });
+
+    await user.click(await screen.findByText("Gather numbers"));
+    await screen.findByRole("button", { name: "← Write report" });
+
+    const descriptionInputs =
+      screen.getAllByPlaceholderText("Add a description");
+    await user.type(descriptionInputs[descriptionInputs.length - 1], "!");
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Discard changes?" }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Discard" }));
+
+    // Back on the parent frame, not the whole modal closed.
+    expect(onClose).not.toHaveBeenCalled();
+    expect(
+      await screen.findByRole("heading", { name: "Edit task" }),
+    ).toBeInTheDocument();
+  });
+
+  it("opens a new-subtask frame inheriting the parent's project, and returns to the parent on save", async () => {
+    window.api.tasks.create = vi
+      .fn()
+      .mockResolvedValue({ ok: true, task: existingSubtask });
+    const user = userEvent.setup();
+    renderModal({ task: existingTask });
+
+    await user.click(screen.getByRole("button", { name: "Add sub-task" }));
+
+    expect(
+      await screen.findByRole("button", { name: "← Write report" }),
+    ).toBeInTheDocument();
+    // The still-mounted (hidden) parent frame also shows "Inbox" for its own
+    // project field — two matches confirms the new-subtask frame inherited it.
+    await waitFor(() =>
+      expect(screen.getAllByDisplayValue("Inbox")).toHaveLength(2),
+    );
+
+    const titleInputs = screen.getAllByRole("textbox", {
+      name: "Task title",
+    });
+    await user.type(titleInputs[titleInputs.length - 1], "New subtask");
+    await user.click(screen.getByRole("button", { name: "Add" }));
+
+    await waitFor(() => {
+      expect(window.api.tasks.create).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "New subtask", parentId: "task-1" }),
+      );
+    });
+    // Back on the parent frame, not the whole modal closed.
+    expect(
+      await screen.findByRole("heading", { name: "Edit task" }),
+    ).toBeInTheDocument();
   });
 });

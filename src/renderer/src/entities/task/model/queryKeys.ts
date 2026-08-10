@@ -11,3 +11,9 @@ export const tasksListQueryKey = ["tasks", "list"] as const;
  * prefix so cross-page invalidation (see above) reaches it too. */
 export const projectTasksListQueryKey = (projectId: string) =>
   ["tasks", "list", "project", projectId] as const;
+
+/** A task's own direct subtasks, as shown in its detail modal — nested under
+ * the same `["tasks", "list"]` prefix so mutating a subtask (complete, edit,
+ * delete) is swept up by the blanket `tasksListQueryKey` invalidation too. */
+export const subtasksListQueryKey = (parentId: string) =>
+  ["tasks", "list", "subtasks", parentId] as const;

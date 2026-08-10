@@ -12,4 +12,5 @@ export type CreateTaskRequest = {
   due: { date: string; datetime: string | null } | null;
   kanbanStatus: KanbanStatusLevel;
   labels: string[];
+  parentId: string | null;
 };

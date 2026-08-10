@@ -25,6 +25,7 @@ export class CreateTaskUseCase implements UseCase<CreateTaskInput, Task> {
       due: input.due,
       kanbanStatus: input.kanbanStatus,
       labels: input.labels,
+      parentId: input.parentId,
     });
 
     return this.taskGateway.create(accessToken.value, task);

@@ -14,6 +14,7 @@ const task: TaskDTO = {
   kanbanStatus: { level: "none", hasConflict: false },
   labels: [],
   checked: false,
+  parentId: null,
 };
 
 const renderCard = (props: Partial<React.ComponentProps<typeof TaskCard>>) => {

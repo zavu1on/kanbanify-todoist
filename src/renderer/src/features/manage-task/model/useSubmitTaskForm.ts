@@ -16,6 +16,8 @@ type UseSubmitTaskFormParams = {
   createTaskMutation: ReturnType<typeof useCreateTaskMutation>;
   updateTaskMutation: ReturnType<typeof useUpdateTaskMutation>;
   onClose: () => void;
+  /** `null` for a top-level task — a subtask frame passes its parent task's id. */
+  parentId: string | null;
 };
 
 /** Builds the create/update payload and dispatches the right mutation for
@@ -30,6 +32,7 @@ export const useSubmitTaskForm = ({
   createTaskMutation,
   updateTaskMutation,
   onClose,
+  parentId,
 }: UseSubmitTaskFormParams) =>
   form.onSubmit(
     (values) => {
@@ -75,6 +78,7 @@ export const useSubmitTaskForm = ({
           due,
           kanbanStatus: values.kanbanStatus,
           labels: values.labels,
+          parentId,
         });
       }
       onClose();

@@ -19,6 +19,7 @@ const buildTask = (checked = false) =>
     due: null,
     rawLabels: ["errand", "todo"],
     checked,
+    parentId: null,
   });
 
 const buildTokenStore = (accessToken: AccessToken | null): ITokenStore => ({

@@ -45,10 +45,16 @@ export class TasksIpcController implements IpcController {
   register(): void {
     ipcMain.handle(
       "tasks:list",
-      (_event, cursor: unknown, projectId: unknown): Promise<TasksListResult> =>
+      (
+        _event,
+        cursor: unknown,
+        projectId: unknown,
+        parentId: unknown,
+      ): Promise<TasksListResult> =>
         this.list(
           typeof cursor === "string" ? cursor : null,
           typeof projectId === "string" ? projectId : undefined,
+          typeof parentId === "string" ? parentId : undefined,
         ),
     );
     ipcMain.handle(
@@ -91,11 +97,13 @@ export class TasksIpcController implements IpcController {
   private async list(
     cursor: string | null,
     projectId?: string,
+    parentId?: string,
   ): Promise<TasksListResult> {
     try {
       const { tasks, nextCursor } = await this.listTasksUseCase.execute(
         cursor,
         projectId,
+        parentId,
       );
       return {
         ok: true,
@@ -179,6 +187,7 @@ export class TasksIpcController implements IpcController {
           input.due,
           input.kanbanStatus,
           input.labels,
+          input.parentId,
         ),
       );
       return { ok: true, task: this.taskMapper.toDTO(task) };

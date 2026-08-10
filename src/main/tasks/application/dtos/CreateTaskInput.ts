@@ -10,5 +10,6 @@ export class CreateTaskInput {
     readonly due: { date: string; datetime: string | null } | null,
     readonly kanbanStatus: KanbanStatusLevel,
     readonly labels: string[],
+    readonly parentId: string | null,
   ) {}
 }

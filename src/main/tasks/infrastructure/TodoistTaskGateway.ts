@@ -18,6 +18,7 @@ export class TodoistTaskGateway implements ITaskGateway {
     accessToken: string,
     cursor: string | null,
     projectId?: string,
+    parentId?: string,
   ): Promise<TaskListPage> {
     return this.errorClassifier.wrap(async () => {
       const api = new TodoistApi(accessToken);
@@ -25,6 +26,7 @@ export class TodoistTaskGateway implements ITaskGateway {
         cursor,
         limit: PAGE_SIZE,
         projectId,
+        parentId,
       });
 
       return {
@@ -51,6 +53,9 @@ export class TodoistTaskGateway implements ITaskGateway {
         projectId: task.projectId,
         priority: task.priority.toApiValue(),
         labels: task.rawLabels,
+        // `AddTaskArgs.parentId` is `string | undefined`, not `string | null` —
+        // omit the key entirely for a top-level task rather than pass `null`.
+        ...(task.parentId ? { parentId: task.parentId } : {}),
       };
       // `AddTaskArgs.dueDate`/`dueDatetime` are mutually exclusive (see
       // `TaskDue`'s doc comment) — the SDK's XOR type only accepts an object

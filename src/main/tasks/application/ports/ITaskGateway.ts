@@ -12,11 +12,15 @@ export interface TaskListPage {
 export interface ITaskGateway {
   /** `projectId` scopes the list to one project — used both for the project
    * page's task list and for counting a project's active tasks (`ListProjectsUseCase`).
+   * `parentId` scopes the list to one task's direct subtasks — Todoist's
+   * `getTasks` never returns completed tasks, so this doubles as "all
+   * unfinished subtasks" with no extra filtering (see `ListTasksUseCase`).
    * @throws {import("../../domain/errors/TasksError").TasksError} */
   listTasks(
     accessToken: string,
     cursor: string | null,
     projectId?: string,
+    parentId?: string,
   ): Promise<TaskListPage>;
 
   /** @throws {import("../../domain/errors/TasksError").TasksError} */

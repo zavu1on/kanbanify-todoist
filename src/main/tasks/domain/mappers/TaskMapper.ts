@@ -14,6 +14,7 @@ export type TaskApiSource = {
   due: { date: string; datetime?: string | null } | null;
   labels: string[];
   checked: boolean;
+  parentId: string | null;
 };
 
 /**
@@ -34,6 +35,7 @@ export class TaskMapper {
         : null,
       rawLabels: source.labels,
       checked: source.checked,
+      parentId: source.parentId,
     });
   }
 
@@ -56,6 +58,7 @@ export class TaskMapper {
       },
       labels: task.labels,
       checked: task.checked,
+      parentId: task.parentId,
     };
   }
 }

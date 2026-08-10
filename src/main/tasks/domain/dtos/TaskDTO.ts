@@ -15,4 +15,5 @@ export type TaskDTO = {
   kanbanStatus: { level: KanbanStatusLevel; hasConflict: boolean };
   labels: string[];
   checked: boolean;
+  parentId: string | null;
 };
