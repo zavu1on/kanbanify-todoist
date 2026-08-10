@@ -22,6 +22,7 @@ import type {
   CompleteTaskResult,
   CreateTaskRequest,
   CreateTaskResult,
+  DeleteTaskResult,
   KanbanStatusLevel,
   TasksCountResult,
   TasksListResult,
@@ -59,6 +60,8 @@ const api = {
       input: UpdateTaskRequest,
     ): Promise<UpdateTaskResult> =>
       ipcRenderer.invoke("tasks:update", taskId, input),
+    delete: (taskId: string): Promise<DeleteTaskResult> =>
+      ipcRenderer.invoke("tasks:delete", taskId),
   },
   labels: {
     list: (): Promise<LabelsListResult> => ipcRenderer.invoke("labels:list"),

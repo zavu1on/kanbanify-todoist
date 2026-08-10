@@ -107,4 +107,11 @@ export class TodoistTaskGateway implements ITaskGateway {
       await api.closeTask(taskId);
     });
   }
+
+  async delete(accessToken: string, taskId: string): Promise<void> {
+    return this.errorClassifier.wrap(async () => {
+      const api = new TodoistApi(accessToken);
+      await api.deleteTask(taskId);
+    });
+  }
 }

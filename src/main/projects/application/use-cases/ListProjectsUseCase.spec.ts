@@ -49,6 +49,7 @@ const buildTaskGateway = (
     save: vi.fn(),
     move: vi.fn(),
     close: vi.fn(),
+    delete: vi.fn(),
   };
 };
 

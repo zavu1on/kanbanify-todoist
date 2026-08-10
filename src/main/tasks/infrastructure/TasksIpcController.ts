@@ -7,12 +7,14 @@ import { UpdateTaskStatusInput } from "../application/dtos/UpdateTaskStatusInput
 import type { CompleteTaskUseCase } from "../application/use-cases/CompleteTaskUseCase";
 import type { CountUnfinishedTasksUseCase } from "../application/use-cases/CountUnfinishedTasksUseCase";
 import type { CreateTaskUseCase } from "../application/use-cases/CreateTaskUseCase";
+import type { DeleteTaskUseCase } from "../application/use-cases/DeleteTaskUseCase";
 import type { ListTasksUseCase } from "../application/use-cases/ListTasksUseCase";
-import type { UpdateTaskUseCase } from "../application/use-cases/UpdateTaskUseCase";
 import type { UpdateTaskStatusUseCase } from "../application/use-cases/UpdateTaskStatusUseCase";
+import type { UpdateTaskUseCase } from "../application/use-cases/UpdateTaskUseCase";
 import type { CompleteTaskResult } from "../domain/contracts/CompleteTaskResult";
 import type { CreateTaskRequest } from "../domain/contracts/CreateTaskRequest";
 import type { CreateTaskResult } from "../domain/contracts/CreateTaskResult";
+import type { DeleteTaskResult } from "../domain/contracts/DeleteTaskResult";
 import type { TasksCountResult } from "../domain/contracts/TasksCountResult";
 import type { TasksErrorType } from "../domain/contracts/TasksFailure";
 import type { TasksListResult } from "../domain/contracts/TasksListResult";
@@ -37,6 +39,7 @@ export class TasksIpcController implements IpcController {
     private readonly completeTaskUseCase: CompleteTaskUseCase,
     private readonly createTaskUseCase: CreateTaskUseCase,
     private readonly updateTaskUseCase: UpdateTaskUseCase,
+    private readonly deleteTaskUseCase: DeleteTaskUseCase,
   ) {}
 
   register(): void {
@@ -77,6 +80,11 @@ export class TasksIpcController implements IpcController {
         taskId: unknown,
         input: UpdateTaskRequest,
       ): Promise<UpdateTaskResult> => this.update(taskId, input),
+    );
+    ipcMain.handle(
+      "tasks:delete",
+      (_event, taskId: unknown): Promise<DeleteTaskResult> =>
+        this.delete(taskId),
     );
   }
 
@@ -210,6 +218,28 @@ export class TasksIpcController implements IpcController {
         ),
       );
       return { ok: true, task: this.taskMapper.toDTO(task) };
+    } catch (error) {
+      return {
+        ok: false,
+        error: {
+          type: this.getErrorType(error),
+          message: this.getMessageFromError(error),
+        },
+      };
+    }
+  }
+
+  private async delete(taskId: unknown): Promise<DeleteTaskResult> {
+    if (typeof taskId !== "string") {
+      return {
+        ok: false,
+        error: { type: "unknown", message: "Invalid task delete request" },
+      };
+    }
+
+    try {
+      await this.deleteTaskUseCase.execute(taskId);
+      return { ok: true };
     } catch (error) {
       return {
         ok: false,

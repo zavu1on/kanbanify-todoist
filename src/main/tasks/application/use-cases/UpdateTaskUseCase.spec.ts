@@ -36,6 +36,7 @@ const buildGateway = (task: Task): ITaskGateway => ({
     return task;
   }),
   close: vi.fn(),
+  delete: vi.fn(),
 });
 
 const token = AccessToken.of("a-valid-token-value-000000000000");

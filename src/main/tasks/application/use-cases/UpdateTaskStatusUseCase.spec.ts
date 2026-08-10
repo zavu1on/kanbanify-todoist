@@ -33,6 +33,7 @@ const buildGateway = (task: Task): ITaskGateway => ({
   save: vi.fn().mockImplementation((_token, saved: Task) => saved),
   move: vi.fn(),
   close: vi.fn(),
+  delete: vi.fn(),
 });
 
 describe("UpdateTaskStatusUseCase", () => {

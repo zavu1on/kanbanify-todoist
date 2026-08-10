@@ -5,6 +5,7 @@
 export type { CompleteTaskResult } from "./domain/contracts/CompleteTaskResult";
 export type { CreateTaskRequest } from "./domain/contracts/CreateTaskRequest";
 export type { CreateTaskResult } from "./domain/contracts/CreateTaskResult";
+export type { DeleteTaskResult } from "./domain/contracts/DeleteTaskResult";
 export type { TasksCountResult } from "./domain/contracts/TasksCountResult";
 export type { TasksErrorType } from "./domain/contracts/TasksFailure";
 export type { TasksListResult } from "./domain/contracts/TasksListResult";

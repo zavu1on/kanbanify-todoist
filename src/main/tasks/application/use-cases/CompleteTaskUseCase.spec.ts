@@ -34,6 +34,7 @@ const buildGateway = (task: Task): ITaskGateway => ({
   save: vi.fn(),
   move: vi.fn(),
   close: vi.fn(),
+  delete: vi.fn(),
 });
 
 describe("CompleteTaskUseCase", () => {

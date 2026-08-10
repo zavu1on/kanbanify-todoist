@@ -22,6 +22,7 @@ const buildGateway = (pages: TaskListPage[]): ITaskGateway => {
     save: vi.fn(),
     move: vi.fn(),
     close: vi.fn(),
+  delete: vi.fn(),
   };
 };
 

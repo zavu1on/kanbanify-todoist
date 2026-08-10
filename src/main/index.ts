@@ -21,9 +21,10 @@ import { TodoistProjectGateway } from "./projects/infrastructure/TodoistProjectG
 import { CompleteTaskUseCase } from "./tasks/application/use-cases/CompleteTaskUseCase";
 import { CountUnfinishedTasksUseCase } from "./tasks/application/use-cases/CountUnfinishedTasksUseCase";
 import { CreateTaskUseCase } from "./tasks/application/use-cases/CreateTaskUseCase";
+import { DeleteTaskUseCase } from "./tasks/application/use-cases/DeleteTaskUseCase";
 import { ListTasksUseCase } from "./tasks/application/use-cases/ListTasksUseCase";
-import { UpdateTaskUseCase } from "./tasks/application/use-cases/UpdateTaskUseCase";
 import { UpdateTaskStatusUseCase } from "./tasks/application/use-cases/UpdateTaskStatusUseCase";
+import { UpdateTaskUseCase } from "./tasks/application/use-cases/UpdateTaskUseCase";
 import { TasksIpcController } from "./tasks/infrastructure/TasksIpcController";
 import { TodoistTaskGateway } from "./tasks/infrastructure/TodoistTaskGateway";
 
@@ -56,6 +57,7 @@ const registerIpcHandlers = () => {
   const completeTaskUseCase = new CompleteTaskUseCase(taskGateway, tokenStore);
   const createTaskUseCase = new CreateTaskUseCase(taskGateway, tokenStore);
   const updateTaskUseCase = new UpdateTaskUseCase(taskGateway, tokenStore);
+  const deleteTaskUseCase = new DeleteTaskUseCase(taskGateway, tokenStore);
 
   new TasksIpcController(
     listTasksUseCase,
@@ -64,6 +66,7 @@ const registerIpcHandlers = () => {
     completeTaskUseCase,
     createTaskUseCase,
     updateTaskUseCase,
+    deleteTaskUseCase,
   ).register();
 
   const projectGateway = new TodoistProjectGateway();

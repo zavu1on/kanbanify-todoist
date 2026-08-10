@@ -45,4 +45,8 @@ export interface ITaskGateway {
    * settable through `updateTask`, so this is separate from `save`.
    * @throws {import("../../domain/errors/TasksError").TasksError} */
   close(accessToken: string, taskId: string): Promise<void>;
+
+  /** Deletes a task outright via Todoist's dedicated delete endpoint.
+   * @throws {import("../../domain/errors/TasksError").TasksError} */
+  delete(accessToken: string, taskId: string): Promise<void>;
 }

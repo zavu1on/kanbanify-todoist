@@ -1,33 +1,25 @@
-import {
-  Box,
-  Button,
-  Group,
-  Modal,
-  Paper,
-  Select,
-  Stack,
-  TagsInput,
-  Textarea,
-  UnstyledButton,
-} from "@mantine/core";
-import { DatePickerInput, TimeInput } from "@mantine/dates";
+import { Button, Divider, Group, Modal, Stack } from "@mantine/core";
 import { schemaResolver, useForm } from "@mantine/form";
 import type { QueryKey } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { type FC, useRef } from "react";
+import { type FC, useRef, useState } from "react";
 import { useLabelsQuery } from "@/entities/label";
 import { useProjectsQuery } from "@/entities/project";
-import { KANBAN_COLUMN_LABELS } from "@/entities/task";
+import {
+  DeleteTaskConfirmModal,
+  useDeleteTaskMutation,
+} from "@/features/delete-task";
 import type {
   KanbanStatusLevel as KanbanStatusLevelType,
   PriorityLevel,
   TaskDTO,
 } from "@/main/tasks";
-import { KANBAN_STATUS_LEVELS, PRIORITY_LEVELS } from "@/main/tasks";
+import { KANBAN_STATUS_LEVELS } from "@/main/tasks";
 import { useCreateLabelMutation } from "../api/useCreateLabelMutation";
 import { useCreateTaskMutation } from "../api/useCreateTaskMutation";
 import { useUpdateTaskMutation } from "../api/useUpdateTaskMutation";
 import type { QuickAddContext } from "../lib/parseQuickAdd";
+import { taskFormSchema } from "../model/taskFormSchema";
 import { useDiscardConfirmation } from "../model/useDiscardConfirmation";
 import { useInboxProjectDefault } from "../model/useInboxProjectDefault";
 import { useLabelsFieldHandler } from "../model/useLabelsFieldHandler";
@@ -35,10 +27,9 @@ import { useProjectMentionSuggestions } from "../model/useProjectMentionSuggesti
 import { useQuickAddTitleSync } from "../model/useQuickAddTitleSync";
 import { useSubmitTaskForm } from "../model/useSubmitTaskForm";
 import { useTaskFieldTokenHandlers } from "../model/useTaskFieldTokenHandlers";
-import { taskFormSchema } from "../model/taskFormSchema";
 import { DiscardChangesModal } from "./DiscardChangesModal";
-import { QuickAddTitleInput } from "./QuickAddTitleInput";
 import { ReservedLabelModal } from "./ReservedLabelModal";
+import { TaskFormFields } from "./TaskFormFields";
 
 /** Reserved kanban labels (see `KANBAN_STATUS_LEVELS`) never go through the
  * Labels field or an `@label` quick-add token — they're only ever set via
@@ -86,6 +77,8 @@ export const TaskFormModal: FC<TaskFormModalProps> = ({
   const createTaskMutation = useCreateTaskMutation(queryKey);
   const updateTaskMutation = useUpdateTaskMutation(queryKey);
   const createLabelMutation = useCreateLabelMutation();
+  const deleteTaskMutation = useDeleteTaskMutation(queryKey);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const quickAddContext: QuickAddContext = {
     projects: projects.map((p) => ({ id: p.id, name: p.name })),
@@ -182,6 +175,15 @@ export const TaskFormModal: FC<TaskFormModalProps> = ({
     onClose,
   });
 
+  // Closes the detail modal first, then deletes optimistically — the delete
+  // mutation's cache write no longer needs to be reconciled with this modal
+  // being open on the task it just removed.
+  const handleConfirmDelete = () => {
+    setIsDeleteConfirmOpen(false);
+    onClose();
+    if (task) deleteTaskMutation.mutate({ taskId: task.id });
+  };
+
   const projectOptions = projects.map((p) => ({ value: p.id, label: p.name }));
   const labelOptions = knownLabels
     .filter(
@@ -200,104 +202,21 @@ export const TaskFormModal: FC<TaskFormModalProps> = ({
     >
       <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleFormKeyDown}>
         <Stack gap="md">
-          <Box pos="relative">
-            <QuickAddTitleInput
-              segments={quickAddSegments}
-              onTextChange={handleTitleTextChange}
-              onSubmit={() => formRef.current?.requestSubmit()}
-              placeholder="Task name — try 'tomorrow at 18:00 p1 @errand #Work @todo'"
-            />
-            {projectSuggestions.length > 0 && (
-              <Paper
-                withBorder
-                shadow="sm"
-                pos="absolute"
-                top="100%"
-                left={0}
-                right={0}
-                style={{ zIndex: 200 }}
-              >
-                <Stack gap={0}>
-                  {projectSuggestions.map((project) => (
-                    <UnstyledButton
-                      key={project.id}
-                      px="sm"
-                      py={6}
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => selectProjectSuggestion(project)}
-                    >
-                      {project.name}
-                    </UnstyledButton>
-                  ))}
-                </Stack>
-              </Paper>
-            )}
-          </Box>
-
-          <Textarea
-            label="Description"
-            placeholder="Add a description"
-            minRows={3}
-            {...form.getInputProps("description")}
-          />
-
-          <Select
-            label="Project"
-            data={projectOptions}
-            searchable
-            allowDeselect={false}
-            value={form.values.projectId}
-            onChange={handleProjectChange}
-          />
-
-          <Group grow align="flex-start">
-            <DatePickerInput
-              label="Date"
-              placeholder="No date"
-              clearable
-              value={form.values.dueDate}
-              onChange={(value) =>
-                handleDueDateChange(typeof value === "string" ? value : null)
-              }
-            />
-            <TimeInput
-              label="Time"
-              disabled={!form.values.dueDate}
-              value={form.values.dueTime ?? ""}
-              onChange={(event) =>
-                handleDueTimeChange(event.currentTarget.value)
-              }
-            />
-          </Group>
-
-          <Select
-            label="Priority"
-            data={[...PRIORITY_LEVELS].map((level) => ({
-              value: level,
-              label: level.toUpperCase(),
-            }))}
-            allowDeselect={false}
-            value={form.values.priority}
-            onChange={handlePriorityChange}
-          />
-
-          <Select
-            label="Kanban status"
-            data={KANBAN_STATUS_LEVELS.map((level) => ({
-              value: level,
-              label: KANBAN_COLUMN_LABELS[level],
-            }))}
-            allowDeselect={false}
-            value={form.values.kanbanStatus}
-            onChange={handleKanbanStatusChange}
-          />
-
-          <TagsInput
-            label="Labels"
-            placeholder="Search or create a label"
-            data={labelOptions}
-            value={form.values.labels}
-            onChange={handleLabelsChange}
+          <TaskFormFields
+            form={form}
+            quickAddSegments={quickAddSegments}
+            onTitleTextChange={handleTitleTextChange}
+            onTitleSubmit={() => formRef.current?.requestSubmit()}
+            projectSuggestions={projectSuggestions}
+            onSelectProjectSuggestion={selectProjectSuggestion}
+            projectOptions={projectOptions}
+            onProjectChange={handleProjectChange}
+            onDueDateChange={handleDueDateChange}
+            onDueTimeChange={handleDueTimeChange}
+            onPriorityChange={handlePriorityChange}
+            onKanbanStatusChange={handleKanbanStatusChange}
+            labelOptions={labelOptions}
+            onLabelsChange={handleLabelsChange}
           />
 
           <Group justify="flex-end">
@@ -311,6 +230,22 @@ export const TaskFormModal: FC<TaskFormModalProps> = ({
               {isEditMode ? "Save" : "Add"}
             </Button>
           </Group>
+
+          {isEditMode && (
+            <>
+              <Divider />
+              <Group justify="flex-end">
+                <Button
+                  type="button"
+                  color="red"
+                  variant="subtle"
+                  onClick={() => setIsDeleteConfirmOpen(true)}
+                >
+                  Delete
+                </Button>
+              </Group>
+            </>
+          )}
         </Stack>
       </form>
 
@@ -324,6 +259,12 @@ export const TaskFormModal: FC<TaskFormModalProps> = ({
         pendingLabel={pendingReservedLabel}
         onCancel={cancelReservedLabel}
         onConfirm={confirmReservedLabel}
+      />
+
+      <DeleteTaskConfirmModal
+        opened={isDeleteConfirmOpen}
+        onCancel={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={handleConfirmDelete}
       />
     </Modal>
   );

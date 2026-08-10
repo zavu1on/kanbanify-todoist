@@ -33,6 +33,7 @@ const buildGateway = (page: TaskListPage): ITaskGateway => ({
   save: vi.fn(),
   move: vi.fn(),
   close: vi.fn(),
+  delete: vi.fn(),
 });
 
 describe("ListTasksUseCase", () => {

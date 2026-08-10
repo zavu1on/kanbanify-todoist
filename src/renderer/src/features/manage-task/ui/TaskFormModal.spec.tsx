@@ -83,6 +83,7 @@ describe("TaskFormModal", () => {
         tasks: {
           create: vi.fn(),
           update: vi.fn(),
+          delete: vi.fn(),
         },
       },
     });
@@ -300,5 +301,56 @@ describe("TaskFormModal", () => {
     expect(
       screen.queryByRole("button", { name: "Work" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("has no Delete button in create mode", () => {
+    renderModal({});
+
+    expect(
+      screen.queryByRole("button", { name: "Delete" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("asks for confirmation before deleting, closing the modal and deleting only after the second confirmation", async () => {
+    window.api.tasks.delete = vi.fn().mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    const { onClose } = renderModal({ task: existingTask });
+
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+    expect(
+      await screen.findByRole("heading", { name: "Delete task?" }),
+    ).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(window.api.tasks.delete).not.toHaveBeenCalled();
+
+    await user.click(
+      screen.getAllByRole("button", { name: "Delete" }).slice(-1)[0],
+    );
+
+    expect(onClose).toHaveBeenCalled();
+    await waitFor(() =>
+      expect(window.api.tasks.delete).toHaveBeenCalledWith("task-1"),
+    );
+  });
+
+  it("cancels deletion without closing the modal or calling the API", async () => {
+    const user = userEvent.setup();
+    const { onClose } = renderModal({ task: existingTask });
+
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+    const confirmDialog = await screen.findByRole("dialog", {
+      name: "Delete task?",
+    });
+    await user.click(
+      within(confirmDialog).getByRole("button", { name: "Cancel" }),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "Delete task?" }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(onClose).not.toHaveBeenCalled();
+    expect(window.api.tasks.delete).not.toHaveBeenCalled();
   });
 });

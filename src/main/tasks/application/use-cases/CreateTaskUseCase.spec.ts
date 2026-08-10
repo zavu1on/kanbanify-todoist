@@ -21,6 +21,7 @@ const buildGateway = (): ITaskGateway => ({
   save: vi.fn(),
   move: vi.fn(),
   close: vi.fn(),
+  delete: vi.fn(),
 });
 
 const token = AccessToken.of("a-valid-token-value-000000000000");
