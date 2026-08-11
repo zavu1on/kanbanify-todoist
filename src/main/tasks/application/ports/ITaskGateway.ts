@@ -23,6 +23,16 @@ export interface ITaskGateway {
     parentId?: string,
   ): Promise<TaskListPage>;
 
+  /** Lists tasks matching a Todoist filter query (e.g. `!no date & !subtask`
+   * for the Calendar page, see SPECIFICATION.md "Календарь") instead of the
+   * fixed `projectId`/`parentId` scoping `listTasks` offers.
+   * @throws {import("../../domain/errors/TasksError").TasksError} */
+  listTasksByFilter(
+    accessToken: string,
+    cursor: string | null,
+    query: string,
+  ): Promise<TaskListPage>;
+
   /** @throws {import("../../domain/errors/TasksError").TasksError} */
   getTask(accessToken: string, taskId: string): Promise<Task>;
 

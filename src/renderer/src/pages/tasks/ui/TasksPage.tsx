@@ -1,18 +1,21 @@
 import { Alert, Stack, Text, Title } from "@mantine/core";
-import { useHotkeys } from "@mantine/hooks";
-import { notifications } from "@mantine/notifications";
-import { useQueryClient } from "@tanstack/react-query";
+import { LayoutGridIcon, ListIcon } from "lucide-animated";
 import type { FC } from "react";
 import { useState } from "react";
 import { useParams } from "react-router";
 import { useProjectsQuery } from "@/entities/project";
-import { projectTasksListQueryKey, tasksListQueryKey } from "@/entities/task";
+import {
+  flattenTaskPages,
+  projectTasksListQueryKey,
+  tasksListQueryKey,
+  useLoadMoreTasksHandler,
+  useToolbar,
+} from "@/entities/task";
 import { TaskBoard } from "@/widgets/task-board";
 import { TaskListView } from "@/widgets/task-list";
 import { useTasksQuery } from "../api/useTasksQuery";
 import { loadViewMode, saveViewMode, type ViewMode } from "../model/viewMode";
 import { TasksSkeleton } from "./TasksSkeleton";
-import { TasksToolbar } from "./TasksToolbar";
 
 /** Renders both the all-tasks "Tasks" screen (`/tasks`) and a project's page
  * (`/projects/:projectId`) — SPECIFICATION.md "Сайдбар": a project page
@@ -20,7 +23,6 @@ import { TasksToolbar } from "./TasksToolbar";
 export const TasksPage: FC = () => {
   const { projectId } = useParams<{ projectId?: string }>();
   const [viewMode, setViewMode] = useState<ViewMode>(loadViewMode);
-  const queryClient = useQueryClient();
   const tasksQuery = useTasksQuery(projectId);
   const projectsQuery = useProjectsQuery();
   const project =
@@ -37,50 +39,29 @@ export const TasksPage: FC = () => {
     saveViewMode(mode);
   };
 
-  // "Refetch" means reload, not "fetch one more page on top of what's cached" —
-  // resetQueries drops every already-loaded page and starts back at page 1,
-  // unlike `refetch()`, which would re-fetch all of them. Subtasks and comments
-  // aren't part of the list itself but are shown in each card's detail modal,
-  // so they'd otherwise go stale silently until that modal is reopened later —
-  // reset by shared key prefix (all parents / all tasks) since "Refetch" means
-  // the whole page, not just the one card a user happens to have open.
-  const handleRefetch = () => {
-    queryClient.resetQueries({ queryKey });
-    queryClient.resetQueries({ queryKey: ["tasks", "list", "subtasks"] });
-    queryClient.resetQueries({ queryKey: ["comments", "list"] });
-  };
+  const handleLoadMore = useLoadMoreTasksHandler(tasksQuery);
+  const { tasks, initialLoadError } = flattenTaskPages(tasksQuery);
 
-  useHotkeys([["mod+R", handleRefetch]]);
-
-  const handleLoadMore = async () => {
-    const result = await tasksQuery.fetchNextPage();
-    const pages = result.data?.pages ?? [];
-    const lastPage = pages.at(-1);
-    if (!lastPage) return;
-
-    if (lastPage.ok) {
-      const totalLoaded = pages.reduce(
-        (sum, page) => sum + (page.ok ? page.tasks.length : 0),
-        0,
-      );
-      notifications.show({
-        color: "green",
-        title: "Tasks loaded",
-        message: `Loaded ${totalLoaded} tasks in total`,
-      });
-    } else {
-      notifications.show({
-        color: "red",
-        title: "Couldn't load more tasks",
-        message: lastPage.error.message,
-      });
-    }
-  };
-
-  const pages = tasksQuery.data?.pages ?? [];
-  const tasks = pages.flatMap((page) => (page.ok ? page.tasks : []));
-  const firstPage = pages[0];
-  const initialLoadError = firstPage && !firstPage.ok ? firstPage.error : null;
+  const toolbar = useToolbar<ViewMode>({
+    viewMode,
+    onViewModeChange: handleViewModeChange,
+    segments: [
+      { value: "list", label: <ListIcon size={16} animateOnHover={false} /> },
+      {
+        value: "kanban",
+        label: <LayoutGridIcon size={16} animateOnHover={false} />,
+      },
+    ],
+    refetchQueryKeys: [
+      queryKey,
+      ["tasks", "list", "subtasks"],
+      ["comments", "list"],
+    ],
+    isRefetching: tasksQuery.isRefetching || tasksQuery.isLoading,
+    onLoadMore: handleLoadMore,
+    hasNextPage: tasksQuery.hasNextPage,
+    isFetchingNextPage: tasksQuery.isFetchingNextPage,
+  });
 
   return (
     <Stack gap="md">
@@ -95,15 +76,7 @@ export const TasksPage: FC = () => {
         )}
       </Stack>
 
-      <TasksToolbar
-        viewMode={viewMode}
-        onViewModeChange={handleViewModeChange}
-        onRefetch={handleRefetch}
-        isRefetching={tasksQuery.isRefetching || tasksQuery.isLoading}
-        onLoadMore={handleLoadMore}
-        hasNextPage={tasksQuery.hasNextPage}
-        isFetchingNextPage={tasksQuery.isFetchingNextPage}
-      />
+      {toolbar}
 
       {tasksQuery.isPending ? (
         <TasksSkeleton />

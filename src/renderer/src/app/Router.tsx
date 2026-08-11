@@ -1,6 +1,7 @@
 import { Center, Loader } from "@mantine/core";
 import type { FC } from "react";
 import { createHashRouter, RouterProvider } from "react-router";
+import { CalendarPage } from "@/pages/calendar";
 import { DashboardPage } from "@/pages/dashboard";
 import { LoginPage } from "@/pages/login";
 import { TasksPage } from "@/pages/tasks";
@@ -15,6 +16,7 @@ const appRouter = createHashRouter([
       { index: true, element: <DashboardPage /> },
       { path: "tasks", element: <TasksPage /> },
       { path: "projects/:projectId", element: <TasksPage /> },
+      { path: "calendar", element: <CalendarPage /> },
     ],
   },
 ]);

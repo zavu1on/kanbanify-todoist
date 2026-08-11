@@ -8,6 +8,10 @@ export type AuthenticatedUserApiSource = {
   fullName: string;
   email: string;
   avatarMedium?: string | null;
+  /** Todoist's "first day of the week" setting: 1-7, Monday-based (1 =
+   * Monday, 7 = Sunday). Converted to 0-6 Sunday-based on the way in — see
+   * `AuthenticatedUser.weekStartsOn`. */
+  startDay: number;
 };
 
 /** Maps a raw Todoist API user into the domain `AuthenticatedUser`. */
@@ -18,6 +22,7 @@ export class AuthenticatedUserMapper {
       fullName: source.fullName,
       email: source.email,
       avatarUrl: source.avatarMedium ?? null,
+      weekStartsOn: source.startDay % 7,
     });
   }
 
@@ -27,6 +32,7 @@ export class AuthenticatedUserMapper {
       fullName: user.fullName,
       email: user.email,
       avatarUrl: user.avatarUrl,
+      weekStartsOn: user.weekStartsOn,
     };
   }
 }

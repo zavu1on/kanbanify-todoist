@@ -58,6 +58,8 @@ const api = {
       parentId?: string,
     ): Promise<TasksListResult> =>
       ipcRenderer.invoke("tasks:list", cursor, projectId, parentId),
+    listWithDueDate: (cursor: string | null): Promise<TasksListResult> =>
+      ipcRenderer.invoke("tasks:listWithDueDate", cursor),
     updateStatus: (
       taskId: string,
       status: KanbanStatusLevel,

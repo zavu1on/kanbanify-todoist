@@ -1,6 +1,7 @@
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 import "@mantine/notifications/styles.css";
+import "@mantine/schedule/styles.css";
 
 import { Notifications } from "@mantine/notifications";
 import { QueryProvider } from "./QueryProvider";

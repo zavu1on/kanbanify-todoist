@@ -1169,6 +1169,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mantine/schedule@npm:9.5.1":
+  version: 9.5.1
+  resolution: "@mantine/schedule@npm:9.5.1"
+  dependencies:
+    rrule: "npm:^2.8.1"
+  peerDependencies:
+    "@mantine/core": 9.5.1
+    "@mantine/dates": 9.5.1
+    "@mantine/hooks": 9.5.1
+    react: ^19.2.0
+    react-dom: ^19.2.0
+  checksum: 10c0/b32bf423c1e50e6260051fedf584aee6f3b48eef58d2e09a779ce1884852b7d77f60fdfbc9cc19faee534045f173813aa6dfbe3037de5c4bea9d245e231d5dc8
+  languageName: node
+  linkType: hard
+
 "@mantine/store@npm:9.5.1":
   version: 9.5.1
   resolution: "@mantine/store@npm:9.5.1"
@@ -3833,6 +3848,7 @@ __metadata:
     "@mantine/form": "npm:^9.5.1"
     "@mantine/hooks": "npm:^9.5.1"
     "@mantine/notifications": "npm:^9.5.1"
+    "@mantine/schedule": "npm:9.5.1"
     "@tanstack/react-query": "npm:^5.101.4"
     "@testing-library/dom": "npm:^10.4.1"
     "@testing-library/jest-dom": "npm:^7.0.0"
@@ -5054,6 +5070,15 @@ __metadata:
   bin:
     rollup: dist/bin/rollup
   checksum: 10c0/d83bcc89f02db337963dcd0b0d16620129cee263f8437464c02d782dde4e1bb89a6b5b511cd230317ce2c5959fb858884305a9a1a33d1d3da4eef9fe6368414b
+  languageName: node
+  linkType: hard
+
+"rrule@npm:^2.8.1":
+  version: 2.8.1
+  resolution: "rrule@npm:2.8.1"
+  dependencies:
+    tslib: "npm:^2.4.0"
+  checksum: 10c0/c9350620bbd57d0cdf99320b576121a2d7ed579fda4ae50891e2779c7dfd6dc7b174b558b6598adefb1f0e053549dc977740e1a265f77dcf0827aaeea60b45e7
   languageName: node
   linkType: hard
 

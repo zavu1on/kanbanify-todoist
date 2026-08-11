@@ -1,13 +1,9 @@
 import { TodoistApi } from "@doist/todoist-sdk";
+import { PAGE_SIZE } from "../../shared/pagination";
 import type { ICommentGateway } from "../application/ports/ICommentGateway";
 import type { Comment } from "../domain/entities/Comment";
 import { CommentMapper } from "../domain/mappers/CommentMapper";
 import { TodoistCommentsErrorClassifier } from "./TodoistCommentsErrorClassifier";
-
-/** Todoist caps list pages at 200 (same as tasks, see SPECIFICATION.md "Задачи") —
- * `listComments` loops every page via `do...while` so callers always get the
- * complete list in one call (see COMMENTS.md). */
-const PAGE_SIZE = 200;
 
 export class TodoistCommentGateway implements ICommentGateway {
   private readonly commentMapper = new CommentMapper();

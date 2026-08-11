@@ -27,6 +27,7 @@ describe("CheckSessionUseCase", () => {
       fullName: "Jane Doe",
       email: "jane@example.com",
       avatarUrl: null,
+      weekStartsOn: 1,
     });
     const userGateway: ITodoistUserGateway = {
       fetchCurrentUser: vi.fn().mockResolvedValue(user),

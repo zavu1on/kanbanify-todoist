@@ -29,7 +29,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", icon: LayoutGridIcon, to: "/" },
   { label: "Tasks", icon: ListIcon, to: "/tasks" },
   { label: "Today", icon: SunIcon, to: "#" },
-  { label: "Calendar", icon: CalendarDaysIcon, to: "#" },
+  { label: "Calendar", icon: CalendarDaysIcon, to: "/calendar" },
 ];
 
 export const Sidebar: FC = () => {

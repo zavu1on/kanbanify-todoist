@@ -6,6 +6,7 @@ const user = {
   fullName: "Ada Lovelace",
   email: "ada@example.com",
   avatarUrl: null,
+  weekStartsOn: 1,
 };
 
 const SessionProbe = () => {

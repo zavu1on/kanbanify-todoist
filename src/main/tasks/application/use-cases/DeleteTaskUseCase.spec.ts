@@ -13,6 +13,7 @@ const buildTokenStore = (accessToken: AccessToken | null): ITokenStore => ({
 
 const buildGateway = (): ITaskGateway => ({
   listTasks: vi.fn(),
+  listTasksByFilter: vi.fn(),
   getTask: vi.fn(),
   create: vi.fn(),
   save: vi.fn(),

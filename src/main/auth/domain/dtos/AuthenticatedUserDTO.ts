@@ -6,4 +6,8 @@ export type AuthenticatedUserDTO = {
   fullName: string;
   email: string;
   avatarUrl: string | null;
+  /** 0-6, Sunday-based (`Date.getDay()` convention) — first day of the week
+   * per the user's Todoist settings, used to align the Calendar grid
+   * (SPECIFICATION.md "Календарь"). */
+  weekStartsOn: number;
 };

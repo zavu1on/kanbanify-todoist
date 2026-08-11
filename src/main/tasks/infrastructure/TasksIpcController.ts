@@ -9,6 +9,7 @@ import type { CountUnfinishedTasksUseCase } from "../application/use-cases/Count
 import type { CreateTaskUseCase } from "../application/use-cases/CreateTaskUseCase";
 import type { DeleteTaskUseCase } from "../application/use-cases/DeleteTaskUseCase";
 import type { ListTasksUseCase } from "../application/use-cases/ListTasksUseCase";
+import type { ListTasksWithDueDateUseCase } from "../application/use-cases/ListTasksWithDueDateUseCase";
 import type { UpdateTaskStatusUseCase } from "../application/use-cases/UpdateTaskStatusUseCase";
 import type { UpdateTaskUseCase } from "../application/use-cases/UpdateTaskUseCase";
 import type { CompleteTaskResult } from "../domain/contracts/CompleteTaskResult";
@@ -34,6 +35,7 @@ export class TasksIpcController implements IpcController {
 
   constructor(
     private readonly listTasksUseCase: ListTasksUseCase,
+    private readonly listTasksWithDueDateUseCase: ListTasksWithDueDateUseCase,
     private readonly updateTaskStatusUseCase: UpdateTaskStatusUseCase,
     private readonly countUnfinishedTasksUseCase: CountUnfinishedTasksUseCase,
     private readonly completeTaskUseCase: CompleteTaskUseCase,
@@ -56,6 +58,11 @@ export class TasksIpcController implements IpcController {
           typeof projectId === "string" ? projectId : undefined,
           typeof parentId === "string" ? parentId : undefined,
         ),
+    );
+    ipcMain.handle(
+      "tasks:listWithDueDate",
+      (_event, cursor: unknown): Promise<TasksListResult> =>
+        this.listWithDueDate(typeof cursor === "string" ? cursor : null),
     );
     ipcMain.handle(
       "tasks:updateStatus",
@@ -105,6 +112,28 @@ export class TasksIpcController implements IpcController {
         projectId,
         parentId,
       );
+      return {
+        ok: true,
+        tasks: tasks.map((task) => this.taskMapper.toDTO(task)),
+        nextCursor,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error: {
+          type: this.getErrorType(error),
+          message: this.getMessageFromError(error),
+        },
+      };
+    }
+  }
+
+  private async listWithDueDate(
+    cursor: string | null,
+  ): Promise<TasksListResult> {
+    try {
+      const { tasks, nextCursor } =
+        await this.listTasksWithDueDateUseCase.execute(cursor);
       return {
         ok: true,
         tasks: tasks.map((task) => this.taskMapper.toDTO(task)),

@@ -1,4 +1,5 @@
 import { TodoistApi } from "@doist/todoist-sdk";
+import { PAGE_SIZE } from "../../shared/pagination";
 import type {
   ITaskGateway,
   TaskListPage,
@@ -6,9 +7,6 @@ import type {
 import type { Task } from "../domain/entities/Task";
 import { TaskMapper } from "../domain/mappers/TaskMapper";
 import { TodoistTasksErrorClassifier } from "./TodoistTasksErrorClassifier";
-
-/** Todoist caps list pages at 200 (see SPECIFICATION.md "Задачи"). */
-const PAGE_SIZE = 200;
 
 export class TodoistTaskGateway implements ITaskGateway {
   private readonly taskMapper = new TaskMapper();
@@ -27,6 +25,26 @@ export class TodoistTaskGateway implements ITaskGateway {
         limit: PAGE_SIZE,
         projectId,
         parentId,
+      });
+
+      return {
+        tasks: results.map((task) => this.taskMapper.toDomain(task)),
+        nextCursor,
+      };
+    });
+  }
+
+  async listTasksByFilter(
+    accessToken: string,
+    cursor: string | null,
+    query: string,
+  ): Promise<TaskListPage> {
+    return this.errorClassifier.wrap(async () => {
+      const api = new TodoistApi(accessToken);
+      const { results, nextCursor } = await api.getTasksByFilter({
+        query,
+        cursor,
+        limit: PAGE_SIZE,
       });
 
       return {

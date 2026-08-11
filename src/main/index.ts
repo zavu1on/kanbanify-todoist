@@ -32,6 +32,7 @@ import { CountUnfinishedTasksUseCase } from "./tasks/application/use-cases/Count
 import { CreateTaskUseCase } from "./tasks/application/use-cases/CreateTaskUseCase";
 import { DeleteTaskUseCase } from "./tasks/application/use-cases/DeleteTaskUseCase";
 import { ListTasksUseCase } from "./tasks/application/use-cases/ListTasksUseCase";
+import { ListTasksWithDueDateUseCase } from "./tasks/application/use-cases/ListTasksWithDueDateUseCase";
 import { UpdateTaskStatusUseCase } from "./tasks/application/use-cases/UpdateTaskStatusUseCase";
 import { UpdateTaskUseCase } from "./tasks/application/use-cases/UpdateTaskUseCase";
 import { TasksIpcController } from "./tasks/infrastructure/TasksIpcController";
@@ -55,6 +56,10 @@ const registerIpcHandlers = () => {
 
   const taskGateway = new TodoistTaskGateway();
   const listTasksUseCase = new ListTasksUseCase(taskGateway, tokenStore);
+  const listTasksWithDueDateUseCase = new ListTasksWithDueDateUseCase(
+    taskGateway,
+    tokenStore,
+  );
   const updateTaskStatusUseCase = new UpdateTaskStatusUseCase(
     taskGateway,
     tokenStore,
@@ -70,6 +75,7 @@ const registerIpcHandlers = () => {
 
   new TasksIpcController(
     listTasksUseCase,
+    listTasksWithDueDateUseCase,
     updateTaskStatusUseCase,
     countUnfinishedTasksUseCase,
     completeTaskUseCase,

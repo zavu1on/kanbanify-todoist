@@ -1,12 +1,9 @@
 import { TodoistApi } from "@doist/todoist-sdk";
+import { PAGE_SIZE } from "../../shared/pagination";
 import type { ILabelGateway } from "../application/ports/ILabelGateway";
 import type { Label } from "../domain/entities/Label";
 import { LabelMapper } from "../domain/mappers/LabelMapper";
 import { TodoistLabelsErrorClassifier } from "./TodoistLabelsErrorClassifier";
-
-/** Todoist caps list pages at 200 (see SPECIFICATION.md "Задачи") — a personal
- * label set almost always fits in one page, but the loop stays correct either way. */
-const PAGE_SIZE = 200;
 
 export class TodoistLabelGateway implements ILabelGateway {
   private readonly labelMapper = new LabelMapper();

@@ -4,14 +4,11 @@ import type {
   WorkspaceProject,
 } from "@doist/todoist-sdk";
 import { TodoistApi } from "@doist/todoist-sdk";
+import { PAGE_SIZE } from "../../shared/pagination";
 import type { IProjectGateway } from "../application/ports/IProjectGateway";
 import type { Project } from "../domain/entities/Project";
 import type { ProjectApiSource } from "../domain/mappers/ProjectMapper";
 import { TodoistProjectsErrorClassifier } from "./TodoistProjectsErrorClassifier";
-
-/** Todoist caps list pages at 200 (see SPECIFICATION.md "Задачи") — the free
- * tier's 5-project cap means this loop almost always runs once. */
-const PAGE_SIZE = 200;
 
 export class TodoistProjectGateway implements IProjectGateway {
   private readonly errorClassifier = new TodoistProjectsErrorClassifier();

@@ -85,6 +85,7 @@ describe("LoginForm", () => {
         fullName: "Ada Lovelace",
         email: "ada@example.com",
         avatarUrl: null,
+        weekStartsOn: 1,
       },
     });
     const user = userEvent.setup();
@@ -109,6 +110,7 @@ describe("LoginForm", () => {
         fullName: "Ada Lovelace",
         email: "ada@example.com",
         avatarUrl: null,
+        weekStartsOn: 1,
       },
     });
     const user = userEvent.setup();

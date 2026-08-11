@@ -17,12 +17,13 @@ const buildGateway = (pages: TaskListPage[]): ITaskGateway => {
   for (const page of pages) listTasks.mockResolvedValueOnce(page);
   return {
     listTasks,
+    listTasksByFilter: vi.fn(),
     getTask: vi.fn(),
     create: vi.fn(),
     save: vi.fn(),
     move: vi.fn(),
     close: vi.fn(),
-  delete: vi.fn(),
+    delete: vi.fn(),
   };
 };
 
