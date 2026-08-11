@@ -10,6 +10,7 @@ import {
   Textarea,
 } from "@mantine/core";
 import { schemaResolver, useForm } from "@mantine/form";
+import { notifications } from "@mantine/notifications";
 import { AttachFileIcon, FileTextIcon } from "lucide-animated";
 import {
   type ChangeEvent,
@@ -19,28 +20,45 @@ import {
   useRef,
   useState,
 } from "react";
+import { MAX_ATTACHMENT_SIZE_BYTES } from "@/main/attachments";
+import type { CommentAttachment } from "@/main/comments";
+import type { CommentFormAttachmentChange } from "../model/attachmentChange";
 import { commentFormSchema } from "../model/commentFormSchema";
 import { DiscardCommentModal } from "./DiscardCommentModal";
+
+const MAX_ATTACHMENT_SIZE_MB = MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024);
+
+/** A comment carries at most one attachment (Todoist's `fileAttachment` is
+ * not an array) — this slot models the one thing that can be attached,
+ * whatever it currently is. */
+type AttachmentSlot =
+  | { kind: "none" }
+  | { kind: "existing"; attachment: CommentAttachment }
+  | { kind: "pending"; file: File };
 
 type CommentFormProps = {
   mode: "create" | "edit";
   /** Absent in create mode. */
   initialContent?: string;
+  /** The comment's current attachment, if any — absent/`null` in create mode. */
+  initialAttachment?: CommentAttachment | null;
   isSubmitting?: boolean;
-  onSubmit: (content: string) => void;
+  onSubmit: (
+    content: string,
+    attachmentChange: CommentFormAttachmentChange,
+  ) => void;
   onCancel: () => void;
 };
 
 /**
  * Shared by "Add new comment" and "Edit comment" (see `CommentsSection`) — the
- * only difference is the submit button's label and whether `initialContent`
- * seeds the field. File attachment is UI-only: selected/dropped files render
- * as local chips and are never sent anywhere (upload is a separate future
- * feature, see `docs/feat/comments/COMMENTS.md`).
+ * only difference is the submit button's label, whether `initialContent`
+ * seeds the field, and whether an existing attachment can be shown/removed.
  */
 export const CommentForm: FC<CommentFormProps> = ({
   mode,
   initialContent = "",
+  initialAttachment = null,
   isSubmitting,
   onSubmit,
   onCancel,
@@ -50,10 +68,17 @@ export const CommentForm: FC<CommentFormProps> = ({
     validate: schemaResolver(commentFormSchema, { sync: true }),
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [files, setFiles] = useState<{ id: string; file: File }[]>([]);
+  const [attachment, setAttachment] = useState<AttachmentSlot>(
+    initialAttachment
+      ? { kind: "existing", attachment: initialAttachment }
+      : { kind: "none" },
+  );
   const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
 
-  const isDirty = form.isDirty() || files.length > 0;
+  const attachmentIsDirty =
+    attachment.kind === "pending" ||
+    (attachment.kind === "none" && initialAttachment !== null);
+  const isDirty = form.isDirty() || attachmentIsDirty;
 
   const requestCancel = () => {
     if (isDirty) {
@@ -63,19 +88,25 @@ export const CommentForm: FC<CommentFormProps> = ({
     onCancel();
   };
 
-  const addFiles = (list: FileList | null) => {
-    if (!list || list.length === 0) return;
-    setFiles((current) => [
-      ...current,
-      ...Array.from(list).map((file) => ({
-        id: crypto.randomUUID(),
-        file,
-      })),
-    ]);
+  const pickFile = (list: FileList | null) => {
+    const file = list?.[0];
+    if (!file) return;
+
+    if (file.size > MAX_ATTACHMENT_SIZE_BYTES) {
+      notifications.show({
+        color: "red",
+        title: "File is too large",
+        message: `File must be ${MAX_ATTACHMENT_SIZE_MB} MB or smaller`,
+      });
+      return;
+    }
+
+    // A comment carries at most one attachment — picking a new file always
+    // replaces whatever was in the slot, never accumulates.
+    setAttachment({ kind: "pending", file });
   };
 
-  const removeFile = (id: string) =>
-    setFiles((current) => current.filter((entry) => entry.id !== id));
+  const removeAttachment = () => setAttachment({ kind: "none" });
 
   // No native <form> here — this component is always mounted inside
   // `TaskFormFrame`'s own <form> (see `TaskFormFields.commentsSection`), and
@@ -83,7 +114,17 @@ export const CommentForm: FC<CommentFormProps> = ({
   // therefore driven by hand instead of `form.onSubmit`/a submit button.
   const handleSubmit = () => {
     if (form.validate().hasErrors) return;
-    onSubmit(form.values.content);
+    onSubmit(form.values.content, resolveAttachmentChange());
+  };
+
+  const resolveAttachmentChange = (): CommentFormAttachmentChange => {
+    if (attachment.kind === "pending") {
+      return { type: "replace", file: attachment.file };
+    }
+    if (attachment.kind === "none" && initialAttachment !== null) {
+      return { type: "remove" };
+    }
+    return { type: "keep" };
   };
 
   // Enter submits, Shift+Enter inserts a newline — Mantine's own Textarea
@@ -94,12 +135,19 @@ export const CommentForm: FC<CommentFormProps> = ({
     handleSubmit();
   };
 
+  const attachedFileName =
+    attachment.kind === "existing"
+      ? (attachment.attachment.fileName ?? "Attachment")
+      : attachment.kind === "pending"
+        ? attachment.file.name
+        : null;
+
   return (
     <>
       <Box
         onDrop={(event: DragEvent<HTMLDivElement>) => {
           event.preventDefault();
-          addFiles(event.dataTransfer.files);
+          pickFile(event.dataTransfer.files);
         }}
         onDragOver={(event: DragEvent<HTMLDivElement>) =>
           event.preventDefault()
@@ -119,7 +167,8 @@ export const CommentForm: FC<CommentFormProps> = ({
               variant="subtle"
               color="gray"
               mt={4}
-              aria-label="Attach a file"
+              aria-label={`Attach a file (max ${MAX_ATTACHMENT_SIZE_MB} MB)`}
+              title={`Attach a file (max ${MAX_ATTACHMENT_SIZE_MB} MB)`}
               onClick={() => fileInputRef.current?.click()}
             >
               <AttachFileIcon size={16} />
@@ -127,30 +176,27 @@ export const CommentForm: FC<CommentFormProps> = ({
             <input
               ref={fileInputRef}
               type="file"
-              multiple
               hidden
               onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                addFiles(event.target.files);
+                pickFile(event.target.files);
                 event.target.value = "";
               }}
             />
           </Group>
 
-          {files.length > 0 && (
+          {attachedFileName && (
             <Group gap="xs">
-              {files.map(({ id, file }) => (
-                <Paper key={id} withBorder radius="sm" px={8} py={4}>
-                  <Group gap={4} wrap="nowrap">
-                    <FileTextIcon size={14} animateOnHover={false} />
-                    <Text size="xs">{file.name}</Text>
-                    <CloseButton
-                      size="xs"
-                      aria-label={`Remove ${file.name}`}
-                      onClick={() => removeFile(id)}
-                    />
-                  </Group>
-                </Paper>
-              ))}
+              <Paper withBorder radius="sm" px={8} py={4}>
+                <Group gap={4} wrap="nowrap">
+                  <FileTextIcon size={14} animateOnHover={false} />
+                  <Text size="xs">{attachedFileName}</Text>
+                  <CloseButton
+                    size="xs"
+                    aria-label={`Remove ${attachedFileName}`}
+                    onClick={removeAttachment}
+                  />
+                </Group>
+              </Paper>
             </Group>
           )}
 

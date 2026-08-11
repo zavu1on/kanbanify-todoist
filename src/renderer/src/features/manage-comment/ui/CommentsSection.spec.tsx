@@ -40,6 +40,13 @@ describe("CommentsSection", () => {
           update: vi.fn(),
           delete: vi.fn(),
         },
+        attachments: {
+          download: vi.fn().mockResolvedValue({
+            ok: true,
+            saved: true,
+            filePath: "/tmp/report.pdf",
+          }),
+        },
       },
     });
   });
@@ -121,6 +128,37 @@ describe("CommentsSection", () => {
     );
     await waitFor(() =>
       expect(screen.queryByText("Looks good")).not.toBeInTheDocument(),
+    );
+  });
+
+  it("downloads a comment's attachment", async () => {
+    window.api.comments.list = vi.fn().mockResolvedValue({
+      ok: true,
+      comments: [
+        {
+          ...existingComment,
+          attachment: {
+            resourceType: "file",
+            fileName: "report.pdf",
+            fileType: "application/pdf",
+            fileUrl: "https://files.todoist.com/report.pdf",
+          },
+        },
+      ],
+    });
+    const user = userEvent.setup();
+    renderSection();
+    await screen.findByText("Looks good");
+
+    await user.click(
+      screen.getByRole("button", { name: "Download report.pdf" }),
+    );
+
+    await waitFor(() =>
+      expect(window.api.attachments.download).toHaveBeenCalledWith({
+        fileUrl: "https://files.todoist.com/report.pdf",
+        fileName: "report.pdf",
+      }),
     );
   });
 });

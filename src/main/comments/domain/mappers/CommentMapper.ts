@@ -1,3 +1,4 @@
+import type { Attachment } from "../../../attachments/domain/entities/Attachment";
 import type { CommentDTO } from "../dtos/CommentDTO";
 import { Comment, type CommentAttachment } from "../entities/Comment";
 
@@ -49,6 +50,18 @@ export class CommentMapper {
       fileName: source.fileName ?? null,
       fileType: source.fileType ?? null,
       fileUrl: source.fileUrl ?? null,
+    };
+  }
+
+  /** Converts a freshly uploaded attachment (from the `attachments` module)
+   * into the shape a `Comment` stores — used by `CreateCommentUseCase`/
+   * `UpdateCommentUseCase` right after `IAttachmentGateway.upload` resolves. */
+  fromUploadedAttachment(attachment: Attachment): CommentAttachment {
+    return {
+      resourceType: attachment.resourceType ?? "file",
+      fileName: attachment.fileName,
+      fileType: attachment.fileType,
+      fileUrl: attachment.fileUrl,
     };
   }
 }

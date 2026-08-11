@@ -1,9 +1,9 @@
 import { InvalidCommentContentError } from "../errors/InvalidCommentContentError";
 import { CommentContent } from "../value-objects/CommentContent";
 
-/** Display-only projection of Todoist's file attachment — this app never
- * uploads/downloads files (out of scope, see `docs/feat/comments/COMMENTS.md`),
- * so there's no invariant to enforce and no VO needed, just the wire shape. */
+/** The shape of Todoist's file attachment as stored on a comment — a comment
+ * carries at most one (Todoist's `fileAttachment` is not an array). Building
+ * one from an upload happens in `CommentMapper.fromUploadedAttachment`. */
 export type CommentAttachment = {
   resourceType: string;
   fileName: string | null;
@@ -11,7 +11,11 @@ export type CommentAttachment = {
   fileUrl: string | null;
 };
 
-export type CommentCreateDetails = { taskId: string; content: string };
+export type CommentCreateDetails = {
+  taskId: string;
+  content: string;
+  attachment?: CommentAttachment | null;
+};
 
 export type CommentReconstituteSource = {
   id: string;
@@ -23,22 +27,23 @@ export type CommentReconstituteSource = {
 
 export class Comment {
   private _content: CommentContent;
+  private _attachment: CommentAttachment | null;
 
   private constructor(
     readonly id: string,
     readonly taskId: string,
     content: CommentContent,
     readonly postedAt: Date,
-    private readonly _attachment: CommentAttachment | null,
+    attachment: CommentAttachment | null,
   ) {
     this._content = content;
+    this._attachment = attachment;
   }
 
   get content(): string {
     return this._content.value;
   }
 
-  /** Read-only — see `CommentAttachment`, no upload/download support yet. */
   get attachment(): CommentAttachment | null {
     return this._attachment;
   }
@@ -52,7 +57,7 @@ export class Comment {
       details.taskId,
       Comment.parseContent(details.content),
       new Date(),
-      null,
+      details.attachment ?? null,
     );
   }
 
@@ -71,6 +76,12 @@ export class Comment {
   /** Mutates this comment's content in place, re-validating it. */
   update(content: string): void {
     this._content = Comment.parseContent(content);
+  }
+
+  /** Mutates this comment's attachment in place — used when a file is added
+   * to, replaced on, or removed from an existing comment during edit. */
+  replaceAttachment(attachment: CommentAttachment | null): void {
+    this._attachment = attachment;
   }
 
   private static parseContent(rawContent: string): CommentContent {

@@ -45,7 +45,7 @@ describe("CommentForm", () => {
     );
     await user.click(screen.getByRole("button", { name: "Comment" }));
 
-    expect(onSubmit).toHaveBeenCalledWith("Looks good");
+    expect(onSubmit).toHaveBeenCalledWith("Looks good", { type: "keep" });
   });
 
   it("submits on Enter when the textarea is focused", async () => {
@@ -55,7 +55,7 @@ describe("CommentForm", () => {
     const textarea = screen.getByPlaceholderText("Add a comment...");
     await user.type(textarea, "Looks good{Enter}");
 
-    expect(onSubmit).toHaveBeenCalledWith("Looks good");
+    expect(onSubmit).toHaveBeenCalledWith("Looks good", { type: "keep" });
   });
 
   it("inserts a newline instead of submitting on Shift+Enter", async () => {
@@ -119,5 +119,65 @@ describe("CommentForm", () => {
 
     await user.click(screen.getByRole("button", { name: "Remove report.pdf" }));
     expect(screen.queryByText("report.pdf")).not.toBeInTheDocument();
+  });
+
+  it("submits a picked file as a 'replace' attachment change", async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderForm();
+
+    const file = new File(["content"], "report.pdf", {
+      type: "application/pdf",
+    });
+    const input = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    await user.upload(input, file);
+    await user.type(
+      screen.getByPlaceholderText("Add a comment..."),
+      "See attached",
+    );
+    await user.click(screen.getByRole("button", { name: "Comment" }));
+
+    expect(onSubmit).toHaveBeenCalledWith("See attached", {
+      type: "replace",
+      file,
+    });
+  });
+
+  it("rejects a file over the size limit without attaching it", async () => {
+    const user = userEvent.setup();
+    renderForm();
+
+    const oversizedFile = new File(
+      [new ArrayBuffer(6 * 1024 * 1024)],
+      "huge.zip",
+    );
+    const input = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    await user.upload(input, oversizedFile);
+
+    expect(screen.queryByText("huge.zip")).not.toBeInTheDocument();
+  });
+
+  it("shows an existing attachment and submits 'remove' when it's cleared", async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderForm({
+      mode: "edit",
+      initialContent: "Original",
+      initialAttachment: {
+        resourceType: "file",
+        fileName: "report.pdf",
+        fileType: "application/pdf",
+        fileUrl: "https://files.todoist.com/report.pdf",
+      },
+    });
+
+    expect(screen.getByText("report.pdf")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Remove report.pdf" }));
+    await user.click(screen.getByRole("button", { name: "Update" }));
+
+    expect(onSubmit).toHaveBeenCalledWith("Original", { type: "remove" });
   });
 });

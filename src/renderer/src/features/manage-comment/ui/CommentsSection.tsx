@@ -2,8 +2,10 @@ import { Button, Divider, Stack, Text } from "@mantine/core";
 import { PlusIcon } from "lucide-animated";
 import { type FC, useState } from "react";
 import { CommentCard, useCommentsQuery } from "@/entities/comment";
+import type { CommentFormAttachmentChange } from "../model/attachmentChange";
 import { useCreateCommentMutation } from "../api/useCreateCommentMutation";
 import { useDeleteCommentMutation } from "../api/useDeleteCommentMutation";
+import { useDownloadAttachmentMutation } from "../api/useDownloadAttachmentMutation";
 import { useUpdateCommentMutation } from "../api/useUpdateCommentMutation";
 import { CommentForm } from "./CommentForm";
 import { DeleteCommentConfirmModal } from "./DeleteCommentConfirmModal";
@@ -22,6 +24,7 @@ export const CommentsSection: FC<CommentsSectionProps> = ({ taskId }) => {
   const createMutation = useCreateCommentMutation(taskId);
   const updateMutation = useUpdateCommentMutation(taskId);
   const deleteMutation = useDeleteCommentMutation(taskId);
+  const downloadMutation = useDownloadAttachmentMutation();
 
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -30,14 +33,25 @@ export const CommentsSection: FC<CommentsSectionProps> = ({ taskId }) => {
   const result = commentsQuery.data;
   const comments = result?.ok ? result.comments : [];
 
-  const handleCreateSubmit = (content: string) => {
+  const handleCreateSubmit = (
+    content: string,
+    attachmentChange: CommentFormAttachmentChange,
+  ) => {
     setIsAdding(false);
-    createMutation.mutate({ content });
+    createMutation.mutate({
+      content,
+      file:
+        attachmentChange.type === "replace" ? attachmentChange.file : undefined,
+    });
   };
 
-  const handleUpdateSubmit = (commentId: string, content: string) => {
+  const handleUpdateSubmit = (
+    commentId: string,
+    content: string,
+    attachmentChange: CommentFormAttachmentChange,
+  ) => {
     setEditingId(null);
-    updateMutation.mutate({ commentId, content });
+    updateMutation.mutate({ commentId, content, attachmentChange });
   };
 
   const handleConfirmDelete = () => {
@@ -69,8 +83,11 @@ export const CommentsSection: FC<CommentsSectionProps> = ({ taskId }) => {
               key={comment.id}
               mode="edit"
               initialContent={comment.content}
+              initialAttachment={comment.attachment}
               isSubmitting={updateMutation.isPending}
-              onSubmit={(content) => handleUpdateSubmit(comment.id, content)}
+              onSubmit={(content, attachmentChange) =>
+                handleUpdateSubmit(comment.id, content, attachmentChange)
+              }
               onCancel={() => setEditingId(null)}
             />
           ) : (
@@ -79,6 +96,13 @@ export const CommentsSection: FC<CommentsSectionProps> = ({ taskId }) => {
               comment={comment}
               onEdit={() => setEditingId(comment.id)}
               onDelete={() => setPendingDeleteId(comment.id)}
+              onDownloadAttachment={() =>
+                comment.attachment?.fileUrl &&
+                downloadMutation.mutate({
+                  fileUrl: comment.attachment.fileUrl,
+                  fileName: comment.attachment.fileName ?? "attachment",
+                })
+              }
             />
           ),
         )

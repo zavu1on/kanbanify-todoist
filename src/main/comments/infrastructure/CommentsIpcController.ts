@@ -1,7 +1,16 @@
 import { ipcMain } from "electron";
+import { AttachmentTooLargeError } from "../../attachments/domain/errors/AttachmentTooLargeError";
+import { InvalidAttachmentSessionError } from "../../attachments/domain/errors/InvalidAttachmentSessionError";
+import { TodoistAttachmentsConnectionError } from "../../attachments/domain/errors/TodoistAttachmentsConnectionError";
 import type { IpcController } from "../../shared/IpcController";
-import { CreateCommentInput } from "../application/dtos/CreateCommentInput";
-import { UpdateCommentInput } from "../application/dtos/UpdateCommentInput";
+import {
+  type CreateCommentAttachmentInput,
+  CreateCommentInput,
+} from "../application/dtos/CreateCommentInput";
+import {
+  type UpdateCommentAttachmentChange,
+  UpdateCommentInput,
+} from "../application/dtos/UpdateCommentInput";
 import type { CreateCommentUseCase } from "../application/use-cases/CreateCommentUseCase";
 import type { DeleteCommentUseCase } from "../application/use-cases/DeleteCommentUseCase";
 import type { ListCommentsUseCase } from "../application/use-cases/ListCommentsUseCase";
@@ -85,7 +94,11 @@ export class CommentsIpcController implements IpcController {
   ): Promise<CreateCommentResult> {
     try {
       const comment = await this.createCommentUseCase.execute(
-        new CreateCommentInput(input.taskId, input.content),
+        new CreateCommentInput(
+          input.taskId,
+          input.content,
+          this.toAttachmentInput(input.attachment),
+        ),
       );
       return { ok: true, comment: this.commentMapper.toDTO(comment) };
     } catch (error) {
@@ -112,7 +125,11 @@ export class CommentsIpcController implements IpcController {
 
     try {
       const comment = await this.updateCommentUseCase.execute(
-        new UpdateCommentInput(commentId, input.content),
+        new UpdateCommentInput(
+          commentId,
+          input.content,
+          this.toAttachmentChange(input.attachment),
+        ),
       );
       return { ok: true, comment: this.commentMapper.toDTO(comment) };
     } catch (error) {
@@ -148,10 +165,36 @@ export class CommentsIpcController implements IpcController {
     }
   }
 
+  private toAttachmentInput(
+    attachment: CreateCommentRequest["attachment"],
+  ): CreateCommentAttachmentInput | null {
+    if (!attachment) return null;
+    return {
+      fileName: attachment.fileName,
+      bytes: Buffer.from(attachment.bytes),
+    };
+  }
+
+  private toAttachmentChange(
+    attachment: UpdateCommentRequest["attachment"],
+  ): UpdateCommentAttachmentChange {
+    if (!attachment) return { type: "keep" };
+    if (attachment.type === "remove") return { type: "remove" };
+    return {
+      type: "replace",
+      fileName: attachment.fileName,
+      bytes: Buffer.from(attachment.bytes),
+    };
+  }
+
   private getErrorType(error: unknown): CommentsErrorType {
     if (error instanceof InvalidCommentSessionError) return "auth_error";
+    if (error instanceof InvalidAttachmentSessionError) return "auth_error";
     if (error instanceof TodoistCommentsConnectionError) return "network_error";
+    if (error instanceof TodoistAttachmentsConnectionError)
+      return "network_error";
     if (error instanceof InvalidCommentContentError) return "invalid_content";
+    if (error instanceof AttachmentTooLargeError) return "file_too_large";
     return "unknown";
   }
 

@@ -7,6 +7,9 @@ import { LogoutUseCase } from "./auth/application/use-cases/LogoutUseCase";
 import { AuthIpcController } from "./auth/infrastructure/AuthIpcController";
 import { SafeStorageTokenStore } from "./auth/infrastructure/SafeStorageTokenStore";
 import { TodoistUserGateway } from "./auth/infrastructure/TodoistUserGateway";
+import { DownloadAttachmentUseCase } from "./attachments/application/use-cases/DownloadAttachmentUseCase";
+import { AttachmentsIpcController } from "./attachments/infrastructure/AttachmentsIpcController";
+import { TodoistAttachmentGateway } from "./attachments/infrastructure/TodoistAttachmentGateway";
 import { CreateCommentUseCase } from "./comments/application/use-cases/CreateCommentUseCase";
 import { DeleteCommentUseCase } from "./comments/application/use-cases/DeleteCommentUseCase";
 import { ListCommentsUseCase } from "./comments/application/use-cases/ListCommentsUseCase";
@@ -112,6 +115,14 @@ const registerIpcHandlers = () => {
 
   new LabelsIpcController(listLabelsUseCase, createLabelUseCase).register();
 
+  const attachmentGateway = new TodoistAttachmentGateway();
+  const downloadAttachmentUseCase = new DownloadAttachmentUseCase(
+    attachmentGateway,
+    tokenStore,
+  );
+
+  new AttachmentsIpcController(downloadAttachmentUseCase).register();
+
   const commentGateway = new TodoistCommentGateway();
   const listCommentsUseCase = new ListCommentsUseCase(
     commentGateway,
@@ -119,14 +130,17 @@ const registerIpcHandlers = () => {
   );
   const createCommentUseCase = new CreateCommentUseCase(
     commentGateway,
+    attachmentGateway,
     tokenStore,
   );
   const updateCommentUseCase = new UpdateCommentUseCase(
     commentGateway,
+    attachmentGateway,
     tokenStore,
   );
   const deleteCommentUseCase = new DeleteCommentUseCase(
     commentGateway,
+    attachmentGateway,
     tokenStore,
   );
 

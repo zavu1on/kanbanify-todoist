@@ -62,3 +62,40 @@ describe("Comment#update", () => {
     expect(comment.content).toBe("Original");
   });
 });
+
+describe("Comment#replaceAttachment", () => {
+  it("attaches a file to a comment that had none", () => {
+    const comment = Comment.create({ taskId: "task-1", content: "Original" });
+
+    comment.replaceAttachment({
+      resourceType: "file",
+      fileName: "report.pdf",
+      fileType: "application/pdf",
+      fileUrl: "https://example.com/report.pdf",
+    });
+
+    expect(comment.attachment).toEqual({
+      resourceType: "file",
+      fileName: "report.pdf",
+      fileType: "application/pdf",
+      fileUrl: "https://example.com/report.pdf",
+    });
+  });
+
+  it("detaches the current file when passed null", () => {
+    const comment = Comment.create({
+      taskId: "task-1",
+      content: "Original",
+      attachment: {
+        resourceType: "file",
+        fileName: "report.pdf",
+        fileType: "application/pdf",
+        fileUrl: "https://example.com/report.pdf",
+      },
+    });
+
+    comment.replaceAttachment(null);
+
+    expect(comment.attachment).toBeNull();
+  });
+});

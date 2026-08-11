@@ -4,14 +4,17 @@ import { commentsListQueryKey } from "@/entities/comment";
 import type { CommentDTO, CommentsListResult } from "@/main/comments";
 import { createComment } from "./createComment";
 
-type CreateCommentVariables = { content: string };
+type CreateCommentVariables = { content: string; file?: File };
 
 /**
  * Adding a comment is optimistic: a placeholder card (temporary id) appears
  * in the list immediately and is swapped for the real one once Todoist
  * assigns it an id, rolled back with an error notification on failure —
- * same pattern as `useCreateTaskMutation`. Comments only ever show up in
- * this one task's detail modal, so there's no other screen's cache to
+ * same pattern as `useCreateTaskMutation`. A picked file is only read into
+ * bytes and uploaded here, at submit time (see `CommentForm`) — the
+ * placeholder shows it with `fileUrl: null`, which doubles as "still
+ * uploading" for `CommentCard`'s download button. Comments only ever show up
+ * in this one task's detail modal, so there's no other screen's cache to
  * invalidate on success (unlike task mutations).
  */
 export const useCreateCommentMutation = (taskId: string) => {
@@ -19,10 +22,14 @@ export const useCreateCommentMutation = (taskId: string) => {
   const queryKey = commentsListQueryKey(taskId);
 
   return useMutation({
-    mutationFn: ({ content }: CreateCommentVariables) =>
-      createComment({ taskId, content }),
+    mutationFn: async ({ content, file }: CreateCommentVariables) => {
+      const attachment = file
+        ? { fileName: file.name, bytes: await file.arrayBuffer() }
+        : undefined;
+      return createComment({ taskId, content, attachment });
+    },
 
-    onMutate: async ({ content }) => {
+    onMutate: async ({ content, file }) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<CommentsListResult>(queryKey);
 
@@ -31,7 +38,14 @@ export const useCreateCommentMutation = (taskId: string) => {
         taskId,
         content,
         postedAt: new Date().toISOString(),
-        attachment: null,
+        attachment: file
+          ? {
+              resourceType: "file",
+              fileName: file.name,
+              fileType: file.type || null,
+              fileUrl: null,
+            }
+          : null,
       };
 
       queryClient.setQueryData<CommentsListResult>(queryKey, (data) =>

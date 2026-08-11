@@ -45,11 +45,16 @@ export class TodoistCommentGateway implements ICommentGateway {
       const created = await api.addComment({
         taskId: comment.taskId,
         content: comment.content,
+        attachment: this.toApiAttachment(comment.attachment),
       });
       return this.toDomain(created);
     });
   }
 
+  /** Todoist's update endpoint only ever accepts `content` — it has no
+   * `attachment` field, so it can never touch what's attached (which is
+   * exactly why `UpdateCommentUseCase` deletes-and-recreates the comment
+   * instead, whenever the attachment itself needs to change). */
   async save(accessToken: string, comment: Comment): Promise<Comment> {
     return this.errorClassifier.wrap(async () => {
       const api = new TodoistApi(accessToken);
@@ -58,6 +63,25 @@ export class TodoistCommentGateway implements ICommentGateway {
       });
       return this.toDomain(updated);
     });
+  }
+
+  private toApiAttachment(
+    attachment: Comment["attachment"],
+  ):
+    | {
+        fileUrl: string;
+        fileName?: string;
+        fileType?: string;
+        resourceType?: string;
+      }
+    | undefined {
+    if (!attachment?.fileUrl) return undefined;
+    return {
+      fileUrl: attachment.fileUrl,
+      fileName: attachment.fileName ?? undefined,
+      fileType: attachment.fileType ?? undefined,
+      resourceType: attachment.resourceType,
+    };
   }
 
   async delete(accessToken: string, commentId: string): Promise<void> {

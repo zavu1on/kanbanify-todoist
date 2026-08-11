@@ -12,8 +12,24 @@ export class TodoistCommentsErrorClassifier {
       return await fn();
     } catch (error) {
       if (error instanceof TodoistRequestError) {
+        if (error.isAuthenticationError()) {
+          throw this.errorMapper.toDomainError("auth");
+        }
+        // `httpStatusCode` is only set when Todoist actually answered (see
+        // `getTodoistRequestError` in `@doist/todoist-sdk`'s http-client.ts) —
+        // undefined means the request never reached them (DNS, timeout,
+        // offline), which is the only case "network" (and its generic
+        // "check your connection" message) is accurate for. A real non-2xx
+        // response (400, 404, ...) is Todoist rejecting the request, not a
+        // connectivity problem, so it's classified as "unknown" with the
+        // response body folded in — otherwise the true reason is lost behind
+        // a misleading "Could not connect to Todoist".
+        if (error.httpStatusCode === undefined) {
+          throw this.errorMapper.toDomainError("network");
+        }
         throw this.errorMapper.toDomainError(
-          error.isAuthenticationError() ? "auth" : "network",
+          "unknown",
+          this.describeTodoistRequestError(error),
         );
       }
 
@@ -22,5 +38,12 @@ export class TodoistCommentsErrorClassifier {
         error instanceof Error ? error.message : undefined,
       );
     }
+  }
+
+  private describeTodoistRequestError(error: TodoistRequestError): string {
+    const data = error.responseData;
+    if (data === undefined) return error.message;
+    const detail = typeof data === "string" ? data : JSON.stringify(data);
+    return `${error.message} — ${detail}`;
   }
 }

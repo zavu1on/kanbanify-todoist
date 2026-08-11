@@ -2,6 +2,7 @@ export type CommentsErrorType =
   | "auth_error"
   | "network_error"
   | "invalid_content"
+  | "file_too_large"
   | "unknown";
 
 /** The `{ ok: false }` shape shared by every `comments:*` IPC contract —

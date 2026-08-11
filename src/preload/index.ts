@@ -1,5 +1,9 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type {
+  DownloadAttachmentRequest,
+  DownloadAttachmentResult,
+} from "../main/attachments";
+import type {
   LoginResult,
   LogoutResult,
   SessionCheckResult,
@@ -104,6 +108,12 @@ const api = {
       ipcRenderer.invoke("comments:update", commentId, input),
     delete: (commentId: string): Promise<DeleteCommentResult> =>
       ipcRenderer.invoke("comments:delete", commentId),
+  },
+  attachments: {
+    download: (
+      request: DownloadAttachmentRequest,
+    ): Promise<DownloadAttachmentResult> =>
+      ipcRenderer.invoke("attachments:download", request),
   },
 };
 

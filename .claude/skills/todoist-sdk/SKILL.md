@@ -1,6 +1,6 @@
 ---
 name: todoist-sdk
-description: Reference for @doist/todoist-sdk (official TypeScript SDK for Todoist API v1) — client init, tasks/projects/labels, pagination, error handling. Use when writing code that calls the Todoist API in this project.
+description: Reference for @doist/todoist-sdk (official TypeScript SDK for Todoist API v1) — client init, tasks/projects/labels/uploads, pagination, error handling. Use when writing code that calls the Todoist API in this project.
 ---
 
 # Todoist SDK (TypeScript)
@@ -16,9 +16,9 @@ Reference for the [`@doist/todoist-sdk`](https://github.com/Doist/todoist-sdk-ty
 
 ## Scope
 
-Deliberately limited to the domains Kanbanify Todoist actually needs (see `docs/SPECIFICATION.md`): **Tasks**, **Projects**, **Labels** (kanban statuses are stored as reserved labels), pagination, errors, client init.
+Deliberately limited to the domains Kanbanify Todoist actually needs (see `docs/SPECIFICATION.md`): **Tasks**, **Projects**, **Labels** (kanban statuses are stored as reserved labels), **Uploads** (file attachments), pagination, errors, client init.
 
-The SDK covers much more (Sections, Comments, Reminders, Backups, Workspaces, Billing, Apps, UI Extensions, Webhooks, Insights, Templates, OAuth auth, etc.) — those domains are **not documented here** since the project doesn't use them (auth is via a personal Access Token, no OAuth flow). If a real need for one of these domains shows up, extend this skill with the matching `reference/*.md` — don't pre-build coverage for the whole SDK.
+The SDK covers much more (Sections, Comments beyond attachment carrying, Reminders, Backups, Workspaces, Billing, Apps, UI Extensions, Webhooks, Insights, Templates, OAuth auth, etc.) — those domains are **not documented here** since the project doesn't use them (auth is via a personal Access Token, no OAuth flow). If a real need for one of these domains shows up, extend this skill with the matching `reference/*.md` — don't pre-build coverage for the whole SDK.
 
 ## Client init
 
@@ -84,3 +84,4 @@ Domain-specific details live in `reference/`:
 - [`reference/tasks.md`](reference/tasks.md) — task methods and types (CRUD, filters, subtasks, deadlines, moving)
 - [`reference/projects.md`](reference/projects.md) — project methods and types
 - [`reference/labels.md`](reference/labels.md) — label methods and types (the carrier of kanban status), available colors
+- [`reference/uploads.md`](reference/uploads.md) — file attachment upload/delete/download, the auth-token allowlist on downloads
