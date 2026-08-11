@@ -6,8 +6,13 @@ import {
 import type { QueryKey } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { type FC, useState } from "react";
-import { type TaskFormDefaults, TaskFormModal } from "@/features/manage-task";
+import {
+  type TaskFormDefaults,
+  TaskFormModal,
+  useUpdateTaskMutation,
+} from "@/features/manage-task";
 import type { TaskDTO } from "@/main/tasks";
+import { dueAfterDrop } from "../model/dueAfterDrop";
 import {
   type TaskEventPayload,
   toScheduleEvents,
@@ -24,9 +29,8 @@ type CalendarMonthViewProps = {
 };
 
 /** The month grid is `@mantine/schedule`'s `MonthView` (CALENDAR.md). No
- * drag-and-drop and no custom day-overflow popup, per this feature's brief:
- * the native `maxEventsPerDay`/`moreEventsProps` "+more" already covers
- * overflow. */
+ * custom day-overflow popup, per this feature's brief: the native
+ * `maxEventsPerDay`/`moreEventsProps` "+more" already covers overflow. */
 export const CalendarMonthView: FC<CalendarMonthViewProps> = ({
   tasks,
   queryKey,
@@ -37,9 +41,28 @@ export const CalendarMonthView: FC<CalendarMonthViewProps> = ({
   const [createDefaults, setCreateDefaults] = useState<TaskFormDefaults | null>(
     null,
   );
+  const updateTaskMutation = useUpdateTaskMutation(queryKey);
 
   const openCreateOnDay = (day: string) => {
     setCreateDefaults({ due: { date: day, datetime: null } });
+  };
+
+  const changeTaskDeadline = (newStart: string, event: ScheduleEventData) => {
+    const task = (event.payload as TaskEventPayload | undefined)?.task;
+    if (!task) return;
+
+    updateTaskMutation.mutate({
+      taskId: task.id,
+      input: {
+        title: task.title,
+        description: task.description,
+        projectId: task.projectId,
+        priority: task.priority,
+        due: dueAfterDrop(task, newStart),
+        kanbanStatus: task.kanbanStatus.level,
+        labels: task.labels,
+      },
+    });
   };
 
   return (
@@ -63,6 +86,13 @@ export const CalendarMonthView: FC<CalendarMonthViewProps> = ({
           const payload = event.payload as TaskEventPayload | undefined;
           if (payload) setEditingTask(payload.task);
         }}
+        // Dragging an event to another day changes its due date — routed
+        // through the same `updateTask` mutation the edit form uses, no
+        // separate IPC channel for this.
+        withEventsDragAndDrop
+        onEventDrop={({ newStart, event }) =>
+          changeTaskDeadline(newStart, event)
+        }
       />
 
       {(editingTask || createDefaults !== null) && (
