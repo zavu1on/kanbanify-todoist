@@ -39,9 +39,15 @@ export const TasksPage: FC = () => {
 
   // "Refetch" means reload, not "fetch one more page on top of what's cached" —
   // resetQueries drops every already-loaded page and starts back at page 1,
-  // unlike `refetch()`, which would re-fetch all of them.
+  // unlike `refetch()`, which would re-fetch all of them. Subtasks and comments
+  // aren't part of the list itself but are shown in each card's detail modal,
+  // so they'd otherwise go stale silently until that modal is reopened later —
+  // reset by shared key prefix (all parents / all tasks) since "Refetch" means
+  // the whole page, not just the one card a user happens to have open.
   const handleRefetch = () => {
     queryClient.resetQueries({ queryKey });
+    queryClient.resetQueries({ queryKey: ["tasks", "list", "subtasks"] });
+    queryClient.resetQueries({ queryKey: ["comments", "list"] });
   };
 
   useHotkeys([["mod+R", handleRefetch]]);

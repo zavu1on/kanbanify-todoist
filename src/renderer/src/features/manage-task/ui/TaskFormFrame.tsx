@@ -276,7 +276,6 @@ export const TaskFormFrame: FC<TaskFormFrameProps> = ({
             titleLeftSection={
               isEditMode && (
                 <Checkbox
-                  mt={6}
                   checked={isCompleting}
                   disabled={isCompleting}
                   aria-label={`Complete "${task.title}"`}

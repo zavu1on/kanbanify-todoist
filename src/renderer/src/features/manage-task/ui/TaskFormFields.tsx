@@ -82,7 +82,7 @@ export const TaskFormFields: FC<TaskFormFieldsProps> = ({
   <Grid gap="lg">
     <Grid.Col span={{ base: 12, sm: 7 }}>
       <Stack gap="md">
-        <Group align="flex-start" wrap="nowrap" gap="xs">
+        <Group align="center" wrap="nowrap" gap="xs">
           {titleLeftSection}
           <Box pos="relative" style={{ flex: 1 }}>
             <QuickAddTitleInput
