@@ -1,7 +1,7 @@
 import { Stack, Text, Title } from "@mantine/core";
 import type { FC } from "react";
 import { useParams } from "react-router";
-import { useProjectsQuery } from "@/entities/project";
+import { useProjectQuery } from "@/entities/project";
 import { TasksPageContent } from "./TasksPageContent";
 
 /** Renders both the all-tasks "Tasks" screen (`/tasks`) and a project's page
@@ -9,11 +9,8 @@ import { TasksPageContent } from "./TasksPageContent";
  * "полностью повторяет страницу Задачи", just scoped to one project. */
 export const TasksPage: FC = () => {
   const { projectId } = useParams<{ projectId?: string }>();
-  const projectsQuery = useProjectsQuery();
-  const project =
-    projectId && projectsQuery.data?.ok
-      ? projectsQuery.data.projects.find((p) => p.id === projectId)
-      : undefined;
+  const projectQuery = useProjectQuery(projectId);
+  const project = projectQuery.data?.ok ? projectQuery.data.project : undefined;
 
   return (
     <Stack gap="md">

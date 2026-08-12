@@ -26,6 +26,7 @@ import type {
   CreateProjectRequest,
   CreateProjectResult,
   DeleteProjectResult,
+  GetProjectResult,
   ProjectsListResult,
   UpdateProjectRequest,
   UpdateProjectResult,
@@ -86,6 +87,8 @@ const api = {
   projects: {
     list: (): Promise<ProjectsListResult> =>
       ipcRenderer.invoke("projects:list"),
+    get: (id: string): Promise<GetProjectResult> =>
+      ipcRenderer.invoke("projects:get", id),
     create: (input: CreateProjectRequest): Promise<CreateProjectResult> =>
       ipcRenderer.invoke("projects:create", input),
     update: (

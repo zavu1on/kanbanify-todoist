@@ -7,31 +7,29 @@ import { ProjectMapper } from "../../domain/mappers/ProjectMapper";
 import type { IProjectGateway } from "../ports/IProjectGateway";
 import { countActiveTasksInProject } from "../services/countActiveTasksInProject";
 
-export class ListProjectsUseCase implements UseCase<void, Project[]> {
+export class GetProjectUseCase implements UseCase<string, Project> {
+  private readonly projectMapper = new ProjectMapper();
+
   constructor(
     private readonly projectGateway: IProjectGateway,
     private readonly taskGateway: ITaskGateway,
     private readonly tokenStore: ITokenStore,
   ) {}
 
-  async execute(): Promise<Project[]> {
+  async execute(projectId: string): Promise<Project> {
     const accessToken = await this.tokenStore.load();
     if (accessToken === null) throw new InvalidProjectSessionError();
 
-    const rawProjects = await this.projectGateway.listProjects(
+    const raw = await this.projectGateway.getProject(
       accessToken.value,
+      projectId,
     );
-    const mapper = new ProjectMapper();
+    const activeTaskCount = await countActiveTasksInProject(
+      this.taskGateway,
+      accessToken.value,
+      projectId,
+    );
 
-    return Promise.all(
-      rawProjects.map(async (raw) => {
-        const activeTaskCount = await countActiveTasksInProject(
-          this.taskGateway,
-          accessToken.value,
-          raw.id,
-        );
-        return mapper.toDomain(raw, activeTaskCount);
-      }),
-    );
+    return this.projectMapper.toDomain(raw, activeTaskCount);
   }
 }

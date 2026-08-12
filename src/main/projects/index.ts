@@ -6,6 +6,7 @@ export type { ArchiveProjectResult } from "./domain/contracts/ArchiveProjectResu
 export type { CreateProjectRequest } from "./domain/contracts/CreateProjectRequest";
 export type { CreateProjectResult } from "./domain/contracts/CreateProjectResult";
 export type { DeleteProjectResult } from "./domain/contracts/DeleteProjectResult";
+export type { GetProjectResult } from "./domain/contracts/GetProjectResult";
 export type { ProjectDTO } from "./domain/dtos/ProjectDTO";
 export type { ProjectsErrorType } from "./domain/contracts/ProjectsFailure";
 export type { ProjectsListResult } from "./domain/contracts/ProjectsListResult";

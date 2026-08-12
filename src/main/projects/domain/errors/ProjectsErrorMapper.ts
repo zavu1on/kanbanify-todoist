@@ -1,6 +1,6 @@
 import { InvalidProjectSessionError } from "./InvalidProjectSessionError";
-import type { ProjectsError } from "./ProjectsError";
 import { ProjectNotFoundError } from "./ProjectNotFoundError";
+import type { ProjectsError } from "./ProjectsError";
 import { TodoistProjectsConnectionError } from "./TodoistProjectsConnectionError";
 import { UnknownProjectsError } from "./UnknownProjectsError";
 

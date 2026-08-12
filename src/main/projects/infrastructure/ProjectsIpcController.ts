@@ -5,12 +5,14 @@ import { UpdateProjectInput } from "../application/dtos/UpdateProjectInput";
 import type { ArchiveProjectUseCase } from "../application/use-cases/ArchiveProjectUseCase";
 import type { CreateProjectUseCase } from "../application/use-cases/CreateProjectUseCase";
 import type { DeleteProjectUseCase } from "../application/use-cases/DeleteProjectUseCase";
+import type { GetProjectUseCase } from "../application/use-cases/GetProjectUseCase";
 import type { ListProjectsUseCase } from "../application/use-cases/ListProjectsUseCase";
 import type { UpdateProjectUseCase } from "../application/use-cases/UpdateProjectUseCase";
 import type { ArchiveProjectResult } from "../domain/contracts/ArchiveProjectResult";
 import type { CreateProjectRequest } from "../domain/contracts/CreateProjectRequest";
 import type { CreateProjectResult } from "../domain/contracts/CreateProjectResult";
 import type { DeleteProjectResult } from "../domain/contracts/DeleteProjectResult";
+import type { GetProjectResult } from "../domain/contracts/GetProjectResult";
 import type { ProjectsErrorType } from "../domain/contracts/ProjectsFailure";
 import type { ProjectsListResult } from "../domain/contracts/ProjectsListResult";
 import type { UpdateProjectRequest } from "../domain/contracts/UpdateProjectRequest";
@@ -28,6 +30,7 @@ export class ProjectsIpcController implements IpcController {
 
   constructor(
     private readonly listProjectsUseCase: ListProjectsUseCase,
+    private readonly getProjectUseCase: GetProjectUseCase,
     private readonly createProjectUseCase: CreateProjectUseCase,
     private readonly updateProjectUseCase: UpdateProjectUseCase,
     private readonly archiveProjectUseCase: ArchiveProjectUseCase,
@@ -38,6 +41,10 @@ export class ProjectsIpcController implements IpcController {
     ipcMain.handle(
       "projects:list",
       (): Promise<ProjectsListResult> => this.list(),
+    );
+    ipcMain.handle(
+      "projects:get",
+      (_event, id: string): Promise<GetProjectResult> => this.get(id),
     );
     ipcMain.handle(
       "projects:create",
@@ -69,6 +76,15 @@ export class ProjectsIpcController implements IpcController {
         ok: true,
         projects: projects.map((project) => this.projectMapper.toDTO(project)),
       };
+    } catch (error) {
+      return this.toFailure(error);
+    }
+  }
+
+  private async get(id: string): Promise<GetProjectResult> {
+    try {
+      const project = await this.getProjectUseCase.execute(id);
+      return { ok: true, project: this.projectMapper.toDTO(project) };
     } catch (error) {
       return this.toFailure(error);
     }

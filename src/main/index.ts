@@ -1,15 +1,15 @@
 import path from "node:path";
 import { app, BrowserWindow, nativeImage } from "electron";
 import icon from "../../resources/icon.png?asset";
+import { DownloadAttachmentUseCase } from "./attachments/application/use-cases/DownloadAttachmentUseCase";
+import { AttachmentsIpcController } from "./attachments/infrastructure/AttachmentsIpcController";
+import { TodoistAttachmentGateway } from "./attachments/infrastructure/TodoistAttachmentGateway";
 import { CheckSessionUseCase } from "./auth/application/use-cases/CheckSessionUseCase";
 import { LoginUseCase } from "./auth/application/use-cases/LoginUseCase";
 import { LogoutUseCase } from "./auth/application/use-cases/LogoutUseCase";
 import { AuthIpcController } from "./auth/infrastructure/AuthIpcController";
 import { SafeStorageTokenStore } from "./auth/infrastructure/SafeStorageTokenStore";
 import { TodoistUserGateway } from "./auth/infrastructure/TodoistUserGateway";
-import { DownloadAttachmentUseCase } from "./attachments/application/use-cases/DownloadAttachmentUseCase";
-import { AttachmentsIpcController } from "./attachments/infrastructure/AttachmentsIpcController";
-import { TodoistAttachmentGateway } from "./attachments/infrastructure/TodoistAttachmentGateway";
 import { CreateCommentUseCase } from "./comments/application/use-cases/CreateCommentUseCase";
 import { DeleteCommentUseCase } from "./comments/application/use-cases/DeleteCommentUseCase";
 import { ListCommentsUseCase } from "./comments/application/use-cases/ListCommentsUseCase";
@@ -23,6 +23,7 @@ import { TodoistLabelGateway } from "./labels/infrastructure/TodoistLabelGateway
 import { ArchiveProjectUseCase } from "./projects/application/use-cases/ArchiveProjectUseCase";
 import { CreateProjectUseCase } from "./projects/application/use-cases/CreateProjectUseCase";
 import { DeleteProjectUseCase } from "./projects/application/use-cases/DeleteProjectUseCase";
+import { GetProjectUseCase } from "./projects/application/use-cases/GetProjectUseCase";
 import { ListProjectsUseCase } from "./projects/application/use-cases/ListProjectsUseCase";
 import { UpdateProjectUseCase } from "./projects/application/use-cases/UpdateProjectUseCase";
 import { ProjectsIpcController } from "./projects/infrastructure/ProjectsIpcController";
@@ -90,6 +91,11 @@ const registerIpcHandlers = () => {
     taskGateway,
     tokenStore,
   );
+  const getProjectUseCase = new GetProjectUseCase(
+    projectGateway,
+    taskGateway,
+    tokenStore,
+  );
   const createProjectUseCase = new CreateProjectUseCase(
     projectGateway,
     tokenStore,
@@ -109,6 +115,7 @@ const registerIpcHandlers = () => {
 
   new ProjectsIpcController(
     listProjectsUseCase,
+    getProjectUseCase,
     createProjectUseCase,
     updateProjectUseCase,
     archiveProjectUseCase,
@@ -175,6 +182,8 @@ const createWindow = () => {
   } else {
     window.loadFile(path.join(__dirname, "../renderer/index.html"));
   }
+
+  window.webContents.openDevTools();
 };
 
 app.whenReady().then(() => {
