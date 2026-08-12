@@ -12,18 +12,6 @@
         ]
       }
     ]
-    // "Stop": [
-    //   {
-    //     "hooks": [
-    //       {
-    //         "type": "command",
-    //         "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/sdlc-gates.sh\"",
-    //         "timeout": 300,
-    //         "statusMessage": "Running typecheck and tests"
-    //       }
-    //     ]
-    //   }
-    // ]
   },
   "enabledPlugins": {
     "ponytail@ponytail": true
