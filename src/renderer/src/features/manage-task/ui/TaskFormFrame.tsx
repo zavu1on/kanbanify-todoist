@@ -6,40 +6,30 @@ import { type FC, useEffect, useRef, useState } from "react";
 import { useLabelsQuery } from "@/entities/label";
 import { useProjectsQuery } from "@/entities/project";
 import { useCompleteTaskMutation } from "@/features/complete-task";
-import {
-  DeleteTaskConfirmModal,
-  useDeleteTaskMutation,
-} from "@/features/delete-task";
 import { CommentsSection } from "@/features/manage-comment";
 import type {
   KanbanStatusLevel as KanbanStatusLevelType,
   PriorityLevel,
   TaskDTO,
 } from "@/main/tasks";
-import { KANBAN_STATUS_LEVELS } from "@/main/tasks";
 import { useCreateLabelMutation } from "../api/useCreateLabelMutation";
 import { useCreateTaskMutation } from "../api/useCreateTaskMutation";
 import { useUpdateTaskMutation } from "../api/useUpdateTaskMutation";
 import type { QuickAddContext } from "../lib/parseQuickAdd";
+import { RESERVED_LABELS } from "../model/reservedLabels";
 import { taskFormSchema } from "../model/taskFormSchema";
-import { useDiscardConfirmation } from "../model/useDiscardConfirmation";
 import { useInboxProjectDefault } from "../model/useInboxProjectDefault";
-import { useLabelsFieldHandler } from "../model/useLabelsFieldHandler";
-import { useProjectMentionSuggestions } from "../model/useProjectMentionSuggestions";
-import { useQuickAddTitleSync } from "../model/useQuickAddTitleSync";
 import { useSubmitTaskForm } from "../model/useSubmitTaskForm";
-import { useTaskFieldTokenHandlers } from "../model/useTaskFieldTokenHandlers";
-import { DiscardChangesModal } from "./DiscardChangesModal";
-import { ReservedLabelModal } from "./ReservedLabelModal";
+import {
+  DeleteConfirmController,
+  type DeleteConfirmControllerHandle,
+} from "./DeleteConfirmController";
+import {
+  DiscardConfirmController,
+  type DiscardConfirmControllerHandle,
+} from "./DiscardConfirmController";
 import { SubtasksSection } from "./SubtasksSection";
-import { TaskFormFields } from "./TaskFormFields";
-
-/** Reserved kanban labels (see `KANBAN_STATUS_LEVELS`) never go through the
- * Labels field or an `@label` quick-add token — they're only ever set via
- * the Kanban status control (SPECIFICATION.md "Детальное отображение задачи"). */
-const RESERVED_LABELS = KANBAN_STATUS_LEVELS.filter(
-  (level): level is Exclude<typeof level, "none"> => level !== "none",
-);
+import { TaskFormFields, type TaskFormFieldsHandle } from "./TaskFormFields";
 
 export type TaskFormDefaults = {
   projectId?: string;
@@ -100,14 +90,15 @@ export const TaskFormFrame: FC<TaskFormFrameProps> = ({
   const createTaskMutation = useCreateTaskMutation(queryKey);
   const updateTaskMutation = useUpdateTaskMutation(queryKey);
   const createLabelMutation = useCreateLabelMutation();
-  const deleteTaskMutation = useDeleteTaskMutation(queryKey);
   const completeTaskMutation = useCompleteTaskMutation(queryKey);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   // Plays a brief press animation before closing — the actual completion
   // (and the task's disappearance from whichever list it's in) happens once
   // the modal is already gone, same reasoning as `TaskCard`'s checkbox.
   const [isCompleting, setIsCompleting] = useState(false);
 
+  // Mirrors the context `TaskFormFields` builds for its own quick-add parsing
+  // — only `useSubmitTaskForm` needs a copy here, to strip the title's tokens
+  // at submit time.
   const quickAddContext: QuickAddContext = {
     projects: projects.map((p) => ({ id: p.id, name: p.name })),
     reservedLabels: RESERVED_LABELS,
@@ -115,11 +106,22 @@ export const TaskFormFrame: FC<TaskFormFrameProps> = ({
 
   // Seeded from the task's plain title on edit, same as create mode starting
   // blank — everything else stays in its own field until a recognized token
-  // shows up in this text (see `useQuickAddTitleSync`).
+  // shows up in this text (see `useQuickAddTitleSync`, owned by `TaskFormFields`).
   const initialRawTitle = task?.title ?? "";
   const formRef = useRef<HTMLFormElement>(null);
+  const formFieldsRef = useRef<TaskFormFieldsHandle>(null);
+  const getRawTitle = () =>
+    formFieldsRef.current?.getRawTitle() ?? initialRawTitle;
+  const discardConfirmRef = useRef<DiscardConfirmControllerHandle>(null);
+  const deleteConfirmRef = useRef<DeleteConfirmControllerHandle>(null);
 
   const form = useForm({
+    // Keeps field values out of React state so typing doesn't re-render this
+    // whole frame (and everything under it — `SubtasksSection`,
+    // `CommentsSection`, both confirm modals) on every keystroke; only the
+    // input that calls `form.getInputProps` for a changed field re-renders
+    // (see `TaskFormFields`).
+    mode: "uncontrolled",
     initialValues: {
       description: task?.description ?? "",
       projectId: task?.projectId ?? baselineProjectId,
@@ -144,61 +146,8 @@ export const TaskFormFrame: FC<TaskFormFrameProps> = ({
     inboxProject,
   });
 
-  const {
-    rawTitle,
-    quickAddSegments,
-    handleTitleTextChange,
-    resyncTitleToken,
-    applyRawTitle,
-  } = useQuickAddTitleSync({
-    initialRawTitle,
-    quickAddContext,
-    form,
-    knownLabels,
-    onUnknownLabel: (name) => createLabelMutation.mutate(name),
-  });
-
-  const {
-    handlePriorityChange,
-    handleProjectChange,
-    handleDueDateChange,
-    handleDueTimeChange,
-    handleKanbanStatusChange,
-  } = useTaskFieldTokenHandlers({ form, projects, resyncTitleToken });
-
-  const {
-    handleLabelsChange,
-    pendingReservedLabel,
-    confirmReservedLabel,
-    cancelReservedLabel,
-  } = useLabelsFieldHandler({
-    form,
-    rawTitle,
-    quickAddContext,
-    reservedLabels: RESERVED_LABELS,
-    knownLabels,
-    onUnknownLabel: (name) => createLabelMutation.mutate(name),
-    applyRawTitle,
-    resyncTitleToken,
-  });
-
-  const { projectSuggestions, selectProjectSuggestion } =
-    useProjectMentionSuggestions({ rawTitle, projects, form, applyRawTitle });
-
-  const {
-    isDiscardConfirmOpen,
-    cancelDiscard,
-    requestClose,
-    handleFormKeyDown,
-  } = useDiscardConfirmation({
-    form,
-    rawTitle,
-    initialRawTitle,
-    onClose: leave,
-  });
-
   useEffect(() => {
-    registerLeave(requestClose);
+    registerLeave(() => discardConfirmRef.current?.requestClose());
   });
 
   // The root frame gets Mantine's own `data-autofocus` handling on the
@@ -215,22 +164,13 @@ export const TaskFormFrame: FC<TaskFormFrameProps> = ({
     form,
     isEditMode,
     task,
-    rawTitle,
+    getRawTitle,
     quickAddContext,
     createTaskMutation,
     updateTaskMutation,
     onClose: leave,
     parentId: parentTask?.id ?? null,
   });
-
-  // Closes this frame first (pop or close the modal, see `leave`), then
-  // deletes optimistically — the mutation's cache write no longer needs to
-  // be reconciled with this frame being on screen for the task it just removed.
-  const handleConfirmDelete = () => {
-    setIsDeleteConfirmOpen(false);
-    leave();
-    if (task) deleteTaskMutation.mutate({ taskId: task.id });
-  };
 
   const handleCompletePress = () => {
     setIsCompleting(true);
@@ -244,33 +184,24 @@ export const TaskFormFrame: FC<TaskFormFrameProps> = ({
     }, 250);
   };
 
-  const projectOptions = projects.map((p) => ({ value: p.id, label: p.name }));
-  const labelOptions = knownLabels
-    .filter(
-      (l) =>
-        !(RESERVED_LABELS as readonly string[]).includes(l.name.toLowerCase()),
-    )
-    .map((l) => l.name);
-
   return (
     <>
-      <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleFormKeyDown}>
+      <form
+        ref={formRef}
+        onSubmit={handleSubmit}
+        onKeyDown={(event) =>
+          discardConfirmRef.current?.handleFormKeyDown(event)
+        }
+      >
         <Stack gap="md">
           <TaskFormFields
+            ref={formFieldsRef}
             form={form}
-            quickAddSegments={quickAddSegments}
-            onTitleTextChange={handleTitleTextChange}
+            projects={projects}
+            knownLabels={knownLabels}
+            initialRawTitle={initialRawTitle}
+            onUnknownLabel={(name) => createLabelMutation.mutate(name)}
             onTitleSubmit={() => formRef.current?.requestSubmit()}
-            projectSuggestions={projectSuggestions}
-            onSelectProjectSuggestion={selectProjectSuggestion}
-            projectOptions={projectOptions}
-            onProjectChange={handleProjectChange}
-            onDueDateChange={handleDueDateChange}
-            onDueTimeChange={handleDueTimeChange}
-            onPriorityChange={handlePriorityChange}
-            onKanbanStatusChange={handleKanbanStatusChange}
-            labelOptions={labelOptions}
-            onLabelsChange={handleLabelsChange}
             hideKanbanStatus={parentTask !== undefined}
             disableProject={parentTask !== undefined}
             titleLeftSection={
@@ -294,7 +225,11 @@ export const TaskFormFrame: FC<TaskFormFrameProps> = ({
           />
 
           <Group justify="flex-end">
-            <Button type="button" variant="default" onClick={requestClose}>
+            <Button
+              type="button"
+              variant="default"
+              onClick={() => discardConfirmRef.current?.requestClose()}
+            >
               Cancel
             </Button>
             <Button
@@ -313,7 +248,7 @@ export const TaskFormFrame: FC<TaskFormFrameProps> = ({
                   type="button"
                   color="red"
                   variant="subtle"
-                  onClick={() => setIsDeleteConfirmOpen(true)}
+                  onClick={() => deleteConfirmRef.current?.open()}
                 >
                   Delete
                 </Button>
@@ -323,23 +258,22 @@ export const TaskFormFrame: FC<TaskFormFrameProps> = ({
         </Stack>
       </form>
 
-      <DiscardChangesModal
-        opened={isDiscardConfirmOpen}
-        onCancel={cancelDiscard}
-        onDiscard={leave}
+      <DiscardConfirmController
+        ref={discardConfirmRef}
+        form={form}
+        getRawTitle={getRawTitle}
+        initialRawTitle={initialRawTitle}
+        onClose={leave}
       />
 
-      <ReservedLabelModal
-        pendingLabel={pendingReservedLabel}
-        onCancel={cancelReservedLabel}
-        onConfirm={confirmReservedLabel}
-      />
-
-      <DeleteTaskConfirmModal
-        opened={isDeleteConfirmOpen}
-        onCancel={() => setIsDeleteConfirmOpen(false)}
-        onConfirm={handleConfirmDelete}
-      />
+      {task && (
+        <DeleteConfirmController
+          ref={deleteConfirmRef}
+          queryKey={queryKey}
+          taskId={task.id}
+          onDeleted={leave}
+        />
+      )}
     </>
   );
 };

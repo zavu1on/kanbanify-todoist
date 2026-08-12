@@ -1,5 +1,5 @@
 import { Divider, Stack, Text } from "@mantine/core";
-import type { FC } from "react";
+import { type FC, memo } from "react";
 import type { TaskDTO } from "@/main/tasks";
 import { SubtasksList } from "./SubtasksList";
 
@@ -12,7 +12,10 @@ type SubtasksSectionProps = {
   onAddSubtask: () => void;
 };
 
-export const SubtasksSection: FC<SubtasksSectionProps> = ({
+/** `memo`d so `TaskFormFrame` re-rendering while typing the title (see
+ * `useQuickAddTitleSync`'s `rawTitle` state) doesn't also re-run this
+ * section's own subtasks query. */
+const SubtasksSectionComponent: FC<SubtasksSectionProps> = ({
   parentTask,
   onOpenSubtask,
   onAddSubtask,
@@ -36,3 +39,5 @@ export const SubtasksSection: FC<SubtasksSectionProps> = ({
     />
   );
 };
+
+export const SubtasksSection = memo(SubtasksSectionComponent);

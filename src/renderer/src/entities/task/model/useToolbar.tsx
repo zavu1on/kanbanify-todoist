@@ -68,6 +68,12 @@ export const useToolbar = <TViewMode extends string>({
           </Tooltip>
         )}
 
+        {/* Mounted wherever `viewMode` state lives (e.g. TasksPageContent),
+         so toggling `viewMode` re-renders this button too, even though it
+         doesn't depend on `viewMode` — not worth its own state boundary for
+         one button. If more `viewMode`-independent pieces land here, split
+         them out instead of letting this comment become the excuse to
+         skip it. */}
         <Tooltip label="Refetch (Ctrl+R)">
           <ActionIcon
             variant="subtle"

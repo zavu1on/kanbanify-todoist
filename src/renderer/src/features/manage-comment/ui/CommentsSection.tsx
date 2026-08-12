@@ -1,12 +1,12 @@
 import { Button, Divider, Stack, Text } from "@mantine/core";
 import { PlusIcon } from "lucide-animated";
-import { type FC, useState } from "react";
+import { type FC, memo, useState } from "react";
 import { CommentCard, useCommentsQuery } from "@/entities/comment";
-import type { CommentFormAttachmentChange } from "../model/attachmentChange";
 import { useCreateCommentMutation } from "../api/useCreateCommentMutation";
 import { useDeleteCommentMutation } from "../api/useDeleteCommentMutation";
 import { useDownloadAttachmentMutation } from "../api/useDownloadAttachmentMutation";
 import { useUpdateCommentMutation } from "../api/useUpdateCommentMutation";
+import type { CommentFormAttachmentChange } from "../model/attachmentChange";
 import { CommentForm } from "./CommentForm";
 import { DeleteCommentConfirmModal } from "./DeleteCommentConfirmModal";
 
@@ -17,9 +17,12 @@ type CommentsSectionProps = {
 /**
  * A task's comments — list of cards plus the inline add/edit form (see
  * COMMENTS.md). Mirrors `SubtasksSection`'s composition: query + mutations
- * owned here, `CommentCard`/`CommentForm` stay presentational.
+ * owned here, `CommentCard`/`CommentForm` stay presentational. `memo`d so
+ * `TaskFormFrame` re-rendering while typing the title (see
+ * `useQuickAddTitleSync`'s `rawTitle` state) doesn't also re-run this
+ * section's own comments query.
  */
-export const CommentsSection: FC<CommentsSectionProps> = ({ taskId }) => {
+const CommentsSectionComponent: FC<CommentsSectionProps> = ({ taskId }) => {
   const commentsQuery = useCommentsQuery(taskId);
   const createMutation = useCreateCommentMutation(taskId);
   const updateMutation = useUpdateCommentMutation(taskId);
@@ -135,3 +138,5 @@ export const CommentsSection: FC<CommentsSectionProps> = ({ taskId }) => {
     </Stack>
   );
 };
+
+export const CommentsSection = memo(CommentsSectionComponent);

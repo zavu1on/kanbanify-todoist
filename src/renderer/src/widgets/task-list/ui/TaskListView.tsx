@@ -1,11 +1,13 @@
-import { Button, Stack } from "@mantine/core";
+import { Stack } from "@mantine/core";
 import type { QueryKey } from "@tanstack/react-query";
-import { PlusIcon } from "lucide-animated";
-import { type FC, useState } from "react";
+import { type FC, useRef } from "react";
 import { TaskCard } from "@/entities/task";
 import { useCompleteTaskMutation } from "@/features/complete-task";
-import { TaskFormModal } from "@/features/manage-task";
 import type { TaskDTO } from "@/main/tasks";
+import {
+  TaskFormControls,
+  type TaskFormControlsHandle,
+} from "./TaskFormControls";
 
 type TaskListViewProps = {
   tasks: TaskDTO[];
@@ -26,8 +28,7 @@ export const TaskListView: FC<TaskListViewProps> = ({
   projectId,
 }) => {
   const completeTaskMutation = useCompleteTaskMutation(queryKey);
-  const [editingTask, setEditingTask] = useState<TaskDTO | null>(null);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const formControlsRef = useRef<TaskFormControlsHandle>(null);
 
   return (
     <Stack gap="xs">
@@ -37,36 +38,15 @@ export const TaskListView: FC<TaskListViewProps> = ({
           task={task}
           hideProject={hideProject}
           onComplete={(taskId) => completeTaskMutation.mutate({ taskId })}
-          onClick={() => setEditingTask(task)}
+          onClick={() => formControlsRef.current?.openEdit(task)}
         />
       ))}
 
-      <Button
-        variant="subtle"
-        color="gray"
-        justify="flex-start"
-        leftSection={<PlusIcon size={16} animateOnHover={false} />}
-        onClick={() => setIsCreateOpen(true)}
-      >
-        Add task
-      </Button>
-
-      {/* Mounted only while open — a fresh instance each time means the
-          form always starts blank and `useForm`'s initialValues pick up
-          the current `defaults` instead of whatever they were on first
-          mount (see `Sidebar`'s "New task" modal). */}
-      {(editingTask || isCreateOpen) && (
-        <TaskFormModal
-          opened
-          onClose={() => {
-            setEditingTask(null);
-            setIsCreateOpen(false);
-          }}
-          queryKey={queryKey}
-          task={editingTask ?? undefined}
-          defaults={{ projectId }}
-        />
-      )}
+      <TaskFormControls
+        ref={formControlsRef}
+        queryKey={queryKey}
+        projectId={projectId}
+      />
     </Stack>
   );
 };

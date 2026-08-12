@@ -11,7 +11,11 @@ import type { TaskFormValues } from "./taskFormSchema";
 
 type UseLabelsFieldHandlerParams = {
   form: UseFormReturnType<TaskFormValues>;
-  rawTitle: string;
+  // A getter, not the value itself — `rawTitle` lives in `QuickAddTitleField`
+  // (kept out of this hook's own caller so a label pick doesn't re-render the
+  // title field or vice versa), so this reads it imperatively instead of
+  // subscribing to every change.
+  getRawTitle: () => string;
   quickAddContext: QuickAddContext;
   reservedLabels: readonly string[];
   knownLabels: LabelDTO[];
@@ -33,7 +37,7 @@ type UseLabelsFieldHandlerParams = {
  */
 export const useLabelsFieldHandler = ({
   form,
-  rawTitle,
+  getRawTitle,
   quickAddContext,
   reservedLabels,
   knownLabels,
@@ -47,7 +51,7 @@ export const useLabelsFieldHandler = ({
 
   const applyLabelsChange = (newLabels: string[]) => {
     form.setFieldValue("labels", newLabels);
-    applyRawTitle(syncLabelTokens(rawTitle, newLabels, quickAddContext));
+    applyRawTitle(syncLabelTokens(getRawTitle(), newLabels, quickAddContext));
   };
 
   const handleLabelsChange = (newLabels: string[]) => {

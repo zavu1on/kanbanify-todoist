@@ -11,7 +11,11 @@ type UseSubmitTaskFormParams = {
   form: UseFormReturnType<TaskFormValues>;
   isEditMode: boolean;
   task: TaskDTO | undefined;
-  rawTitle: string;
+  // A getter, not the value itself — `rawTitle` lives in `TaskFormFields`
+  // (kept out of `TaskFormFrame`'s state so typing doesn't re-render the
+  // frame), so this reads it imperatively at submit-time instead of
+  // subscribing to every change.
+  getRawTitle: () => string;
   quickAddContext: QuickAddContext;
   createTaskMutation: ReturnType<typeof useCreateTaskMutation>;
   updateTaskMutation: ReturnType<typeof useUpdateTaskMutation>;
@@ -27,7 +31,7 @@ export const useSubmitTaskForm = ({
   form,
   isEditMode,
   task,
-  rawTitle,
+  getRawTitle,
   quickAddContext,
   createTaskMutation,
   updateTaskMutation,
@@ -36,7 +40,7 @@ export const useSubmitTaskForm = ({
 }: UseSubmitTaskFormParams) =>
   form.onSubmit(
     (values) => {
-      const title = parseQuickAdd(rawTitle, quickAddContext).cleanTitle;
+      const title = parseQuickAdd(getRawTitle(), quickAddContext).cleanTitle;
 
       if (title.length === 0) {
         notifications.show({

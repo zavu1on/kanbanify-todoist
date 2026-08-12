@@ -4,7 +4,11 @@ import type { TaskFormValues } from "./taskFormSchema";
 
 type UseDiscardConfirmationParams = {
   form: UseFormReturnType<TaskFormValues>;
-  rawTitle: string;
+  // A getter, not the value itself — `rawTitle` lives in `TaskFormFields`
+  // (kept out of `TaskFormFrame`'s state so typing doesn't re-render the
+  // frame), so this reads it imperatively at close-time instead of
+  // subscribing to every change.
+  getRawTitle: () => string;
   initialRawTitle: string;
   onClose: () => void;
 };
@@ -15,14 +19,14 @@ type UseDiscardConfirmationParams = {
  */
 export const useDiscardConfirmation = ({
   form,
-  rawTitle,
+  getRawTitle,
   initialRawTitle,
   onClose,
 }: UseDiscardConfirmationParams) => {
   const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
 
   const requestClose = () => {
-    if (form.isDirty() || rawTitle !== initialRawTitle) {
+    if (form.isDirty() || getRawTitle() !== initialRawTitle) {
       setIsDiscardConfirmOpen(true);
       return;
     }
