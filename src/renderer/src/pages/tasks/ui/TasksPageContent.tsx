@@ -1,6 +1,6 @@
 import { Alert, Stack } from "@mantine/core";
 import type { FC } from "react";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   flattenTaskPages,
   projectTasksListQueryKey,
@@ -24,14 +24,18 @@ export const TasksPageContent: FC<TasksPageContentProps> = ({ projectId }) => {
   const [viewMode, setViewMode] = useState<ViewMode>(loadViewMode);
   const tasksQuery = useTasksQuery(projectId);
 
-  const queryKey = projectId
-    ? projectTasksListQueryKey(projectId)
-    : tasksListQueryKey;
+  // `projectTasksListQueryKey` builds a fresh array every call — memoized so
+  // it (and everything downstream keyed off it, e.g. `TasksPageToolbar`'s
+  // `memo`) doesn't see a new reference on every unrelated render.
+  const queryKey = useMemo(
+    () => (projectId ? projectTasksListQueryKey(projectId) : tasksListQueryKey),
+    [projectId],
+  );
 
-  const handleViewModeChange = (mode: ViewMode) => {
+  const handleViewModeChange = useCallback((mode: ViewMode) => {
     setViewMode(mode);
     saveViewMode(mode);
-  };
+  }, []);
 
   const handleLoadMore = useLoadMoreTasksHandler(tasksQuery);
   const { tasks, initialLoadError } = flattenTaskPages(tasksQuery);

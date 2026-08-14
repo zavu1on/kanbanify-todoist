@@ -1,6 +1,7 @@
 import type { QueryKey } from "@tanstack/react-query";
 import { LayoutGridIcon, ListIcon } from "lucide-animated";
-import type { FC } from "react";
+import type { FC, ReactElement } from "react";
+import { memo } from "react";
 import { useToolbar } from "@/entities/task";
 import type { ViewMode } from "../model/viewMode";
 
@@ -14,33 +15,46 @@ type TasksPageToolbarProps = {
   isFetchingNextPage: boolean;
 };
 
-export const TasksPageToolbar: FC<TasksPageToolbarProps> = ({
-  viewMode,
-  onViewModeChange,
-  queryKey,
-  isRefetching,
-  onLoadMore,
-  hasNextPage,
-  isFetchingNextPage,
-}) => {
-  return useToolbar<ViewMode>({
+// Static — doesn't depend on props, so it's declared once here instead of
+// being rebuilt (with fresh icon elements) on every render, which made
+// SegmentedControl's `data` prop change identity on every task list update
+// and reset its slide indicator/icons, showing up as a toolbar flicker.
+const VIEW_MODE_SEGMENTS = [
+  { value: "list", label: <ListIcon size={16} animateOnHover={false} /> },
+  {
+    value: "kanban",
+    label: <LayoutGridIcon size={16} animateOnHover={false} />,
+  },
+] satisfies { value: ViewMode; label: ReactElement }[];
+
+// `memo`-ed so an unrelated task list update (add/complete/etc. — which
+// changes `tasks`, not any prop this component reads) doesn't re-render the
+// toolbar. Only holds if every prop below is itself referentially stable
+// across those updates — see `TasksPageContent`'s `queryKey`/`onViewModeChange`
+// and `useLoadMoreTasksHandler`'s `onLoadMore`.
+export const TasksPageToolbar: FC<TasksPageToolbarProps> = memo(
+  function TasksPageToolbar({
     viewMode,
     onViewModeChange,
-    segments: [
-      { value: "list", label: <ListIcon size={16} animateOnHover={false} /> },
-      {
-        value: "kanban",
-        label: <LayoutGridIcon size={16} animateOnHover={false} />,
-      },
-    ],
-    refetchQueryKeys: [
-      queryKey,
-      ["tasks", "list", "subtasks"],
-      ["comments", "list"],
-    ],
+    queryKey,
     isRefetching,
     onLoadMore,
     hasNextPage,
     isFetchingNextPage,
-  });
-};
+  }) {
+    return useToolbar<ViewMode>({
+      viewMode,
+      onViewModeChange,
+      segments: VIEW_MODE_SEGMENTS,
+      refetchQueryKeys: [
+        queryKey,
+        ["tasks", "list", "subtasks"],
+        ["comments", "list"],
+      ],
+      isRefetching,
+      onLoadMore,
+      hasNextPage,
+      isFetchingNextPage,
+    });
+  },
+);

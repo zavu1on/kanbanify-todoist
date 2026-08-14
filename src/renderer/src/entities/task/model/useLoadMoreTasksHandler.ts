@@ -1,5 +1,9 @@
 import { notifications } from "@mantine/notifications";
-import type { InfiniteData, UseInfiniteQueryResult } from "@tanstack/react-query";
+import type {
+  InfiniteData,
+  UseInfiniteQueryResult,
+} from "@tanstack/react-query";
+import { useCallback } from "react";
 import type { TasksListResult } from "@/main/tasks";
 
 /** Shared "Load more" handler for every screen paginating `tasks:list`/
@@ -8,8 +12,16 @@ import type { TasksListResult } from "@/main/tasks";
 export const useLoadMoreTasksHandler = (
   tasksQuery: UseInfiniteQueryResult<InfiniteData<TasksListResult>>,
 ) => {
-  return async () => {
-    const result = await tasksQuery.fetchNextPage();
+  const { fetchNextPage } = tasksQuery;
+
+  // `fetchNextPage` itself is stable across renders (TanStack Query
+  // guarantee, same as `mutate`), and the result of the call — not
+  // `tasksQuery.data` — is what the body reads below, so this is safe to
+  // keep referentially stable regardless of how often `tasksQuery` itself
+  // changes identity. Lets callers (e.g. `TasksPageToolbar`) be `memo`-ed
+  // without this handler forcing a re-render on every task list update.
+  return useCallback(async () => {
+    const result = await fetchNextPage();
     const pages = result.data?.pages ?? [];
     const lastPage = pages.at(-1);
     if (!lastPage) return;
@@ -31,5 +43,5 @@ export const useLoadMoreTasksHandler = (
         message: lastPage.error.message,
       });
     }
-  };
+  }, [fetchNextPage]);
 };

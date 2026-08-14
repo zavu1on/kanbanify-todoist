@@ -8,7 +8,7 @@ import {
 } from "@dnd-kit/core";
 import { Group } from "@mantine/core";
 import type { QueryKey } from "@tanstack/react-query";
-import { type FC, useState } from "react";
+import { type FC, useCallback, useState } from "react";
 import { TaskCard } from "@/entities/task";
 import { useCompleteTaskMutation } from "@/features/complete-task";
 import { type TaskFormDefaults, TaskFormModal } from "@/features/manage-task";
@@ -48,6 +48,12 @@ export const TaskBoardView: FC<TaskBoardProps> = ({
     handleDragCancel,
   } = useDragOnDropHandlers(tasks, queryKey);
   const completeTaskMutation = useCompleteTaskMutation(queryKey);
+  // Stable across renders (`mutate` itself is stable per TanStack Query) so
+  // `DraggableTaskCard`'s `memo` can actually skip untouched cards.
+  const handleComplete = useCallback(
+    (taskId: string) => completeTaskMutation.mutate({ taskId }),
+    [completeTaskMutation.mutate],
+  );
   const [editingTask, setEditingTask] = useState<TaskDTO | null>(null);
   const [createDefaults, setCreateDefaults] = useState<TaskFormDefaults | null>(
     null,
@@ -86,7 +92,7 @@ export const TaskBoardView: FC<TaskBoardProps> = ({
             tasks={columns.get(status) ?? []}
             isDropTarget={dropTargetStatus === status}
             hideProject={hideProject}
-            onComplete={(taskId) => completeTaskMutation.mutate({ taskId })}
+            onComplete={handleComplete}
             onTaskClick={setEditingTask}
             onAddTask={() => handleAddTask(status)}
           />

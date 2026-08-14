@@ -14,6 +14,7 @@ import {
 } from "@mantine/core";
 import { PlusIcon } from "lucide-animated";
 import type { FC } from "react";
+import { useCallback, useRef } from "react";
 import { KANBAN_COLUMN_LABELS } from "@/entities/task";
 import type { KanbanStatusLevel, TaskDTO } from "@/main/tasks";
 import { DraggableTaskCard } from "./DraggableTaskCard";
@@ -38,6 +39,22 @@ export const KanbanColumn: FC<KanbanColumnProps> = ({
   onAddTask,
 }) => {
   const { setNodeRef } = useDroppable({ id: status });
+
+  // Read through a ref instead of closing over `tasks` directly — `tasks`
+  // (this column's slice of `buildColumns`) is a fresh array on nearly every
+  // render, so a `useCallback` depending on it would defeat the point: every
+  // `DraggableTaskCard` needs the *same* `onClick` reference across renders
+  // for its `memo` to skip cards whose own task didn't change.
+  const tasksRef = useRef(tasks);
+  tasksRef.current = tasks;
+
+  const handleCardClick = useCallback(
+    (taskId: string) => {
+      const task = tasksRef.current.find((t) => t.id === taskId);
+      if (task) onTaskClick(task);
+    },
+    [onTaskClick],
+  );
 
   return (
     <Paper
@@ -86,7 +103,7 @@ export const KanbanColumn: FC<KanbanColumnProps> = ({
                 task={task}
                 hideProject={hideProject}
                 onComplete={onComplete}
-                onClick={() => onTaskClick(task)}
+                onClick={handleCardClick}
               />
             ))}
           </SortableContext>

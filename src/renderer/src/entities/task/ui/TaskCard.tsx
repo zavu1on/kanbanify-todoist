@@ -8,7 +8,7 @@ import {
 } from "@mantine/core";
 import { BadgeAlertIcon, ClockIcon } from "lucide-animated";
 import type { FC } from "react";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { useProjectsQuery } from "@/entities/project";
 import type { TaskDTO } from "@/main/tasks";
 import { getDueDisplay } from "../lib/dueDate";
@@ -34,8 +34,11 @@ type TaskCardProps = {
   onComplete?: (taskId: string) => void;
   // Opens the task detail modal (SPECIFICATION.md "Карточка задачи": "Клик по
   // карточке открывает Детальное отображение задачи"). Omitted for the kanban
-  // drag preview, same reasoning as `onComplete`.
-  onClick?: () => void;
+  // drag preview, same reasoning as `onComplete`. Takes the task id (not the
+  // task itself) so callers can pass a referentially stable handler shared
+  // across every card instead of a fresh closure per task — see
+  // TaskListView.tsx.
+  onClick?: (taskId: string) => void;
   // Renders as a single compact list row (title and meta side by side, no
   // wrapping) instead of the default two-row card — used for subtask rows
   // inside the detail modal (SPECIFICATION.md "Детальное отображение задачи"),
@@ -43,14 +46,14 @@ type TaskCardProps = {
   fixedHeight?: boolean;
 };
 
-export const TaskCard: FC<TaskCardProps> = ({
+export const TaskCard: FC<TaskCardProps> = memo(function TaskCard({
   task,
   hideKanbanStatus,
   hideProject,
   onComplete,
   onClick,
   fixedHeight,
-}) => {
+}) {
   // Lets the exit animation play before the task actually leaves the list —
   // `onComplete` (the optimistic-removal mutation) fires from `onExited`,
   // once the card has visually finished disappearing.
@@ -163,7 +166,7 @@ export const TaskCard: FC<TaskCardProps> = ({
             ...transitionStyles,
             cursor: onClick ? "pointer" : undefined,
           }}
-          onClick={onClick}
+          onClick={onClick && (() => onClick(task.id))}
         >
           {fixedHeight ? (
             <TaskCardCompactRow
@@ -186,4 +189,4 @@ export const TaskCard: FC<TaskCardProps> = ({
       )}
     </Transition>
   );
-};
+});
