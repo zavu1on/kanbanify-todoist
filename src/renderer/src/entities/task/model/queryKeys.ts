@@ -23,3 +23,13 @@ export const todayTasksListQueryKey = ["tasks", "list", "today"] as const;
  * delete) is swept up by the blanket `tasksListQueryKey` invalidation too. */
 export const subtasksListQueryKey = (parentId: string) =>
   ["tasks", "list", "subtasks", parentId] as const;
+
+/** The Today sidebar badge's own cache entry — deliberately outside the
+ * `["tasks", "list"]` prefix (it's a count, not a list page), so mutations
+ * must invalidate it explicitly alongside `tasksListQueryKey`. */
+export const todayCountQueryKey = ["tasks", "count", "today"] as const;
+
+/** The "Tasks" sidebar badge's own cache entry — same reasoning as
+ * `todayCountQueryKey`: a count, not a list page, so mutations must
+ * invalidate it explicitly. */
+export const taskCountQueryKey = ["tasks", "count"] as const;

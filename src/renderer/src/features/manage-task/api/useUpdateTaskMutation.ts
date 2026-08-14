@@ -5,7 +5,8 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { tasksListQueryKey } from "@/entities/task";
+import { taskCountQueryKey, tasksListQueryKey } from "@/entities/task";
+import { projectsListQueryKey } from "@/entities/project";
 import type { TaskDTO, TasksListResult, UpdateTaskRequest } from "@/main/tasks";
 import { updateTask } from "./updateTask";
 
@@ -94,12 +95,27 @@ export const useUpdateTaskMutation = (queryKey: QueryKey) => {
           },
       );
 
-      // Same reasoning as `useChangeTaskStatusMutation`: mark every tasks-list
-      // page stale without forcing a refetch, so the edit shows up on other
-      // screens without an on-screen jump here.
+      // Unlike `useChangeTaskStatusMutation`'s drag-and-drop case, a single
+      // edit has no rapid-fire jump risk, so refetch every other active
+      // tasks-list page immediately (e.g. Today, if it's mounted and the
+      // task's due date moved to/from today) instead of waiting for its
+      // next mount.
       queryClient.invalidateQueries({
         queryKey: tasksListQueryKey,
-        refetchType: "none",
+        refetchType: "active",
+      });
+      // `taskCountQueryKey` (`["tasks", "count"]`) is a fuzzy-match prefix of
+      // the Today badge's `["tasks", "count", "today"]`, so this one call
+      // refreshes both sidebar badges.
+      queryClient.invalidateQueries({
+        queryKey: taskCountQueryKey,
+        refetchType: "active",
+      });
+      // An edit can move the task to a different project, shifting the
+      // `activeTaskCount` badge for both the old and new project.
+      queryClient.invalidateQueries({
+        queryKey: projectsListQueryKey,
+        refetchType: "active",
       });
     },
 

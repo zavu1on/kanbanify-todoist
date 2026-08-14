@@ -55,7 +55,15 @@ describe("useDeleteTaskMutation", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: ["tasks", "list"],
-      refetchType: "none",
+      refetchType: "active",
+    });
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: ["tasks", "count"],
+      refetchType: "active",
+    });
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: ["projects", "list"],
+      refetchType: "active",
     });
   });
 

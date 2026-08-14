@@ -5,7 +5,8 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { tasksListQueryKey } from "@/entities/task";
+import { taskCountQueryKey, tasksListQueryKey } from "@/entities/task";
+import { projectsListQueryKey } from "@/entities/project";
 import type { TasksListResult } from "@/main/tasks";
 import { completeTask } from "./completeTask";
 
@@ -65,13 +66,25 @@ export const useCompleteTaskMutation = (queryKey: QueryKey) => {
         return;
       }
 
-      // Same reasoning as `useChangeTaskStatusMutation`: mark every tasks-list
-      // page stale without forcing a refetch, so the change shows up on other
-      // screens without an on-screen jump here (the cache on screen already
-      // has the optimistic removal from `onMutate`).
+      // Unlike `useChangeTaskStatusMutation`'s drag-and-drop case, a single
+      // completion has no rapid-fire jump risk, so refetch every other active
+      // tasks-list page immediately (e.g. Today, if it's mounted) instead of
+      // waiting for its next mount.
       queryClient.invalidateQueries({
         queryKey: tasksListQueryKey,
-        refetchType: "none",
+        refetchType: "active",
+      });
+      // `taskCountQueryKey` (`["tasks", "count"]`) is a fuzzy-match prefix of
+      // the Today badge's `["tasks", "count", "today"]`, so this one call
+      // refreshes both sidebar badges.
+      queryClient.invalidateQueries({
+        queryKey: taskCountQueryKey,
+        refetchType: "active",
+      });
+      // Completing a task changes its project's `activeTaskCount` badge in the sidebar.
+      queryClient.invalidateQueries({
+        queryKey: projectsListQueryKey,
+        refetchType: "active",
       });
     },
   });

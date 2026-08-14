@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import { taskCountQueryKey } from "@/entities/task";
 import { getTaskCount } from "./getTaskCount";
 
 export const useTaskCountQuery = () =>
   useQuery({
-    queryKey: ["tasks", "count"],
+    queryKey: taskCountQueryKey,
     queryFn: getTaskCount,
   });
