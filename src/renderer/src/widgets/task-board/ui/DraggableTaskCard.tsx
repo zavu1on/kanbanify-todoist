@@ -34,7 +34,7 @@ export const DraggableTaskCard: FC<DraggableTaskCardProps> = ({
       // dnd-kit drives the drag offset via `transform`/`transition`, which have
       // no Mantine style-prop equivalent — this is the one case inline style
       // is warranted. The dragged card itself renders through `DragOverlay`
-      // (see TaskBoard.tsx), so this copy is hidden rather than faded.
+      // (see TaskBoardView.tsx), so this copy is hidden rather than faded.
       style={{
         transform: CSS.Transform.toString(transform),
         transition,

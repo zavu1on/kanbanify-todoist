@@ -29,7 +29,7 @@ type TaskCardProps = {
   // there to drop the redundant project chip.
   hideProject?: boolean;
   // Omitted where completing doesn't make sense (e.g. the kanban drag preview
-  // in `DragOverlay`, see TaskBoard.tsx) — the checkbox itself only renders
+  // in `DragOverlay`, see TaskBoardView.tsx) — the checkbox itself only renders
   // when this is passed.
   onComplete?: (taskId: string) => void;
   // Opens the task detail modal (SPECIFICATION.md "Карточка задачи": "Клик по

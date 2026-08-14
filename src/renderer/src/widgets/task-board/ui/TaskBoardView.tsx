@@ -32,7 +32,7 @@ type TaskBoardProps = {
   projectId?: string;
 };
 
-export const TaskBoard: FC<TaskBoardProps> = ({
+export const TaskBoardView: FC<TaskBoardProps> = ({
   tasks,
   queryKey,
   hideProject,

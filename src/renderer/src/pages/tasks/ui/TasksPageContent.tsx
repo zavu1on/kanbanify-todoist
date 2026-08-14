@@ -1,5 +1,4 @@
 import { Alert, Stack } from "@mantine/core";
-import { LayoutGridIcon, ListIcon } from "lucide-animated";
 import type { FC } from "react";
 import { useState } from "react";
 import {
@@ -7,12 +6,12 @@ import {
   projectTasksListQueryKey,
   tasksListQueryKey,
   useLoadMoreTasksHandler,
-  useToolbar,
 } from "@/entities/task";
-import { TaskBoard } from "@/widgets/task-board";
+import { TaskBoardView } from "@/widgets/task-board";
 import { TaskListView } from "@/widgets/task-list";
 import { useTasksQuery } from "../api/useTasksQuery";
 import { loadViewMode, saveViewMode, type ViewMode } from "../model/viewMode";
+import { TasksPageToolbar } from "./TasksPageToolbar";
 import { TasksSkeleton } from "./TasksSkeleton";
 
 type TasksPageContentProps = {
@@ -37,30 +36,17 @@ export const TasksPageContent: FC<TasksPageContentProps> = ({ projectId }) => {
   const handleLoadMore = useLoadMoreTasksHandler(tasksQuery);
   const { tasks, initialLoadError } = flattenTaskPages(tasksQuery);
 
-  const toolbar = useToolbar<ViewMode>({
-    viewMode,
-    onViewModeChange: handleViewModeChange,
-    segments: [
-      { value: "list", label: <ListIcon size={16} animateOnHover={false} /> },
-      {
-        value: "kanban",
-        label: <LayoutGridIcon size={16} animateOnHover={false} />,
-      },
-    ],
-    refetchQueryKeys: [
-      queryKey,
-      ["tasks", "list", "subtasks"],
-      ["comments", "list"],
-    ],
-    isRefetching: tasksQuery.isRefetching || tasksQuery.isLoading,
-    onLoadMore: handleLoadMore,
-    hasNextPage: tasksQuery.hasNextPage,
-    isFetchingNextPage: tasksQuery.isFetchingNextPage,
-  });
-
   return (
     <Stack gap="md">
-      {toolbar}
+      <TasksPageToolbar
+        viewMode={viewMode}
+        onViewModeChange={handleViewModeChange}
+        queryKey={queryKey}
+        isRefetching={tasksQuery.isRefetching || tasksQuery.isLoading}
+        onLoadMore={handleLoadMore}
+        hasNextPage={tasksQuery.hasNextPage}
+        isFetchingNextPage={tasksQuery.isFetchingNextPage}
+      />
 
       {tasksQuery.isPending ? (
         <TasksSkeleton />
@@ -76,7 +62,7 @@ export const TasksPageContent: FC<TasksPageContentProps> = ({ projectId }) => {
           projectId={projectId}
         />
       ) : (
-        <TaskBoard
+        <TaskBoardView
           tasks={tasks}
           queryKey={queryKey}
           hideProject={!!projectId}

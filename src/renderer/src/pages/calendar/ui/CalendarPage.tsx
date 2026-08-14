@@ -1,19 +1,15 @@
 import { Alert, Stack, Title } from "@mantine/core";
 import type { DayOfWeek } from "@mantine/schedule";
-import { CalendarDaysIcon, ListIcon } from "lucide-animated";
 import type { FC } from "react";
 import { useState } from "react";
 import { useSession } from "@/app/SessionContext";
-import {
-  flattenTaskPages,
-  useLoadMoreTasksHandler,
-  useToolbar,
-} from "@/entities/task";
-import { CalendarAgendaList } from "@/widgets/calendar-agenda-list";
+import { flattenTaskPages, useLoadMoreTasksHandler } from "@/entities/task";
+import { CalendarAgendaView } from "@/widgets/calendar-agenda-list";
 import { CalendarMonthView } from "@/widgets/calendar-month-view";
 import { useCalendarTasksQuery } from "../api/useCalendarTasksQuery";
 import { calendarTasksListQueryKey } from "../model/queryKeys";
 import { loadViewMode, saveViewMode, type ViewMode } from "../model/viewMode";
+import { CalendarPageToolbar } from "./CalendarPageToolbar";
 import { CalendarSkeleton } from "./CalendarSkeleton";
 
 /** Shows every unfinished task with a due date (SPECIFICATION.md "Календарь").
@@ -41,32 +37,19 @@ export const CalendarPage: FC = () => {
 
   const { tasks, initialLoadError } = flattenTaskPages(tasksQuery);
 
-  const toolbar = useToolbar<ViewMode>({
-    viewMode,
-    onViewModeChange: handleViewModeChange,
-    segments: [
-      {
-        value: "month",
-        label: <CalendarDaysIcon size={16} animateOnHover={false} />,
-      },
-      { value: "agenda", label: <ListIcon size={16} animateOnHover={false} /> },
-    ],
-    refetchQueryKeys: [
-      calendarTasksListQueryKey,
-      ["tasks", "list", "subtasks"],
-      ["comments", "list"],
-    ],
-    isRefetching: tasksQuery.isRefetching || tasksQuery.isLoading,
-    onLoadMore: handleLoadMore,
-    hasNextPage: tasksQuery.hasNextPage,
-    isFetchingNextPage: tasksQuery.isFetchingNextPage,
-  });
-
   return (
     <Stack gap="md">
       <Title order={2}>Calendar</Title>
 
-      {toolbar}
+      <CalendarPageToolbar
+        viewMode={viewMode}
+        onViewModeChange={handleViewModeChange}
+        queryKey={calendarTasksListQueryKey}
+        isRefetching={tasksQuery.isRefetching || tasksQuery.isLoading}
+        onLoadMore={handleLoadMore}
+        hasNextPage={tasksQuery.hasNextPage}
+        isFetchingNextPage={tasksQuery.isFetchingNextPage}
+      />
 
       {tasksQuery.isPending ? (
         <CalendarSkeleton />
@@ -81,7 +64,7 @@ export const CalendarPage: FC = () => {
           weekStartsOn={weekStartsOn}
         />
       ) : (
-        <CalendarAgendaList
+        <CalendarAgendaView
           tasks={tasks}
           queryKey={calendarTasksListQueryKey}
         />

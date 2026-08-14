@@ -2,22 +2,23 @@ import { MantineProvider } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { screen } from "@testing-library/react";
 import type { TaskDTO } from "@/main/tasks";
-import { TaskBoard } from "./TaskBoard";
+import { CalendarAgendaView } from "./CalendarAgendaView";
 
-const task: TaskDTO = {
+const buildTask = (overrides: Partial<TaskDTO>): TaskDTO => ({
   id: "task-1",
   title: "Write report",
   description: "",
   projectId: "inbox",
   priority: "p4",
-  due: null,
+  due: { date: "2026-08-10", datetime: null },
   kanbanStatus: { level: "todo", hasConflict: false },
   labels: [],
   checked: false,
   parentId: null,
-};
+  ...overrides,
+});
 
-const renderBoard = () => {
+const renderList = (tasks: TaskDTO[]) => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
@@ -25,13 +26,13 @@ const renderBoard = () => {
   render(
     <MantineProvider>
       <QueryClientProvider client={queryClient}>
-        <TaskBoard tasks={[task]} queryKey={["tasks", "list"]} />
+        <CalendarAgendaView tasks={tasks} queryKey={["tasks", "list"]} />
       </QueryClientProvider>
     </MantineProvider>,
   );
 };
 
-describe("TaskBoard", () => {
+describe("CalendarAgendaView", () => {
   beforeEach(() => {
     Object.defineProperty(window, "api", {
       writable: true,
@@ -48,20 +49,32 @@ describe("TaskBoard", () => {
           create: vi.fn(),
           update: vi.fn(),
           updateStatus: vi.fn(),
-          list: vi.fn().mockResolvedValue({
-            ok: true,
-            tasks: [],
-            nextCursor: null,
-          }),
+          list: vi.fn().mockResolvedValue({ ok: true, tasks: [], nextCursor: null }),
           complete: vi.fn(),
         },
       },
     });
   });
 
+  it("groups tasks under a heading for their due date", () => {
+    renderList([
+      buildTask({ id: "task-1", due: { date: "2026-08-10", datetime: null } }),
+      buildTask({
+        id: "task-2",
+        title: "Send invoice",
+        due: { date: "2026-08-11", datetime: null },
+      }),
+    ]);
+
+    expect(screen.getByText("Monday, August 10")).toBeInTheDocument();
+    expect(screen.getByText("Tuesday, August 11")).toBeInTheDocument();
+    expect(screen.getByText("Write report")).toBeInTheDocument();
+    expect(screen.getByText("Send invoice")).toBeInTheDocument();
+  });
+
   it("opens the edit modal when a task card is clicked", async () => {
     const user = userEvent.setup();
-    renderBoard();
+    renderList([buildTask({})]);
 
     await user.click(screen.getByText("Write report"));
 
@@ -70,22 +83,15 @@ describe("TaskBoard", () => {
     ).toBeInTheDocument();
   });
 
-  it("pre-fills the Kanban status matching whichever column's '+' was clicked", async () => {
-    window.api.tasks.create = vi.fn().mockResolvedValue({ ok: true, task });
+  it("completes a task through the checkbox", async () => {
+    window.api.tasks.complete = vi.fn().mockResolvedValue({ ok: true });
     const user = userEvent.setup();
-    renderBoard();
+    renderList([buildTask({})]);
 
-    await user.click(
-      screen.getByRole("button", { name: "Add task to In progress" }),
-    );
-    expect(await screen.findByDisplayValue("In progress")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await user.click(screen.getByRole("checkbox"));
 
-    // A second column, on the same always-mounted modal instance — the
-    // previous click's defaults must not stick around.
-    await user.click(
-      screen.getByRole("button", { name: "Add task to Completed" }),
+    await waitFor(() =>
+      expect(window.api.tasks.complete).toHaveBeenCalledWith("task-1"),
     );
-    expect(await screen.findByDisplayValue("Completed")).toBeInTheDocument();
   });
 });

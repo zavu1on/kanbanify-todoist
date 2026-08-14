@@ -20,7 +20,7 @@ type CalendarAgendaListProps = {
  * the same way as `widgets/task-list/TaskListView` instead: a `TaskCard`
  * per task, grouped under a date heading, since CALENDAR.md asks this view
  * to look like the Tasks list. */
-export const CalendarAgendaList: FC<CalendarAgendaListProps> = ({
+export const CalendarAgendaView: FC<CalendarAgendaListProps> = ({
   tasks,
   queryKey,
 }) => {
