@@ -46,7 +46,19 @@ export const SidebarNavLink: FC<SidebarNavLinkProps> = ({
   return (
     <NavLink
       label={label}
-      leftSection={<Icon ref={iconRef} size={18} animateOnHover={false} />}
+      leftSection={
+        // `lucide-animated` icons render a plain <div> wrapping an inline
+        // <svg>; without `display: flex` the wrapper's height follows the
+        // font's line-height metrics (not the SVG's intrinsic size), which
+        // differ enough between OSes that Windows renders the icon flush to
+        // the top of the row instead of centered.
+        <Icon
+          ref={iconRef}
+          size={18}
+          animateOnHover={false}
+          style={{ display: "flex" }}
+        />
+      }
       rightSection={
         isBadgeLoading ? (
           <Skeleton

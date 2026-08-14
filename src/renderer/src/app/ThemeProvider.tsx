@@ -23,7 +23,6 @@ const theme = createTheme({
     myColor,
   },
   primaryColor: "myColor",
-  scale: 1.15,
 });
 
 export const ThemeProvider: FC<PropsWithChildren> = ({ children }) => {

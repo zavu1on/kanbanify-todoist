@@ -1,5 +1,5 @@
 import path from "node:path";
-import { app, BrowserWindow, nativeImage } from "electron";
+import { app, BrowserWindow, Menu, nativeImage, Tray } from "electron";
 import icon from "../../resources/icon.png?asset";
 import { DownloadAttachmentUseCase } from "./attachments/application/use-cases/DownloadAttachmentUseCase";
 import { AttachmentsIpcController } from "./attachments/infrastructure/AttachmentsIpcController";
@@ -43,6 +43,30 @@ import { TasksIpcController } from "./tasks/infrastructure/TasksIpcController";
 import { TodoistTaskGateway } from "./tasks/infrastructure/TodoistTaskGateway";
 
 const appIcon = nativeImage.createFromPath(icon);
+
+// Set once the user picks "Quit" from the tray menu (or the app quits via
+// another OS-level path) — distinguishes an actual quit from the window's
+// "close" event, which otherwise only hides the window into the tray.
+let isQuitting = false;
+let tray: Tray | null = null;
+
+const createTray = (window: BrowserWindow) => {
+  tray = new Tray(appIcon);
+  tray.setToolTip("Kanbanify Todoist");
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: "Open", click: () => window.show() },
+      {
+        label: "Quit",
+        click: () => {
+          isQuitting = true;
+          app.quit();
+        },
+      },
+    ]),
+  );
+  tray.on("click", () => window.show());
+};
 
 const registerIpcHandlers = () => {
   const userGateway = new TodoistUserGateway();
@@ -200,10 +224,26 @@ const createWindow = () => {
   } else {
     window.loadFile(path.join(__dirname, "../renderer/index.html"));
   }
+
+  // Closing the window ("X") minimizes to tray instead of quitting — only
+  // the tray's "Quit" (or another OS-level quit path) actually exits.
+  window.on("close", (event) => {
+    if (isQuitting) return;
+
+    event.preventDefault();
+    window.hide();
+  });
+
+  if (!tray) {
+    createTray(window);
+  }
 };
 
 app.whenReady().then(() => {
   registerIpcHandlers();
+
+  // Hides the native "File / Edit / Window / …" menu bar.
+  Menu.setApplicationMenu(null);
 
   if (process.platform === "darwin") {
     app.dock?.setIcon(appIcon);
@@ -216,6 +256,10 @@ app.whenReady().then(() => {
       createWindow();
     }
   });
+});
+
+app.on("before-quit", () => {
+  isQuitting = true;
 });
 
 app.on("window-all-closed", () => {
