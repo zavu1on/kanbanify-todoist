@@ -1,49 +1,22 @@
 import { AppShell, Group, Stack, Text } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
-import {
-  CalendarDaysIcon,
-  LayoutGridIcon,
-  ListIcon,
-  PlusIcon,
-  SearchIcon,
-  SunIcon,
-} from "lucide-animated";
-import type { FC } from "react";
+import { CalendarDaysIcon, SunIcon } from "lucide-animated";
+import { type FC, memo } from "react";
 import { useSession } from "@/app/SessionContext";
-import { useProjectsQuery } from "@/entities/project";
-import { tasksListQueryKey } from "@/entities/task";
-import { ProjectFormModal } from "@/features/manage-project";
-import { TaskFormModal } from "@/features/manage-task";
 import logo from "@/shared/ui/kanbanify-logo.svg";
-import { useTaskCountQuery } from "../api/useTaskCountQuery";
-import { type AnimatedIcon, SidebarNavLink } from "./SidebarNavLink";
-import { SidebarProjectsSection } from "./SidebarProjectsSection";
-import { SidebarProjectsSkeleton } from "./SidebarProjectsSkeleton";
+import { SidebarNavLink } from "./SidebarNavLink";
+import { SidebarNewTaskNavLink } from "./SidebarNewTaskNavLink";
+import { SidebarProjects } from "./SidebarProjects";
+import { SidebarTasksNavLink } from "./SidebarTasksNavLink";
 import { UserCard } from "./UserCard";
 
-type NavItem = { label: string; icon: AnimatedIcon; to: string };
-
-const NAV_ITEMS: NavItem[] = [
-  { label: "New task", icon: PlusIcon, to: "#" },
-  { label: "Search", icon: SearchIcon, to: "#" },
-  { label: "Dashboard", icon: LayoutGridIcon, to: "/" },
-  { label: "Tasks", icon: ListIcon, to: "/tasks" },
-  { label: "Today", icon: SunIcon, to: "#" },
-  { label: "Calendar", icon: CalendarDaysIcon, to: "/calendar" },
-];
-
-export const Sidebar: FC = () => {
+// Memoized: `AppLayout` re-renders on every route change (its `Outlet`
+// child swaps), and without this the whole sidebar — nav list, task count
+// badge, projects list — would re-render (and visibly flicker) on every
+// navigation even though none of its own data changed. Sidebar takes no
+// props, so this bails out on every parent re-render except the ones driven
+// by its own `useSession()` call.
+export const Sidebar: FC = memo(() => {
   const session = useSession();
-  const [isAddProjectOpen, { open: openAddProject, close: closeAddProject }] =
-    useDisclosure(false);
-  const [isAddTaskOpen, { open: openAddTask, close: closeAddTask }] =
-    useDisclosure(false);
-  const taskCountQuery = useTaskCountQuery();
-  const taskCount = taskCountQuery.data?.ok
-    ? taskCountQuery.data.count
-    : undefined;
-  const projectsQuery = useProjectsQuery();
-  const projects = projectsQuery.data?.ok ? projectsQuery.data.projects : [];
 
   return (
     <AppShell.Navbar>
@@ -58,49 +31,18 @@ export const Sidebar: FC = () => {
 
       <AppShell.Section grow py="sm" style={{ overflowY: "auto" }}>
         <Stack gap={2}>
-          {NAV_ITEMS.map((item) => (
-            <SidebarNavLink
-              key={item.label}
-              {...item}
-              badge={item.label === "Tasks" ? taskCount : undefined}
-              isBadgeLoading={
-                item.label === "Tasks" && taskCountQuery.isPending
-              }
-              onClick={item.label === "New task" ? openAddTask : undefined}
-            />
-          ))}
+          <SidebarNewTaskNavLink />
+          <SidebarTasksNavLink />
+          <SidebarNavLink label="Today" icon={SunIcon} to="#" />
+          <SidebarNavLink
+            label="Calendar"
+            icon={CalendarDaysIcon}
+            to="/calendar"
+          />
         </Stack>
 
-        {projectsQuery.isPending ? (
-          <SidebarProjectsSkeleton />
-        ) : (
-          <SidebarProjectsSection
-            projects={projects}
-            isRefetching={projectsQuery.isRefetching}
-            onRefetch={() => projectsQuery.refetch()}
-            onAddProject={openAddProject}
-          />
-        )}
+        <SidebarProjects />
       </AppShell.Section>
-
-      {/* Mounted only while open — a fresh instance each time means the form
-          always starts blank (see `ProjectActionsMenu`'s edit modal). */}
-      {isAddProjectOpen && (
-        <ProjectFormModal opened={isAddProjectOpen} onClose={closeAddProject} />
-      )}
-
-      {/* No page context from the sidebar — project defaults to Inbox, every
-          other field starts empty (SPECIFICATION.md "Добавление задачи").
-          Optimistic write lands in the global "Tasks" list cache since no
-          specific list is on screen; other cached lists get invalidated on
-          success (see `useCreateTaskMutation`). */}
-      {isAddTaskOpen && (
-        <TaskFormModal
-          opened={isAddTaskOpen}
-          onClose={closeAddTask}
-          queryKey={tasksListQueryKey}
-        />
-      )}
 
       <AppShell.Section p="sm">
         {session.status === "authenticated" && (
@@ -113,4 +55,4 @@ export const Sidebar: FC = () => {
       </AppShell.Section>
     </AppShell.Navbar>
   );
-};
+});
