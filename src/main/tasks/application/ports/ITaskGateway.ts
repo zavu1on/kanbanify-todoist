@@ -33,6 +33,15 @@ export interface ITaskGateway {
     query: string,
   ): Promise<TaskListPage>;
 
+  /** One page of tasks completed today (by completion date, not due date) —
+   * SPECIFICATION.md "Сегодня" empty state ("количество задач, выполненных
+   * за день").
+   * @throws {import("../../domain/errors/TasksError").TasksError} */
+  listTasksCompletedToday(
+    accessToken: string,
+    cursor: string | null,
+  ): Promise<TaskListPage>;
+
   /** @throws {import("../../domain/errors/TasksError").TasksError} */
   getTask(accessToken: string, taskId: string): Promise<Task>;
 

@@ -11,6 +11,7 @@ export {
   projectTasksListQueryKey,
   subtasksListQueryKey,
   tasksListQueryKey,
+  todayTasksListQueryKey,
 } from "./model/queryKeys";
 export { useLoadMoreTasksHandler } from "./model/useLoadMoreTasksHandler";
 export { type ToolbarSegment, useToolbar } from "./model/useToolbar";

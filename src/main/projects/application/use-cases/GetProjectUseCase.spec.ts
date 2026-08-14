@@ -32,6 +32,7 @@ const buildTaskGateway = (pages: TaskListPage[]): ITaskGateway => ({
     return pages[pageIndex] ?? { tasks: [], nextCursor: null };
   }),
   listTasksByFilter: vi.fn(),
+  listTasksCompletedToday: vi.fn(),
   getTask: vi.fn(),
   create: vi.fn(),
   save: vi.fn(),

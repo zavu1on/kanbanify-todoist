@@ -4,6 +4,7 @@ import { createHashRouter, Navigate, RouterProvider } from "react-router";
 import { CalendarPage } from "@/pages/calendar";
 import { LoginPage } from "@/pages/login";
 import { TasksPage } from "@/pages/tasks";
+import { TodayPage } from "@/pages/today";
 import { AppLayout } from "./AppLayout";
 import { useSession } from "./SessionContext";
 
@@ -15,6 +16,7 @@ const appRouter = createHashRouter([
       { index: true, element: <Navigate to="/tasks" replace /> },
       { path: "tasks", element: <TasksPage /> },
       { path: "projects/:projectId", element: <TasksPage /> },
+      { path: "today", element: <TodayPage /> },
       { path: "calendar", element: <CalendarPage /> },
     ],
   },

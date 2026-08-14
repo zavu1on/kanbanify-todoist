@@ -30,6 +30,7 @@ const buildTokenStore = (accessToken: AccessToken | null): ITokenStore => ({
 const buildGateway = (page: TaskListPage): ITaskGateway => ({
   listTasks: vi.fn().mockResolvedValue(page),
   listTasksByFilter: vi.fn(),
+  listTasksCompletedToday: vi.fn(),
   getTask: vi.fn(),
   create: vi.fn(),
   save: vi.fn(),

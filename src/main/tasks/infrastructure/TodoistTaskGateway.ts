@@ -54,6 +54,33 @@ export class TodoistTaskGateway implements ITaskGateway {
     });
   }
 
+  async listTasksCompletedToday(
+    accessToken: string,
+    cursor: string | null,
+  ): Promise<TaskListPage> {
+    return this.errorClassifier.wrap(async () => {
+      const api = new TodoistApi(accessToken);
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const { items, nextCursor } = await api.getCompletedTasksByCompletionDate(
+        {
+          since: startOfDay.toISOString(),
+          until: endOfDay.toISOString(),
+          cursor,
+          limit: PAGE_SIZE,
+        },
+      );
+
+      return {
+        tasks: items.map((task) => this.taskMapper.toDomain(task)),
+        nextCursor,
+      };
+    });
+  }
+
   async getTask(accessToken: string, taskId: string): Promise<Task> {
     return this.errorClassifier.wrap(async () => {
       const api = new TodoistApi(accessToken);

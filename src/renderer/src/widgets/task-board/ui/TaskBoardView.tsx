@@ -30,6 +30,10 @@ type TaskBoardProps = {
   // Pre-fills a new task's project (see SPECIFICATION.md "Добавление задачи")
   // — absent on the global "Tasks" page, set on a project's page.
   projectId?: string;
+  // Pre-fills a new task's due date — set on the Today page so its "+"
+  // button creates a task due today (SPECIFICATION.md "Сегодня"), absent
+  // elsewhere.
+  createDueDefault?: TaskDTO["due"];
 };
 
 export const TaskBoardView: FC<TaskBoardProps> = ({
@@ -37,6 +41,7 @@ export const TaskBoardView: FC<TaskBoardProps> = ({
   queryKey,
   hideProject,
   projectId,
+  createDueDefault,
 }) => {
   const {
     columns,
@@ -60,7 +65,11 @@ export const TaskBoardView: FC<TaskBoardProps> = ({
   );
 
   const handleAddTask = (status: KanbanStatusLevel) => {
-    setCreateDefaults({ projectId, kanbanStatus: status });
+    setCreateDefaults({
+      projectId,
+      kanbanStatus: status,
+      due: createDueDefault,
+    });
   };
 
   // Without an activation distance, dnd-kit treats every pointerdown as a

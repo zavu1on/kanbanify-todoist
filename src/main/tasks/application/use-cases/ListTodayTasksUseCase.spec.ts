@@ -6,7 +6,7 @@ import { InvalidTaskSessionError } from "../../domain/errors/InvalidTaskSessionE
 import { Priority } from "../../domain/value-objects/Priority";
 import { TaskDue } from "../../domain/value-objects/TaskDue";
 import type { ITaskGateway, TaskListPage } from "../ports/ITaskGateway";
-import { ListTasksWithDueDateUseCase } from "./ListTasksWithDueDateUseCase";
+import { ListTodayTasksUseCase } from "./ListTodayTasksUseCase";
 
 const buildTask = (id: string, due: TaskDue | null): Task =>
   Task.reconstitute({
@@ -39,9 +39,9 @@ const buildGateway = (page: TaskListPage): ITaskGateway => ({
   delete: vi.fn(),
 });
 
-describe("ListTasksWithDueDateUseCase", () => {
+describe("ListTodayTasksUseCase", () => {
   it("throws InvalidTaskSessionError when no token is stored", async () => {
-    const useCase = new ListTasksWithDueDateUseCase(
+    const useCase = new ListTodayTasksUseCase(
       buildGateway({ tasks: [], nextCursor: null }),
       buildTokenStore(null),
     );
@@ -51,10 +51,10 @@ describe("ListTasksWithDueDateUseCase", () => {
     );
   });
 
-  it("forwards the token, cursor and the dated-tasks filter query to the gateway", async () => {
+  it("forwards the token, cursor and the today-or-overdue filter query to the gateway", async () => {
     const page: TaskListPage = { tasks: [], nextCursor: "next-cursor" };
     const gateway = buildGateway(page);
-    const useCase = new ListTasksWithDueDateUseCase(
+    const useCase = new ListTodayTasksUseCase(
       gateway,
       buildTokenStore(AccessToken.of("a-valid-token-value-000000000000")),
     );
@@ -64,7 +64,7 @@ describe("ListTasksWithDueDateUseCase", () => {
     expect(gateway.listTasksByFilter).toHaveBeenCalledWith(
       "a-valid-token-value-000000000000",
       "current-cursor",
-      "!no date & !subtask",
+      "(today | overdue) & !subtask",
     );
     expect(result).toEqual(page);
   });
@@ -77,7 +77,7 @@ describe("ListTasksWithDueDateUseCase", () => {
       tasks: [noDue, farthest, overdue],
       nextCursor: null,
     };
-    const useCase = new ListTasksWithDueDateUseCase(
+    const useCase = new ListTodayTasksUseCase(
       buildGateway(page),
       buildTokenStore(AccessToken.of("a-valid-token-value-000000000000")),
     );

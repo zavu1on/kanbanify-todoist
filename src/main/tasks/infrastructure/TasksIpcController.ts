@@ -5,11 +5,14 @@ import { CreateTaskInput } from "../application/dtos/CreateTaskInput";
 import { UpdateTaskInput } from "../application/dtos/UpdateTaskInput";
 import { UpdateTaskStatusInput } from "../application/dtos/UpdateTaskStatusInput";
 import type { CompleteTaskUseCase } from "../application/use-cases/CompleteTaskUseCase";
+import type { CountTasksCompletedTodayUseCase } from "../application/use-cases/CountTasksCompletedTodayUseCase";
+import type { CountTodayTasksUseCase } from "../application/use-cases/CountTodayTasksUseCase";
 import type { CountUnfinishedTasksUseCase } from "../application/use-cases/CountUnfinishedTasksUseCase";
 import type { CreateTaskUseCase } from "../application/use-cases/CreateTaskUseCase";
 import type { DeleteTaskUseCase } from "../application/use-cases/DeleteTaskUseCase";
 import type { ListTasksUseCase } from "../application/use-cases/ListTasksUseCase";
 import type { ListTasksWithDueDateUseCase } from "../application/use-cases/ListTasksWithDueDateUseCase";
+import type { ListTodayTasksUseCase } from "../application/use-cases/ListTodayTasksUseCase";
 import type { UpdateTaskStatusUseCase } from "../application/use-cases/UpdateTaskStatusUseCase";
 import type { UpdateTaskUseCase } from "../application/use-cases/UpdateTaskUseCase";
 import type { CompleteTaskResult } from "../domain/contracts/CompleteTaskResult";
@@ -36,8 +39,11 @@ export class TasksIpcController implements IpcController {
   constructor(
     private readonly listTasksUseCase: ListTasksUseCase,
     private readonly listTasksWithDueDateUseCase: ListTasksWithDueDateUseCase,
+    private readonly listTodayTasksUseCase: ListTodayTasksUseCase,
     private readonly updateTaskStatusUseCase: UpdateTaskStatusUseCase,
     private readonly countUnfinishedTasksUseCase: CountUnfinishedTasksUseCase,
+    private readonly countTodayTasksUseCase: CountTodayTasksUseCase,
+    private readonly countTasksCompletedTodayUseCase: CountTasksCompletedTodayUseCase,
     private readonly completeTaskUseCase: CompleteTaskUseCase,
     private readonly createTaskUseCase: CreateTaskUseCase,
     private readonly updateTaskUseCase: UpdateTaskUseCase,
@@ -65,6 +71,11 @@ export class TasksIpcController implements IpcController {
         this.listWithDueDate(typeof cursor === "string" ? cursor : null),
     );
     ipcMain.handle(
+      "tasks:listToday",
+      (_event, cursor: unknown): Promise<TasksListResult> =>
+        this.listToday(typeof cursor === "string" ? cursor : null),
+    );
+    ipcMain.handle(
       "tasks:updateStatus",
       (
         _event,
@@ -75,6 +86,14 @@ export class TasksIpcController implements IpcController {
     ipcMain.handle(
       "tasks:count",
       (): Promise<TasksCountResult> => this.count(),
+    );
+    ipcMain.handle(
+      "tasks:countToday",
+      (): Promise<TasksCountResult> => this.countToday(),
+    );
+    ipcMain.handle(
+      "tasks:countCompletedToday",
+      (): Promise<TasksCountResult> => this.countCompletedToday(),
     );
     ipcMain.handle(
       "tasks:complete",
@@ -134,6 +153,26 @@ export class TasksIpcController implements IpcController {
     try {
       const { tasks, nextCursor } =
         await this.listTasksWithDueDateUseCase.execute(cursor);
+      return {
+        ok: true,
+        tasks: tasks.map((task) => this.taskMapper.toDTO(task)),
+        nextCursor,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error: {
+          type: this.getErrorType(error),
+          message: this.getMessageFromError(error),
+        },
+      };
+    }
+  }
+
+  private async listToday(cursor: string | null): Promise<TasksListResult> {
+    try {
+      const { tasks, nextCursor } =
+        await this.listTodayTasksUseCase.execute(cursor);
       return {
         ok: true,
         tasks: tasks.map((task) => this.taskMapper.toDTO(task)),
@@ -292,6 +331,36 @@ export class TasksIpcController implements IpcController {
   private async count(): Promise<TasksCountResult> {
     try {
       const count = await this.countUnfinishedTasksUseCase.execute();
+      return { ok: true, count };
+    } catch (error) {
+      return {
+        ok: false,
+        error: {
+          type: this.getErrorType(error),
+          message: this.getMessageFromError(error),
+        },
+      };
+    }
+  }
+
+  private async countToday(): Promise<TasksCountResult> {
+    try {
+      const count = await this.countTodayTasksUseCase.execute();
+      return { ok: true, count };
+    } catch (error) {
+      return {
+        ok: false,
+        error: {
+          type: this.getErrorType(error),
+          message: this.getMessageFromError(error),
+        },
+      };
+    }
+  }
+
+  private async countCompletedToday(): Promise<TasksCountResult> {
+    try {
+      const count = await this.countTasksCompletedTodayUseCase.execute();
       return { ok: true, count };
     } catch (error) {
       return {

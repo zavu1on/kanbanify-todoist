@@ -1,5 +1,5 @@
 import { AppShell, Group, Stack, Text } from "@mantine/core";
-import { CalendarDaysIcon, SunIcon } from "lucide-animated";
+import { CalendarDaysIcon } from "lucide-animated";
 import { type FC, memo } from "react";
 import { useSession } from "@/app/SessionContext";
 import logo from "@/shared/ui/kanbanify-logo.svg";
@@ -7,6 +7,7 @@ import { SidebarNavLink } from "./SidebarNavLink";
 import { SidebarNewTaskNavLink } from "./SidebarNewTaskNavLink";
 import { SidebarProjects } from "./SidebarProjects";
 import { SidebarTasksNavLink } from "./SidebarTasksNavLink";
+import { SidebarTodayNavLink } from "./SidebarTodayNavLink";
 import { UserCard } from "./UserCard";
 
 // Memoized: `AppLayout` re-renders on every route change (its `Outlet`
@@ -33,7 +34,7 @@ export const Sidebar: FC = memo(() => {
         <Stack gap={2}>
           <SidebarNewTaskNavLink />
           <SidebarTasksNavLink />
-          <SidebarNavLink label="Today" icon={SunIcon} to="#" />
+          <SidebarTodayNavLink />
           <SidebarNavLink
             label="Calendar"
             icon={CalendarDaysIcon}

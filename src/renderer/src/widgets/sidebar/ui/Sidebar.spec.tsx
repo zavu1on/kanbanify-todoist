@@ -39,6 +39,7 @@ describe("Sidebar", () => {
         },
         tasks: {
           count: vi.fn(),
+          countToday: vi.fn(),
           create: vi.fn(),
         },
         labels: {
@@ -102,6 +103,19 @@ describe("Sidebar", () => {
       expect(window.api.tasks.count).toHaveBeenCalled();
     });
     expect(screen.queryByText("7")).not.toBeInTheDocument();
+  });
+
+  it("shows the today-or-overdue task count next to the Today link", async () => {
+    window.api.tasks.countToday = vi
+      .fn()
+      .mockResolvedValue({ ok: true, count: 3 });
+    renderSidebar();
+
+    expect(await screen.findByText("3")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /today/i })).toHaveAttribute(
+      "href",
+      "/today",
+    );
   });
 
   it("lists projects with their active task count after the divider", async () => {

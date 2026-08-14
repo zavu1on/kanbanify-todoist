@@ -4,7 +4,7 @@ import { AccessToken } from "../../../auth/domain/value-objects/AccessToken";
 import type { Task } from "../../domain/entities/Task";
 import { InvalidTaskSessionError } from "../../domain/errors/InvalidTaskSessionError";
 import type { ITaskGateway, TaskListPage } from "../ports/ITaskGateway";
-import { CountUnfinishedTasksUseCase } from "./CountUnfinishedTasksUseCase";
+import { CountTodayTasksUseCase } from "./CountTodayTasksUseCase";
 
 const buildTokenStore = (accessToken: AccessToken | null): ITokenStore => ({
   save: vi.fn(),
@@ -13,11 +13,11 @@ const buildTokenStore = (accessToken: AccessToken | null): ITokenStore => ({
 });
 
 const buildGateway = (pages: TaskListPage[]): ITaskGateway => {
-  const listTasks = vi.fn();
-  for (const page of pages) listTasks.mockResolvedValueOnce(page);
+  const listTasksByFilter = vi.fn();
+  for (const page of pages) listTasksByFilter.mockResolvedValueOnce(page);
   return {
-    listTasks,
-    listTasksByFilter: vi.fn(),
+    listTasks: vi.fn(),
+    listTasksByFilter,
     listTasksCompletedToday: vi.fn(),
     getTask: vi.fn(),
     create: vi.fn(),
@@ -28,9 +28,9 @@ const buildGateway = (pages: TaskListPage[]): ITaskGateway => {
   };
 };
 
-describe("CountUnfinishedTasksUseCase", () => {
+describe("CountTodayTasksUseCase", () => {
   it("throws InvalidTaskSessionError when no token is stored", async () => {
-    const useCase = new CountUnfinishedTasksUseCase(
+    const useCase = new CountTodayTasksUseCase(
       buildGateway([{ tasks: [], nextCursor: null }]),
       buildTokenStore(null),
     );
@@ -43,7 +43,7 @@ describe("CountUnfinishedTasksUseCase", () => {
       { tasks: [{} as Task, {} as Task], nextCursor: "page-2" },
       { tasks: [{} as Task], nextCursor: null },
     ]);
-    const useCase = new CountUnfinishedTasksUseCase(
+    const useCase = new CountTodayTasksUseCase(
       gateway,
       buildTokenStore(AccessToken.of("a-valid-token-value-000000000000")),
     );
@@ -51,24 +51,17 @@ describe("CountUnfinishedTasksUseCase", () => {
     const count = await useCase.execute();
 
     expect(count).toBe(3);
-    expect(gateway.listTasks).toHaveBeenNthCalledWith(
+    expect(gateway.listTasksByFilter).toHaveBeenNthCalledWith(
       1,
       "a-valid-token-value-000000000000",
       null,
+      "(today | overdue) & !subtask",
     );
-    expect(gateway.listTasks).toHaveBeenNthCalledWith(
+    expect(gateway.listTasksByFilter).toHaveBeenNthCalledWith(
       2,
       "a-valid-token-value-000000000000",
       "page-2",
+      "(today | overdue) & !subtask",
     );
-  });
-
-  it("returns 0 for a single empty page", async () => {
-    const useCase = new CountUnfinishedTasksUseCase(
-      buildGateway([{ tasks: [], nextCursor: null }]),
-      buildTokenStore(AccessToken.of("a-valid-token-value-000000000000")),
-    );
-
-    await expect(useCase.execute()).resolves.toBe(0);
   });
 });

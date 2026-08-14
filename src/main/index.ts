@@ -29,11 +29,14 @@ import { UpdateProjectUseCase } from "./projects/application/use-cases/UpdatePro
 import { ProjectsIpcController } from "./projects/infrastructure/ProjectsIpcController";
 import { TodoistProjectGateway } from "./projects/infrastructure/TodoistProjectGateway";
 import { CompleteTaskUseCase } from "./tasks/application/use-cases/CompleteTaskUseCase";
+import { CountTasksCompletedTodayUseCase } from "./tasks/application/use-cases/CountTasksCompletedTodayUseCase";
+import { CountTodayTasksUseCase } from "./tasks/application/use-cases/CountTodayTasksUseCase";
 import { CountUnfinishedTasksUseCase } from "./tasks/application/use-cases/CountUnfinishedTasksUseCase";
 import { CreateTaskUseCase } from "./tasks/application/use-cases/CreateTaskUseCase";
 import { DeleteTaskUseCase } from "./tasks/application/use-cases/DeleteTaskUseCase";
 import { ListTasksUseCase } from "./tasks/application/use-cases/ListTasksUseCase";
 import { ListTasksWithDueDateUseCase } from "./tasks/application/use-cases/ListTasksWithDueDateUseCase";
+import { ListTodayTasksUseCase } from "./tasks/application/use-cases/ListTodayTasksUseCase";
 import { UpdateTaskStatusUseCase } from "./tasks/application/use-cases/UpdateTaskStatusUseCase";
 import { UpdateTaskUseCase } from "./tasks/application/use-cases/UpdateTaskUseCase";
 import { TasksIpcController } from "./tasks/infrastructure/TasksIpcController";
@@ -61,11 +64,23 @@ const registerIpcHandlers = () => {
     taskGateway,
     tokenStore,
   );
+  const listTodayTasksUseCase = new ListTodayTasksUseCase(
+    taskGateway,
+    tokenStore,
+  );
   const updateTaskStatusUseCase = new UpdateTaskStatusUseCase(
     taskGateway,
     tokenStore,
   );
   const countUnfinishedTasksUseCase = new CountUnfinishedTasksUseCase(
+    taskGateway,
+    tokenStore,
+  );
+  const countTodayTasksUseCase = new CountTodayTasksUseCase(
+    taskGateway,
+    tokenStore,
+  );
+  const countTasksCompletedTodayUseCase = new CountTasksCompletedTodayUseCase(
     taskGateway,
     tokenStore,
   );
@@ -77,8 +92,11 @@ const registerIpcHandlers = () => {
   new TasksIpcController(
     listTasksUseCase,
     listTasksWithDueDateUseCase,
+    listTodayTasksUseCase,
     updateTaskStatusUseCase,
     countUnfinishedTasksUseCase,
+    countTodayTasksUseCase,
+    countTasksCompletedTodayUseCase,
     completeTaskUseCase,
     createTaskUseCase,
     updateTaskUseCase,

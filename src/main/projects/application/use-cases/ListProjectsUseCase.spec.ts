@@ -45,6 +45,7 @@ const buildTaskGateway = (
   return {
     listTasks,
     listTasksByFilter: vi.fn(),
+    listTasksCompletedToday: vi.fn(),
     getTask: vi.fn(),
     create: vi.fn(),
     save: vi.fn(),

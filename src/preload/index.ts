@@ -61,12 +61,18 @@ const api = {
       ipcRenderer.invoke("tasks:list", cursor, projectId, parentId),
     listWithDueDate: (cursor: string | null): Promise<TasksListResult> =>
       ipcRenderer.invoke("tasks:listWithDueDate", cursor),
+    listToday: (cursor: string | null): Promise<TasksListResult> =>
+      ipcRenderer.invoke("tasks:listToday", cursor),
     updateStatus: (
       taskId: string,
       status: KanbanStatusLevel,
     ): Promise<UpdateTaskStatusResult> =>
       ipcRenderer.invoke("tasks:updateStatus", taskId, status),
     count: (): Promise<TasksCountResult> => ipcRenderer.invoke("tasks:count"),
+    countToday: (): Promise<TasksCountResult> =>
+      ipcRenderer.invoke("tasks:countToday"),
+    countCompletedToday: (): Promise<TasksCountResult> =>
+      ipcRenderer.invoke("tasks:countCompletedToday"),
     complete: (taskId: string): Promise<CompleteTaskResult> =>
       ipcRenderer.invoke("tasks:complete", taskId),
     create: (input: CreateTaskRequest): Promise<CreateTaskResult> =>
