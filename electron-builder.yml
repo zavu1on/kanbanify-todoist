@@ -1,0 +1,15 @@
+appId: com.mikhailalekseev.kanbanify-todoist
+productName: Kanbanify Todoist
+directories:
+  output: release
+files:
+  - dist/**
+  - package.json
+asar: true
+icon: resources/icon.png
+win:
+  target: nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+publish: null

@@ -9,6 +9,9 @@ node_modules
 # Built application
 dist
 
+# Packaged installers (electron-builder)
+release
+
 # Local todos
 TODO.md
 
