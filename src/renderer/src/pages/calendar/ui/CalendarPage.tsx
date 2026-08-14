@@ -1,7 +1,7 @@
 import { Alert, Stack, Title } from "@mantine/core";
 import type { DayOfWeek } from "@mantine/schedule";
 import type { FC } from "react";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useSession } from "@/app/SessionContext";
 import { flattenTaskPages, useLoadMoreTasksHandler } from "@/entities/task";
 import { CalendarAgendaView } from "@/widgets/calendar-agenda-list";
@@ -30,12 +30,21 @@ export const CalendarPage: FC = () => {
   const tasksQuery = useCalendarTasksQuery();
   const handleLoadMore = useLoadMoreTasksHandler(tasksQuery);
 
-  const handleViewModeChange = (mode: ViewMode) => {
+  const handleViewModeChange = useCallback((mode: ViewMode) => {
     setViewMode(mode);
     saveViewMode(mode);
-  };
+  }, []);
 
-  const { tasks, initialLoadError } = flattenTaskPages(tasksQuery);
+  // `flattenTaskPages` rebuilds the array via `flatMap` on every call, which
+  // would hand `CalendarMonthView`/`CalendarAgendaView` a "new" `tasks`
+  // reference on every render regardless of whether the data actually
+  // changed — memoized on `tasksQuery.data` (kept referentially stable by
+  // TanStack Query's structural sharing when a refetch returns the same
+  // content) so their own memoization downstream can actually bail out.
+  const { tasks, initialLoadError } = useMemo(
+    () => flattenTaskPages(tasksQuery),
+    [tasksQuery.data],
+  );
 
   return (
     <Stack gap="md">

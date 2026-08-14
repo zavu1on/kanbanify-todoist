@@ -1,11 +1,9 @@
-import { Stack, Text } from "@mantine/core";
 import type { QueryKey } from "@tanstack/react-query";
-import dayjs from "dayjs";
-import { type FC, useState } from "react";
-import { TaskCard } from "@/entities/task";
+import { type FC, memo, useCallback, useMemo, useState } from "react";
 import { useCompleteTaskMutation } from "@/features/complete-task";
 import { TaskFormModal } from "@/features/manage-task";
 import type { TaskDTO } from "@/main/tasks";
+import { AgendaList } from "./AgendaList";
 
 type CalendarAgendaListProps = {
   // Dated tasks only, already sorted by due date (`tasks:listWithDueDate`).
@@ -20,52 +18,59 @@ type CalendarAgendaListProps = {
  * the same way as `widgets/task-list/TaskListView` instead: a `TaskCard`
  * per task, grouped under a date heading, since CALENDAR.md asks this view
  * to look like the Tasks list. */
-export const CalendarAgendaView: FC<CalendarAgendaListProps> = ({
-  tasks,
-  queryKey,
-}) => {
-  const completeTaskMutation = useCompleteTaskMutation(queryKey);
-  const [editingTask, setEditingTask] = useState<TaskDTO | null>(null);
+// `memo`-ed so an unrelated `CalendarPage` re-render (e.g. the toolbar's
+// `isRefetching` flicker) doesn't force a full re-render here — holds only
+// because `tasks`/`queryKey` are themselves kept referentially stable
+// upstream (see CalendarPage.tsx's memoized `flattenTaskPages` call).
+export const CalendarAgendaView: FC<CalendarAgendaListProps> = memo(
+  function CalendarAgendaView({ tasks, queryKey }) {
+    const completeTaskMutation = useCompleteTaskMutation(queryKey);
+    const [editingTask, setEditingTask] = useState<TaskDTO | null>(null);
 
-  const groups = new Map<string, TaskDTO[]>();
-  for (const task of tasks) {
-    const date = task.due?.date ?? "";
-    const group = groups.get(date);
-    if (group) group.push(task);
-    else groups.set(date, [task]);
-  }
+    // Stable across renders (`mutate` itself is stable per TanStack Query,
+    // `tasks` stable per the note above) so `TaskCard`'s `memo` can actually
+    // skip untouched cards.
+    const handleComplete = useCallback(
+      (taskId: string) => completeTaskMutation.mutate({ taskId }),
+      [completeTaskMutation.mutate],
+    );
 
-  return (
-    <>
-      <Stack gap="lg">
-        {[...groups.entries()].map(([date, dayTasks]) => (
-          <Stack key={date} gap="xs">
-            <Text fw={600} size="sm">
-              {dayjs(date).format("dddd, MMMM D")}
-            </Text>
+    const handleCardClick = useCallback(
+      (taskId: string) => {
+        const task = tasks.find((t) => t.id === taskId);
+        if (task) setEditingTask(task);
+      },
+      [tasks],
+    );
 
-            <Stack gap="xs">
-              {dayTasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onComplete={(taskId) => completeTaskMutation.mutate({ taskId })}
-                  onClick={() => setEditingTask(task)}
-                />
-              ))}
-            </Stack>
-          </Stack>
-        ))}
-      </Stack>
+    const groups = useMemo(() => {
+      const byDate = new Map<string, TaskDTO[]>();
+      for (const task of tasks) {
+        const date = task.due?.date ?? "";
+        const group = byDate.get(date);
+        if (group) group.push(task);
+        else byDate.set(date, [task]);
+      }
+      return [...byDate.entries()];
+    }, [tasks]);
 
-      {editingTask && (
-        <TaskFormModal
-          opened
-          onClose={() => setEditingTask(null)}
-          queryKey={queryKey}
-          task={editingTask}
+    return (
+      <>
+        <AgendaList
+          groups={groups}
+          onComplete={handleComplete}
+          onCardClick={handleCardClick}
         />
-      )}
-    </>
-  );
-};
+
+        {editingTask && (
+          <TaskFormModal
+            opened
+            onClose={() => setEditingTask(null)}
+            queryKey={queryKey}
+            task={editingTask}
+          />
+        )}
+      </>
+    );
+  },
+);
