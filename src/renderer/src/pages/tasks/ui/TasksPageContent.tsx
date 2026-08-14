@@ -1,12 +1,15 @@
 import { Alert, Stack } from "@mantine/core";
+import type { DayOfWeek } from "@mantine/schedule";
 import type { FC } from "react";
 import { useCallback, useMemo, useState } from "react";
+import { useSession } from "@/app/SessionContext";
 import {
   flattenTaskPages,
   projectTasksListQueryKey,
   tasksListQueryKey,
   useLoadMoreTasksHandler,
 } from "@/entities/task";
+import { CalendarMonthView } from "@/widgets/calendar-month-view";
 import { TaskBoardView } from "@/widgets/task-board";
 import { TaskListView } from "@/widgets/task-list";
 import { useTasksQuery } from "../api/useTasksQuery";
@@ -21,7 +24,20 @@ type TasksPageContentProps = {
 /** Owns everything that changes on view-mode toggle or task refetch/pagination
  * so switching between list and kanban doesn't re-render the page title. */
 export const TasksPageContent: FC<TasksPageContentProps> = ({ projectId }) => {
+  const session = useSession();
+  // Falls back to Monday if the session hasn't resolved yet — mirrors
+  // `CalendarPage`, which this view's calendar mode reuses the month grid
+  // from.
+  const weekStartsOn: DayOfWeek =
+    session.status === "authenticated"
+      ? (session.user.weekStartsOn as DayOfWeek)
+      : 1;
+
   const [viewMode, setViewMode] = useState<ViewMode>(loadViewMode);
+  // "calendar" only exists on a project's page — a stored preference from
+  // there shouldn't silently apply on the unscoped Tasks page.
+  const effectiveViewMode: ViewMode =
+    !projectId && viewMode === "calendar" ? "list" : viewMode;
   const tasksQuery = useTasksQuery(projectId);
 
   // `projectTasksListQueryKey` builds a fresh array every call — memoized so
@@ -43,8 +59,9 @@ export const TasksPageContent: FC<TasksPageContentProps> = ({ projectId }) => {
   return (
     <Stack gap="md">
       <TasksPageToolbar
-        viewMode={viewMode}
+        viewMode={effectiveViewMode}
         onViewModeChange={handleViewModeChange}
+        isProjectPage={!!projectId}
         queryKey={queryKey}
         isRefetching={tasksQuery.isRefetching || tasksQuery.isLoading}
         onLoadMore={handleLoadMore}
@@ -58,18 +75,25 @@ export const TasksPageContent: FC<TasksPageContentProps> = ({ projectId }) => {
         <Alert color="red" title="Couldn't load tasks">
           {initialLoadError.message}
         </Alert>
-      ) : viewMode === "list" ? (
+      ) : effectiveViewMode === "list" ? (
         <TaskListView
           tasks={tasks}
           queryKey={queryKey}
           hideProject={!!projectId}
           projectId={projectId}
         />
-      ) : (
+      ) : effectiveViewMode === "kanban" ? (
         <TaskBoardView
           tasks={tasks}
           queryKey={queryKey}
           hideProject={!!projectId}
+          projectId={projectId}
+        />
+      ) : (
+        <CalendarMonthView
+          tasks={tasks}
+          queryKey={queryKey}
+          weekStartsOn={weekStartsOn}
           projectId={projectId}
         />
       )}

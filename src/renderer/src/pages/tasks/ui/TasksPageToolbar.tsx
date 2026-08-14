@@ -1,5 +1,5 @@
 import type { QueryKey } from "@tanstack/react-query";
-import { LayoutGridIcon, ListIcon } from "lucide-animated";
+import { CalendarDaysIcon, LayoutGridIcon, ListIcon } from "lucide-animated";
 import type { FC, ReactElement } from "react";
 import { memo } from "react";
 import { useToolbar } from "@/entities/task";
@@ -8,6 +8,9 @@ import type { ViewMode } from "../model/viewMode";
 type TasksPageToolbarProps = {
   viewMode: ViewMode;
   onViewModeChange: (viewMode: ViewMode) => void;
+  // Gates the "calendar" segment — only a project's page has a single
+  // project to scope the month grid to (SPECIFICATION.md "Задачи").
+  isProjectPage: boolean;
   queryKey: QueryKey;
   isRefetching: boolean;
   onLoadMore: () => void;
@@ -27,6 +30,14 @@ const VIEW_MODE_SEGMENTS = [
   },
 ] satisfies { value: ViewMode; label: ReactElement }[];
 
+const VIEW_MODE_SEGMENTS_WITH_CALENDAR = [
+  ...VIEW_MODE_SEGMENTS,
+  {
+    value: "calendar",
+    label: <CalendarDaysIcon size={16} animateOnHover={false} />,
+  },
+] satisfies { value: ViewMode; label: ReactElement }[];
+
 // `memo`-ed so an unrelated task list update (add/complete/etc. — which
 // changes `tasks`, not any prop this component reads) doesn't re-render the
 // toolbar. Only holds if every prop below is itself referentially stable
@@ -36,6 +47,7 @@ export const TasksPageToolbar: FC<TasksPageToolbarProps> = memo(
   function TasksPageToolbar({
     viewMode,
     onViewModeChange,
+    isProjectPage,
     queryKey,
     isRefetching,
     onLoadMore,
@@ -45,7 +57,9 @@ export const TasksPageToolbar: FC<TasksPageToolbarProps> = memo(
     return useToolbar<ViewMode>({
       viewMode,
       onViewModeChange,
-      segments: VIEW_MODE_SEGMENTS,
+      segments: isProjectPage
+        ? VIEW_MODE_SEGMENTS_WITH_CALENDAR
+        : VIEW_MODE_SEGMENTS,
       refetchQueryKeys: [
         queryKey,
         ["tasks", "list", "subtasks"],

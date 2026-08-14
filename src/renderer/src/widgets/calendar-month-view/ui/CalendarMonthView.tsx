@@ -26,6 +26,10 @@ type CalendarMonthViewProps = {
   // updates there (see `TaskFormModal`).
   queryKey: QueryKey;
   weekStartsOn: DayOfWeek;
+  // Pre-fills a new task's project when a day is clicked (see
+  // SPECIFICATION.md "Добавление задачи") — absent on the Calendar page,
+  // set on a project's page (`TasksPageContent`).
+  projectId?: string;
 };
 
 /** The month grid is `@mantine/schedule`'s `MonthView` (CALENDAR.md). No
@@ -36,7 +40,7 @@ type CalendarMonthViewProps = {
 // `weekStartsOn` (e.g. the toolbar's `isRefetching` flicker) doesn't force
 // `MonthView` to rebuild its whole grid — mirrors the TaskBoardView fix.
 export const CalendarMonthView: FC<CalendarMonthViewProps> = memo(
-  function CalendarMonthView({ tasks, queryKey, weekStartsOn }) {
+  function CalendarMonthView({ tasks, queryKey, weekStartsOn, projectId }) {
     const [date, setDate] = useState(() => dayjs().format("YYYY-MM-DD"));
     const [editingTask, setEditingTask] = useState<TaskDTO | null>(null);
     const [createDefaults, setCreateDefaults] =
@@ -45,9 +49,12 @@ export const CalendarMonthView: FC<CalendarMonthViewProps> = memo(
 
     const events = useMemo(() => toScheduleEvents(tasks), [tasks]);
 
-    const openCreateOnDay = useCallback((day: string) => {
-      setCreateDefaults({ due: { date: day, datetime: null } });
-    }, []);
+    const openCreateOnDay = useCallback(
+      (day: string) => {
+        setCreateDefaults({ due: { date: day, datetime: null }, projectId });
+      },
+      [projectId],
+    );
 
     const changeTaskDeadline = useCallback(
       (newStart: string, event: ScheduleEventData) => {
