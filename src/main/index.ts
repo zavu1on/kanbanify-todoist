@@ -182,8 +182,6 @@ const createWindow = () => {
   } else {
     window.loadFile(path.join(__dirname, "../renderer/index.html"));
   }
-
-  window.webContents.openDevTools();
 };
 
 app.whenReady().then(() => {
