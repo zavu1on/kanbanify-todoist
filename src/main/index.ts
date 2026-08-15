@@ -219,8 +219,8 @@ const registerIpcHandlers = () => {
 
 const createWindow = () => {
   const window = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1080,
+    height: 650,
     icon: appIcon,
     webPreferences: {
       preload: path.join(__dirname, "../preload/index.js"),
