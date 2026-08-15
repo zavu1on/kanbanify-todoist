@@ -1,6 +1,5 @@
 import path from "node:path";
 import { app, BrowserWindow, Menu, nativeImage, Tray } from "electron";
-import icon from "../../resources/icon.png?asset";
 import { DownloadAttachmentUseCase } from "./attachments/application/use-cases/DownloadAttachmentUseCase";
 import { AttachmentsIpcController } from "./attachments/infrastructure/AttachmentsIpcController";
 import { TodoistAttachmentGateway } from "./attachments/infrastructure/TodoistAttachmentGateway";
@@ -42,7 +41,15 @@ import { UpdateTaskUseCase } from "./tasks/application/use-cases/UpdateTaskUseCa
 import { TasksIpcController } from "./tasks/infrastructure/TasksIpcController";
 import { TodoistTaskGateway } from "./tasks/infrastructure/TodoistTaskGateway";
 
-const appIcon = nativeImage.createFromPath(icon);
+// In dev, electron-vite runs main from `dist/main`, so the icon lives two
+// levels up in the source `resources/` dir. In a packaged build that path
+// doesn't exist inside `app.asar` — the icon is shipped instead via
+// electron-builder's `extraResources`, landing next to app.asar itself,
+// which Electron exposes as `process.resourcesPath`.
+const iconPath = app.isPackaged
+  ? path.join(process.resourcesPath, "icon.png")
+  : path.join(__dirname, "../../resources/icon.png");
+const appIcon = nativeImage.createFromPath(iconPath);
 
 // Set once the user picks "Quit" from the tray menu (or the app quits via
 // another OS-level path) — distinguishes an actual quit from the window's
@@ -51,7 +58,10 @@ let isQuitting = false;
 let tray: Tray | null = null;
 
 const createTray = (window: BrowserWindow) => {
-  tray = new Tray(appIcon);
+  // Windows renders the tray icon at 16x16 — downscale explicitly instead of
+  // handing it the full 512x512 image, which some Windows builds fail to
+  // shrink cleanly for the notification area.
+  tray = new Tray(appIcon.resize({ width: 16, height: 16 }));
   tray.setToolTip("Kanbanify Todoist");
   tray.setContextMenu(
     Menu.buildFromTemplate([

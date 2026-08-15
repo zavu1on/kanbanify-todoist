@@ -3,7 +3,9 @@ import {
   type MantineColorsTuple,
   MantineProvider,
 } from "@mantine/core";
+import { DatePickerInput } from "@mantine/dates";
 import type { FC, PropsWithChildren } from "react";
+import "./globalStyles.css";
 
 const myColor: MantineColorsTuple = [
   "#ecf4ff",
@@ -23,6 +25,12 @@ const theme = createTheme({
     myColor,
   },
   primaryColor: "myColor",
+  scale: 0.9,
+  components: {
+    DatePickerInput: DatePickerInput.extend({
+      defaultProps: { highlightToday: true },
+    }),
+  },
 });
 
 export const ThemeProvider: FC<PropsWithChildren> = ({ children }) => {
