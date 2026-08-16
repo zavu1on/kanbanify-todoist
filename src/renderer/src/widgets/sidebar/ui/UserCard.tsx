@@ -13,6 +13,7 @@ import { notifications } from "@mantine/notifications";
 import type { FC } from "react";
 import { useState } from "react";
 import { useSession } from "@/app/SessionContext";
+import { AutoLaunchSwitch } from "@/features/toggle-auto-launch";
 
 type UserCardProps = {
   fullName: string;
@@ -23,6 +24,8 @@ type UserCardProps = {
 export const UserCard: FC<UserCardProps> = ({ fullName, email, avatarUrl }) => {
   const { logout } = useSession();
   const [isConfirmOpen, { open: openConfirm, close: closeConfirm }] =
+    useDisclosure(false);
+  const [isSettingsOpen, { open: openSettings, close: closeSettings }] =
     useDisclosure(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -66,11 +69,16 @@ export const UserCard: FC<UserCardProps> = ({ fullName, email, avatarUrl }) => {
         </Menu.Target>
 
         <Menu.Dropdown>
+          <Menu.Item onClick={openSettings}>Settings</Menu.Item>
           <Menu.Item color="red" onClick={openConfirm}>
             Log out
           </Menu.Item>
         </Menu.Dropdown>
       </Menu>
+
+      <Modal opened={isSettingsOpen} onClose={closeSettings} title="Settings">
+        <AutoLaunchSwitch />
+      </Modal>
 
       <Modal opened={isConfirmOpen} onClose={closeConfirm} title="Log out?">
         <Stack gap="md">

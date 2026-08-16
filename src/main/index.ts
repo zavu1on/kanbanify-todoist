@@ -27,6 +27,11 @@ import { ListProjectsUseCase } from "./projects/application/use-cases/ListProjec
 import { UpdateProjectUseCase } from "./projects/application/use-cases/UpdateProjectUseCase";
 import { ProjectsIpcController } from "./projects/infrastructure/ProjectsIpcController";
 import { TodoistProjectGateway } from "./projects/infrastructure/TodoistProjectGateway";
+import { GetAutoLaunchStatusUseCase } from "./startup/application/use-cases/GetAutoLaunchStatusUseCase";
+import { SetAutoLaunchStatusUseCase } from "./startup/application/use-cases/SetAutoLaunchStatusUseCase";
+import { AUTO_LAUNCH_HIDDEN_ARG } from "./startup/domain/constants/AutoLaunchHiddenArg";
+import { ElectronAutoLaunchGateway } from "./startup/infrastructure/ElectronAutoLaunchGateway";
+import { StartupIpcController } from "./startup/infrastructure/StartupIpcController";
 import { CompleteTaskUseCase } from "./tasks/application/use-cases/CompleteTaskUseCase";
 import { CountTasksCompletedTodayUseCase } from "./tasks/application/use-cases/CountTasksCompletedTodayUseCase";
 import { CountTodayTasksUseCase } from "./tasks/application/use-cases/CountTodayTasksUseCase";
@@ -56,6 +61,12 @@ const appIcon = nativeImage.createFromPath(iconPath);
 // "close" event, which otherwise only hides the window into the tray.
 let isQuitting = false;
 let tray: Tray | null = null;
+
+// Set by the OS when auto-launch registered this launch args (see
+// `ElectronAutoLaunchGateway`) — on Windows there's no built-in equivalent
+// of macOS's `wasOpenedAsHidden`, so a custom launch flag is the only
+// reliable way to tell "started at login" apart from "started by the user".
+const startedHidden = process.argv.includes(AUTO_LAUNCH_HIDDEN_ARG);
 
 const createTray = (window: BrowserWindow) => {
   // Windows renders the tray icon at 16x16 — downscale explicitly instead of
@@ -215,6 +226,19 @@ const registerIpcHandlers = () => {
     updateCommentUseCase,
     deleteCommentUseCase,
   ).register();
+
+  const autoLaunchGateway = new ElectronAutoLaunchGateway();
+  const getAutoLaunchStatusUseCase = new GetAutoLaunchStatusUseCase(
+    autoLaunchGateway,
+  );
+  const setAutoLaunchStatusUseCase = new SetAutoLaunchStatusUseCase(
+    autoLaunchGateway,
+  );
+
+  new StartupIpcController(
+    getAutoLaunchStatusUseCase,
+    setAutoLaunchStatusUseCase,
+  ).register();
 };
 
 const createWindow = () => {
@@ -222,6 +246,7 @@ const createWindow = () => {
     width: 1080,
     height: 650,
     icon: appIcon,
+    show: !startedHidden,
     webPreferences: {
       preload: path.join(__dirname, "../preload/index.js"),
       contextIsolation: true,

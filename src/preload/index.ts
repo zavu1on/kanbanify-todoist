@@ -31,6 +31,7 @@ import type {
   UpdateProjectRequest,
   UpdateProjectResult,
 } from "../main/projects";
+import type { AutoLaunchStatusResult } from "../main/startup";
 import type {
   CompleteTaskResult,
   CreateTaskRequest,
@@ -125,6 +126,12 @@ const api = {
       request: DownloadAttachmentRequest,
     ): Promise<DownloadAttachmentResult> =>
       ipcRenderer.invoke("attachments:download", request),
+  },
+  startup: {
+    getAutoLaunch: (): Promise<AutoLaunchStatusResult> =>
+      ipcRenderer.invoke("startup:getAutoLaunch"),
+    setAutoLaunch: (enabled: boolean): Promise<AutoLaunchStatusResult> =>
+      ipcRenderer.invoke("startup:setAutoLaunch", enabled),
   },
 };
 
