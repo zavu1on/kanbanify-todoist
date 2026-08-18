@@ -12,6 +12,7 @@ export const AutoLaunchSwitch: FC = () => {
   return (
     <Switch
       label="Launch at system startup"
+      aria-label="Launch at system startup"
       description="Opens minimized to the tray"
       checked={enabled}
       disabled={isPending || isSaving}

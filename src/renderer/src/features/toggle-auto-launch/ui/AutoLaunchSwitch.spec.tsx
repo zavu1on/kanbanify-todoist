@@ -39,7 +39,7 @@ describe("AutoLaunchSwitch", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("checkbox", { name: "Launch at system startup" }),
+        screen.getByRole("switch", { name: "Launch at system startup" }),
       ).toBeChecked();
     });
   });
@@ -54,7 +54,7 @@ describe("AutoLaunchSwitch", () => {
     const user = userEvent.setup();
     renderSwitch();
 
-    const toggle = await screen.findByRole("checkbox", {
+    const toggle = await screen.findByRole("switch", {
       name: "Launch at system startup",
     });
     await waitFor(() => expect(toggle).not.toBeChecked());
@@ -76,7 +76,7 @@ describe("AutoLaunchSwitch", () => {
     const user = userEvent.setup();
     renderSwitch();
 
-    const toggle = await screen.findByRole("checkbox", {
+    const toggle = await screen.findByRole("switch", {
       name: "Launch at system startup",
     });
     await waitFor(() => expect(toggle).not.toBeChecked());
