@@ -49,7 +49,7 @@ const theme = createTheme({
     myColor,
   },
   primaryColor: "myColor",
-  scale: 1,
+  scale: 0.9,
   defaultRadius: "md",
   other: {
     surface: "#ffffff",
