@@ -110,13 +110,26 @@ export const TaskBoardView: FC<TaskBoardProps> = ({
 
       <DragOverlay>
         {activeTask && (
-          <TaskCard
-            task={activeTask}
-            hideKanbanStatus
-            hideProject={hideProject}
-            // Prevent task completing when task is dragging
-            onComplete={() => {}}
-          />
+          // Rotate + lifted shadow reads as "picked up" — dnd-kit's overlay
+          // has no Mantine style-prop equivalent for either, same
+          // justification as the transform inline-style in
+          // DraggableTaskCard.tsx.
+          <div
+            style={{
+              transform: "rotate(-1deg)",
+              boxShadow: "0 6px 18px rgba(20,25,40,0.12)",
+              borderRadius: 11,
+            }}
+          >
+            <TaskCard
+              task={activeTask}
+              variant="board"
+              hideKanbanStatus
+              hideProject={hideProject}
+              // Prevent task completing when task is dragging
+              onComplete={() => {}}
+            />
+          </div>
         )}
       </DragOverlay>
 

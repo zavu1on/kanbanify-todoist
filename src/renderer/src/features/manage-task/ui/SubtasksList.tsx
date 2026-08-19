@@ -1,4 +1,4 @@
-import { Button, Divider, Stack, Text } from "@mantine/core";
+import { Box, Button, Group, Progress, Stack, Text } from "@mantine/core";
 import { PlusIcon } from "lucide-animated";
 import type { FC } from "react";
 import {
@@ -27,15 +27,29 @@ export const SubtasksList: FC<SubtasksListProps> = ({
   const pages = subtasksQuery.data?.pages ?? [];
   const firstPage = pages[0];
   const subtasks = firstPage?.ok ? firstPage.tasks : [];
+  const doneCount = subtasks.filter((subtask) => subtask.checked).length;
 
   return (
     <Stack gap="xs">
-      <Divider
-        label={
-          subtasksQuery.isPending ? "Sub-tasks" : `Sub-tasks ${subtasks.length}`
-        }
-        labelPosition="left"
-      />
+      <Box>
+        <Group justify="space-between" mb={4}>
+          <Text size="xs" fw={650} tt="uppercase" c="dimmed">
+            Sub-tasks
+          </Text>
+          {!subtasksQuery.isPending && subtasks.length > 0 && (
+            <Text size="xs" c="dimmed">
+              {doneCount}/{subtasks.length} done
+            </Text>
+          )}
+        </Group>
+        {!subtasksQuery.isPending && subtasks.length > 0 && (
+          <Progress
+            size={3}
+            value={(doneCount / subtasks.length) * 100}
+            color="myColor"
+          />
+        )}
+      </Box>
 
       {subtasksQuery.isPending ? (
         <Text size="sm" c="dimmed">
@@ -50,7 +64,7 @@ export const SubtasksList: FC<SubtasksListProps> = ({
           <TaskCard
             key={subtask.id}
             task={subtask}
-            fixedHeight
+            variant="compact"
             hideKanbanStatus
             onComplete={(taskId) => completeSubtaskMutation.mutate({ taskId })}
             onClick={() => onOpenSubtask(subtask)}

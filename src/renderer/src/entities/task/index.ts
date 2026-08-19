@@ -1,5 +1,5 @@
 export { useSubtasksQuery } from "./api/useSubtasksQuery";
-export { getDueDisplay } from "./lib/dueDate";
+export { DUE_STATE_COLORS, getDueDisplay } from "./lib/dueDate";
 export {
   KANBAN_COLUMN_LABELS,
   KANBAN_STATUS_COLORS,
@@ -16,4 +16,5 @@ export {
 } from "./model/queryKeys";
 export { useLoadMoreTasksHandler } from "./model/useLoadMoreTasksHandler";
 export { type ToolbarSegment, useToolbar } from "./model/useToolbar";
+export type { TaskCardVariant } from "./ui/TaskCardBodyProps";
 export { TaskCard } from "./ui/TaskCard";

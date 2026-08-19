@@ -1,3 +1,4 @@
+import { Group } from "@mantine/core";
 import type { QueryKey } from "@tanstack/react-query";
 import { LayoutGridIcon, ListIcon } from "lucide-animated";
 import type { FC, ReactElement } from "react";
@@ -19,10 +20,23 @@ type TodayPageToolbarProps = {
 // `data` prop doesn't change identity (and reset its slide indicator) on
 // every task list update.
 const VIEW_MODE_SEGMENTS = [
-  { value: "list", label: <ListIcon size={16} animateOnHover={false} /> },
+  {
+    value: "list",
+    label: (
+      <Group gap={6} wrap="nowrap">
+        <ListIcon size={15} animateOnHover={false} />
+        <span>List</span>
+      </Group>
+    ),
+  },
   {
     value: "kanban",
-    label: <LayoutGridIcon size={16} animateOnHover={false} />,
+    label: (
+      <Group gap={6} wrap="nowrap">
+        <LayoutGridIcon size={15} animateOnHover={false} />
+        <span>Board</span>
+      </Group>
+    ),
   },
 ] satisfies { value: ViewMode; label: ReactElement }[];
 

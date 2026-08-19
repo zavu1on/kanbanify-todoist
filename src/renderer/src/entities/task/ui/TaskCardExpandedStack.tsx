@@ -1,26 +1,32 @@
-import { Box, Group, Stack, Text } from "@mantine/core";
+import { Group, Stack, Text } from "@mantine/core";
 import type { FC } from "react";
 import type { TaskCardBodyProps } from "./TaskCardBodyProps";
 
+// Two-row layout for the kanban board, where columns are too narrow for the
+// single-row list layout — title on its own line, then a wrapping meta row.
 export const TaskCardExpandedStack: FC<TaskCardBodyProps> = ({
   checkbox,
-  priorityDot,
   title,
   hasMeta,
-  metaBadges,
+  dueMeta,
+  projectMeta,
+  kanbanPill,
+  labelPills,
 }) => (
-  <Stack gap={6}>
-    <Group gap={6} wrap="nowrap" align="flex-start">
+  <Stack gap={8}>
+    <Group gap={10} wrap="nowrap" align="flex-start">
       {checkbox}
-      {priorityDot && <Box mt={6}>{priorityDot}</Box>}
       <Text size="sm" fw={500} style={{ flex: 1 }}>
         {title}
       </Text>
     </Group>
 
     {hasMeta && (
-      <Group gap={6} wrap="wrap">
-        {metaBadges}
+      <Group gap={8} wrap="wrap" pl={checkbox ? 28 : 0}>
+        {dueMeta}
+        {kanbanPill}
+        {projectMeta}
+        {labelPills}
       </Group>
     )}
   </Stack>

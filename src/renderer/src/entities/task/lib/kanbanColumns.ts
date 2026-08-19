@@ -10,11 +10,9 @@ export const KANBAN_COLUMN_LABELS: Record<KanbanStatusLevel, string> = {
   completed: "Completed",
 };
 
-export const KANBAN_STATUS_COLORS: Record<
-  Exclude<KanbanStatusLevel, "none">,
-  string
-> = {
-  todo: "gray",
-  "in-progress": "blue",
-  completed: "green",
+export const KANBAN_STATUS_COLORS: Record<KanbanStatusLevel, string> = {
+  none: "#b6bcc7",
+  todo: "#7b8494",
+  "in-progress": "#2f6fb3",
+  completed: "#2f9e5f",
 };

@@ -10,6 +10,7 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
+import { ChevronUpIcon } from "lucide-animated";
 import type { FC } from "react";
 import { useState } from "react";
 import { useSession } from "@/app/SessionContext";
@@ -56,7 +57,7 @@ export const UserCard: FC<UserCardProps> = ({ fullName, email, avatarUrl }) => {
           >
             <Group gap="sm" wrap="nowrap">
               <Avatar src={avatarUrl} name={fullName} color="initials" />
-              <Stack gap={0} style={{ minWidth: 0 }}>
+              <Stack gap={0} style={{ minWidth: 0, flex: 1 }}>
                 <Text size="sm" fw={500} truncate>
                   {fullName}
                 </Text>
@@ -64,6 +65,11 @@ export const UserCard: FC<UserCardProps> = ({ fullName, email, avatarUrl }) => {
                   {email}
                 </Text>
               </Stack>
+              <ChevronUpIcon
+                size={15}
+                animateOnHover={false}
+                color="var(--mantine-color-dimmed)"
+              />
             </Group>
           </UnstyledButton>
         </Menu.Target>

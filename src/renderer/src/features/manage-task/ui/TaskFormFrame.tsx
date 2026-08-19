@@ -1,4 +1,12 @@
-import { Button, Checkbox, Divider, Group, Stack } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Checkbox,
+  Divider,
+  Group,
+  Stack,
+  Text,
+} from "@mantine/core";
 import { schemaResolver, useForm } from "@mantine/form";
 import type { QueryKey } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -224,26 +232,15 @@ export const TaskFormFrame: FC<TaskFormFrameProps> = ({
             commentsSection={task && <CommentsSection taskId={task.id} />}
           />
 
-          <Group justify="flex-end">
-            <Button
-              type="button"
-              variant="default"
-              onClick={() => discardConfirmRef.current?.requestClose()}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={(event) => event.currentTarget.form?.requestSubmit()}
-            >
-              {isEditMode ? "Save" : "Add"}
-            </Button>
-          </Group>
-
-          {isEditMode && (
-            <>
-              <Divider />
-              <Group justify="flex-end">
+          <Box
+            style={{ position: "sticky", bottom: 0 }}
+            bg="#fff"
+            pt="sm"
+            mt="xs"
+          >
+            <Divider mb="sm" />
+            <Group justify="space-between" align="center">
+              {isEditMode ? (
                 <Button
                   type="button"
                   color="red"
@@ -252,9 +249,28 @@ export const TaskFormFrame: FC<TaskFormFrameProps> = ({
                 >
                   Delete
                 </Button>
+              ) : (
+                <Text size="xs" c="dimmed">
+                  Esc to close
+                </Text>
+              )}
+              <Group>
+                <Button
+                  type="button"
+                  variant="default"
+                  onClick={() => discardConfirmRef.current?.requestClose()}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={(event) => event.currentTarget.form?.requestSubmit()}
+                >
+                  {isEditMode ? "Save" : "Add"}
+                </Button>
               </Group>
-            </>
-          )}
+            </Group>
+          </Box>
         </Stack>
       </form>
 

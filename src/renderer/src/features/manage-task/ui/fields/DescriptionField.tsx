@@ -10,9 +10,11 @@ type DescriptionFieldProps = {
  * not its siblings (see `TaskFormFields`). */
 export const DescriptionField = ({ form }: DescriptionFieldProps) => (
   <Textarea
-    label="Description"
+    aria-label="Description"
     placeholder="Add a description"
+    variant="unstyled"
     minRows={3}
+    styles={{ input: { background: "#fafbfd", borderRadius: 9, padding: 10 } }}
     key={form.key("description")}
     {...form.getInputProps("description")}
   />

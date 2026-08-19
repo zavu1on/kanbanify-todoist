@@ -18,6 +18,7 @@ import {
   toScheduleEvents,
 } from "../model/toScheduleEvents";
 import { CalendarChip } from "./CalendarChip";
+import classes from "./CalendarMonthView.module.css";
 
 type CalendarMonthViewProps = {
   // Dated tasks only, already sorted by due date (`tasks:listWithDueDate`).
@@ -96,6 +97,10 @@ export const CalendarMonthView: FC<CalendarMonthViewProps> = memo(
           onDateChange={setDate}
           events={events}
           firstDayOfWeek={weekStartsOn}
+          classNames={{
+            monthViewDay: classes.day,
+            monthViewDayLabel: classes.dayLabel,
+          }}
           // `@mantine/schedule` shrinks event text via a container query once
           // a day's event row gets short, regardless of `theme.scale` —
           // rendering the title in a `Text` with an explicit size sidesteps

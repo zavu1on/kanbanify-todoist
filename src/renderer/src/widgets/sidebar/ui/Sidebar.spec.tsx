@@ -56,7 +56,7 @@ describe("Sidebar", () => {
     const user = userEvent.setup();
     renderSidebar();
 
-    await user.click(screen.getByRole("link", { name: "New task" }));
+    await user.click(screen.getByRole("button", { name: "New task" }));
 
     expect(
       await screen.findByRole("heading", { name: "New task" }),

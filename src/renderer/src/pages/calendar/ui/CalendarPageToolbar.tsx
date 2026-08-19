@@ -1,8 +1,13 @@
+import { Box, Group, Stack } from "@mantine/core";
 import type { QueryKey } from "@tanstack/react-query";
 import { CalendarDaysIcon, ListIcon } from "lucide-animated";
 import type { FC, ReactElement } from "react";
 import { memo } from "react";
-import { useToolbar } from "@/entities/task";
+import {
+  DUE_STATE_COLORS,
+  PRIORITY_MARKER_COLORS,
+  useToolbar,
+} from "@/entities/task";
 import type { ViewMode } from "../model/viewMode";
 
 type CalendarPageToolbarProps = {
@@ -22,10 +27,29 @@ type CalendarPageToolbarProps = {
 const VIEW_MODE_SEGMENTS = [
   {
     value: "month",
-    label: <CalendarDaysIcon size={16} animateOnHover={false} />,
+    label: (
+      <Group gap={6} wrap="nowrap">
+        <CalendarDaysIcon size={15} animateOnHover={false} />
+        <span>Month</span>
+      </Group>
+    ),
   },
-  { value: "agenda", label: <ListIcon size={16} animateOnHover={false} /> },
+  {
+    value: "agenda",
+    label: (
+      <Group gap={6} wrap="nowrap">
+        <ListIcon size={15} animateOnHover={false} />
+        <span>Agenda</span>
+      </Group>
+    ),
+  },
 ] satisfies { value: ViewMode; label: ReactElement }[];
+
+const PRIORITY_LEGEND_ITEMS = [
+  { label: "P1", color: PRIORITY_MARKER_COLORS.p1 },
+  { label: "P2", color: PRIORITY_MARKER_COLORS.p2 },
+  { label: "P3", color: PRIORITY_MARKER_COLORS.p3 },
+] as const;
 
 // `memo`-ed so an unrelated task list update doesn't re-render the toolbar —
 // only holds if every prop below is itself referentially stable across those
@@ -40,7 +64,7 @@ export const CalendarPageToolbar: FC<CalendarPageToolbarProps> = memo(
     hasNextPage,
     isFetchingNextPage,
   }) {
-    return useToolbar<ViewMode>({
+    const toolbar = useToolbar<ViewMode>({
       viewMode,
       onViewModeChange,
       segments: VIEW_MODE_SEGMENTS,
@@ -54,5 +78,24 @@ export const CalendarPageToolbar: FC<CalendarPageToolbarProps> = memo(
       hasNextPage,
       isFetchingNextPage,
     });
+
+    return (
+      <Stack gap={8}>
+        {toolbar}
+
+        <Group gap={14} fz={12} c="dimmed">
+          {PRIORITY_LEGEND_ITEMS.map(({ label, color }) => (
+            <Group key={label} gap={6} wrap="nowrap">
+              <Box w={3} h={11} bdrs={999} bg={color} />
+              <span>{label}</span>
+            </Group>
+          ))}
+          <Group gap={6} wrap="nowrap" c={DUE_STATE_COLORS.overdue}>
+            <Box w={7} h={7} bdrs={999} bg={DUE_STATE_COLORS.overdue} />
+            <span>overdue</span>
+          </Group>
+        </Group>
+      </Stack>
+    );
   },
 );

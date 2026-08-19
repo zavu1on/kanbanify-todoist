@@ -5,6 +5,18 @@ export type DueDisplay = {
   label: string;
   isOverdue: boolean;
   isDueToday: boolean;
+  // Whole days between today and the due date, only meaningful when
+  // `isOverdue` — 0 covers "overdue today at a past time", where the card
+  // shows the plain label instead of a day count (see `TaskCard`).
+  daysOverdue: number;
+};
+
+/** Text/icon colors for the due-date meta line — red wins when a task is
+ * both overdue and due today (a past time today), same precedence
+ * `getDueDisplay`'s doc comment describes. */
+export const DUE_STATE_COLORS = {
+  overdue: "#c93a3a",
+  today: "#2f6fb3",
 };
 
 type TaskDue = NonNullable<TaskDTO["due"]>;
@@ -26,8 +38,16 @@ export const getDueDisplay = (due: TaskDue): DueDisplay => {
     ? target.isBefore(now)
     : target.isBefore(now, "day");
   const isDueToday = target.isSame(now, "day");
+  const daysOverdue = isOverdue
+    ? now.startOf("day").diff(target.startOf("day"), "day")
+    : 0;
 
-  return { label: formatDueLabel(due, target, now), isOverdue, isDueToday };
+  return {
+    label: formatDueLabel(due, target, now),
+    isOverdue,
+    isDueToday,
+    daysOverdue,
+  };
 };
 
 const formatDueLabel = (

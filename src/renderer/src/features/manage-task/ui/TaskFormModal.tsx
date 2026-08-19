@@ -1,4 +1,4 @@
-import { Modal, UnstyledButton } from "@mantine/core";
+import { Modal, Text, UnstyledButton } from "@mantine/core";
 import type { QueryKey } from "@tanstack/react-query";
 import { type FC, useRef, useState } from "react";
 import { subtasksListQueryKey } from "@/entities/task";
@@ -65,13 +65,15 @@ export const TaskFormModal: FC<TaskFormModalProps> = ({
       closeOnEscape={false}
       title={
         topFrame ? (
-          <UnstyledButton fw={600} onClick={() => activeLeaveRef.current()}>
-            ← {topFrame.parentTask.title}
+          <UnstyledButton onClick={() => activeLeaveRef.current()}>
+            <Text fw={650} size="lg">
+              ← {topFrame.parentTask.title}
+            </Text>
           </UnstyledButton>
-        ) : task ? (
-          "Edit task"
         ) : (
-          "New task"
+          <Text fw={650} size="lg">
+            {task ? "Edit task" : "New task"}
+          </Text>
         )
       }
       size="xl"

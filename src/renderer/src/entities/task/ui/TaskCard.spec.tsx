@@ -62,4 +62,49 @@ describe("TaskCard", () => {
 
     await waitFor(() => expect(onComplete).toHaveBeenCalledWith("1"));
   });
+
+  it("shows at most 2 labels, collapsing the rest into a +N pill", () => {
+    renderCard({
+      task: { ...task, labels: ["frontend", "urgent", "backend", "docs"] },
+    });
+
+    expect(screen.getByText("frontend")).toBeInTheDocument();
+    expect(screen.getByText("urgent")).toBeInTheDocument();
+    expect(screen.queryByText("backend")).not.toBeInTheDocument();
+    expect(screen.queryByText("docs")).not.toBeInTheDocument();
+    expect(screen.getByText("+2")).toBeInTheDocument();
+  });
+
+  it("does not show a +N pill when there are 2 or fewer labels", () => {
+    renderCard({ task: { ...task, labels: ["frontend", "urgent"] } });
+
+    expect(screen.queryByText(/^\+\d+$/)).not.toBeInTheDocument();
+  });
+
+  describe("due date meta", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-08-05T14:00:00.000Z"));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("prefixes the day count for a task overdue by more than a day", () => {
+      renderCard({
+        task: { ...task, due: { date: "2026-08-02", datetime: null } },
+      });
+
+      expect(screen.getByText("3 days overdue · Aug 2")).toBeInTheDocument();
+    });
+
+    it("shows the plain label for a task due today", () => {
+      renderCard({
+        task: { ...task, due: { date: "2026-08-05", datetime: null } },
+      });
+
+      expect(screen.getByText("Today")).toBeInTheDocument();
+    });
+  });
 });

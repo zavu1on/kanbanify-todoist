@@ -154,13 +154,14 @@ export const QuickAddTitleInput: FC<QuickAddTitleInputProps> = ({
     <Box style={{ position: "relative" }}>
       {isEmpty && !focused && (
         <Text
-          size="sm"
           c="dimmed"
           style={{
             position: "absolute",
             top: 0,
             left: 0,
             padding: "0.5rem 0",
+            fontSize: "1.25rem",
+            fontWeight: 650,
             pointerEvents: "none",
           }}
         >
@@ -183,8 +184,8 @@ export const QuickAddTitleInput: FC<QuickAddTitleInputProps> = ({
         style={{
           minHeight: "1.5rem",
           padding: "0.5rem 0",
-          fontSize: "var(--mantine-font-size-lg)",
-          fontWeight: 600,
+          fontSize: "1.25rem",
+          fontWeight: 650,
           outline: "none",
           whiteSpace: "pre-wrap",
           wordBreak: "break-word",

@@ -21,7 +21,16 @@ describe("getDueDisplay", () => {
 
   it("is overdue for a date-only due yesterday", () => {
     const display = getDueDisplay({ date: "2026-08-04", datetime: null });
-    expect(display).toMatchObject({ isOverdue: true, isDueToday: false });
+    expect(display).toMatchObject({
+      isOverdue: true,
+      isDueToday: false,
+      daysOverdue: 1,
+    });
+  });
+
+  it("counts multiple days overdue for a date-only due further in the past", () => {
+    const display = getDueDisplay({ date: "2026-08-02", datetime: null });
+    expect(display).toMatchObject({ isOverdue: true, daysOverdue: 3 });
   });
 
   it("is not overdue for a today due with a time later than now", () => {
@@ -39,7 +48,11 @@ describe("getDueDisplay", () => {
       date: "2026-08-05",
       datetime: "2026-08-05T10:00:00.000Z",
     });
-    expect(display).toMatchObject({ isOverdue: true, isDueToday: true });
+    expect(display).toMatchObject({
+      isOverdue: true,
+      isDueToday: true,
+      daysOverdue: 0,
+    });
   });
 
   it("is not overdue or due today for a date-only due in the future", () => {

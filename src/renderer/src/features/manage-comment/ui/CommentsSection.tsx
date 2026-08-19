@@ -1,5 +1,4 @@
-import { Button, Divider, Stack, Text } from "@mantine/core";
-import { PlusIcon } from "lucide-animated";
+import { Avatar, Divider, Group, Stack, Text, TextInput } from "@mantine/core";
 import { type FC, memo, useState } from "react";
 import { CommentCard, useCommentsQuery } from "@/entities/comment";
 import { useCreateCommentMutation } from "../api/useCreateCommentMutation";
@@ -119,15 +118,16 @@ const CommentsSectionComponent: FC<CommentsSectionProps> = ({ taskId }) => {
           onCancel={() => setIsAdding(false)}
         />
       ) : (
-        <Button
-          variant="subtle"
-          size="compact-sm"
-          leftSection={<PlusIcon size={14} animateOnHover={false} />}
-          onClick={() => setIsAdding(true)}
-          style={{ alignSelf: "flex-start" }}
-        >
-          Add new comment
-        </Button>
+        <Group gap="xs" wrap="nowrap">
+          <Avatar size="sm" />
+          <TextInput
+            placeholder="Add a comment..."
+            radius="xl"
+            readOnly
+            style={{ flex: 1 }}
+            onFocus={() => setIsAdding(true)}
+          />
+        </Group>
       )}
 
       <DeleteCommentConfirmModal

@@ -66,7 +66,7 @@ describe("CommentsSection", () => {
     renderSection();
     await screen.findByText("Looks good");
 
-    await user.click(screen.getByRole("button", { name: "Add new comment" }));
+    await user.click(screen.getByPlaceholderText("Add a comment..."));
     await user.type(
       screen.getByPlaceholderText("Add a comment..."),
       "New note",

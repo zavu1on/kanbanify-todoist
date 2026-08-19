@@ -17,6 +17,7 @@ export const SidebarProjectLink: FC<SidebarProjectLinkProps> = ({
 
   return (
     <NavLink
+      bdrs={0}
       label={project.name}
       leftSection={
         <Paper radius="xl" w={8} h={8} bg={getProjectColorHex(project.color)} />

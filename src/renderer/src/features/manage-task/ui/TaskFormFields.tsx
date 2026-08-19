@@ -1,4 +1,4 @@
-import { Grid, Group, Stack } from "@mantine/core";
+import { Group, Stack } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 import { type ReactNode, type Ref, useImperativeHandle, useRef } from "react";
 import type { LabelDTO } from "@/main/labels";
@@ -114,65 +114,56 @@ export const TaskFormFields = ({
     .map((l) => l.name);
 
   return (
-    <Grid gap="lg">
-      <Grid.Col span={{ base: 12, sm: 7 }}>
-        <Stack gap="md">
-          <Group align="center" wrap="nowrap" gap="xs">
-            {titleLeftSection}
-            <QuickAddTitleField
-              ref={titleFieldRef}
-              form={form}
-              projects={projectSummaries}
-              knownLabels={knownLabels}
-              quickAddContext={quickAddContext}
-              initialRawTitle={initialRawTitle}
-              onUnknownLabel={onUnknownLabel}
-              onSubmit={onTitleSubmit}
-            />
-          </Group>
+    <Stack gap="md">
+      <Group align="center" wrap="nowrap" gap="xs">
+        {titleLeftSection}
+        <QuickAddTitleField
+          ref={titleFieldRef}
+          form={form}
+          projects={projectSummaries}
+          knownLabels={knownLabels}
+          quickAddContext={quickAddContext}
+          initialRawTitle={initialRawTitle}
+          onUnknownLabel={onUnknownLabel}
+          onSubmit={onTitleSubmit}
+        />
+      </Group>
 
-          <DescriptionField form={form} />
+      <Group gap={8} wrap="wrap">
+        <ProjectField
+          form={form}
+          projectOptions={projectOptions}
+          disabled={disableProject}
+          onChange={handleProjectChange}
+        />
 
-          {subtasksSection}
-          {commentsSection}
-        </Stack>
-      </Grid.Col>
+        <DueDateTimeField
+          form={form}
+          onDueDateChange={handleDueDateChange}
+          onDueTimeChange={handleDueTimeChange}
+        />
 
-      <Grid.Col span={{ base: 12, sm: 5 }}>
-        <Stack gap="md">
-          <ProjectField
-            form={form}
-            projectOptions={projectOptions}
-            disabled={disableProject}
-            onChange={handleProjectChange}
-          />
+        <PriorityField form={form} onChange={handlePriorityChange} />
 
-          <DueDateTimeField
-            form={form}
-            onDueDateChange={handleDueDateChange}
-            onDueTimeChange={handleDueTimeChange}
-          />
+        {!hideKanbanStatus && (
+          <KanbanStatusField form={form} onChange={handleKanbanStatusChange} />
+        )}
 
-          <PriorityField form={form} onChange={handlePriorityChange} />
+        <LabelsField
+          form={form}
+          labelOptions={labelOptions}
+          knownLabels={knownLabels}
+          quickAddContext={quickAddContext}
+          onUnknownLabel={onUnknownLabel}
+          initialRawTitle={initialRawTitle}
+          titleFieldRef={titleFieldRef}
+        />
+      </Group>
 
-          {!hideKanbanStatus && (
-            <KanbanStatusField
-              form={form}
-              onChange={handleKanbanStatusChange}
-            />
-          )}
+      <DescriptionField form={form} />
 
-          <LabelsField
-            form={form}
-            labelOptions={labelOptions}
-            knownLabels={knownLabels}
-            quickAddContext={quickAddContext}
-            onUnknownLabel={onUnknownLabel}
-            initialRawTitle={initialRawTitle}
-            titleFieldRef={titleFieldRef}
-          />
-        </Stack>
-      </Grid.Col>
-    </Grid>
+      {subtasksSection}
+      {commentsSection}
+    </Stack>
   );
 };

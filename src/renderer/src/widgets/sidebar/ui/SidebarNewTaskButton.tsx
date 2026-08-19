@@ -1,16 +1,31 @@
+import { Button } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { PlusIcon } from "lucide-animated";
 import type { FC } from "react";
 import { tasksListQueryKey } from "@/entities/task";
 import { TaskFormModal } from "@/features/manage-task";
-import { SidebarNavLink } from "./SidebarNavLink";
 
-export const SidebarNewTaskNavLink: FC = () => {
+export const SidebarNewTaskButton: FC = () => {
   const [isOpen, { open, close }] = useDisclosure(false);
 
   return (
     <>
-      <SidebarNavLink label="New task" icon={PlusIcon} to="#" onClick={open} />
+      <Button
+        h={38}
+        radius={9}
+        fullWidth
+        justify="center"
+        leftSection={
+          <PlusIcon
+            size={17}
+            animateOnHover={false}
+            style={{ display: "flex" }}
+          />
+        }
+        onClick={open}
+      >
+        New task
+      </Button>
 
       {/* Mounted only while open — a fresh instance each time means the form
           always starts blank (see `ProjectActionsMenu`'s edit modal).

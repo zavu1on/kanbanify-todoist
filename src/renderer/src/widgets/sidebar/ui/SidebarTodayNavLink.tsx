@@ -15,6 +15,7 @@ export const SidebarTodayNavLink: FC = () => {
       icon={SunIcon}
       to="/today"
       badge={todayCount}
+      badgeColor="red"
       isBadgeLoading={todayCountQuery.isPending}
     />
   );

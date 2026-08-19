@@ -1,9 +1,14 @@
 import type { ReactNode } from "react";
 
+export type TaskCardVariant = "list" | "board" | "compact";
+
 export type TaskCardBodyProps = {
   checkbox: ReactNode;
-  priorityDot: ReactNode;
   title: string;
   hasMeta: boolean;
-  metaBadges: ReactNode;
+  dueMeta: ReactNode;
+  projectMeta: ReactNode;
+  kanbanPill: ReactNode;
+  labelPills: ReactNode;
+  hovered: boolean;
 };

@@ -50,15 +50,17 @@ export const useToolbar = <TViewMode extends string>({
         value={viewMode}
         onChange={(value) => onViewModeChange(value as TViewMode)}
         data={segments}
+        radius={8}
       />
 
       <Group gap="xs">
         {hasNextPage && (
           <Tooltip label="Load more tasks">
             <ActionIcon
-              variant="subtle"
+              variant="outline"
               color="gray"
-              size="lg"
+              size={34}
+              radius={9}
               loading={isFetchingNextPage}
               onClick={onLoadMore}
               aria-label="Load more tasks"
@@ -76,9 +78,10 @@ export const useToolbar = <TViewMode extends string>({
          skip it. */}
         <Tooltip label="Refetch (Ctrl+R)">
           <ActionIcon
-            variant="subtle"
+            variant="outline"
             color="gray"
-            size="lg"
+            size={34}
+            radius={9}
             loading={isRefetching}
             onClick={handleRefetch}
             aria-label="Refetch tasks"

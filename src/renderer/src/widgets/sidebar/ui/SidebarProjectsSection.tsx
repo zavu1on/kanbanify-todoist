@@ -56,7 +56,7 @@ export const SidebarProjectsSection: FC<SidebarProjectsSectionProps> = ({
         </Tooltip>
       </Group>
     </Group>
-    <Stack gap={2}>
+    <Stack gap={4}>
       {projects.map((project) => (
         <SidebarProjectLink key={project.id} project={project} />
       ))}

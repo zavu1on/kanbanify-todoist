@@ -44,6 +44,7 @@ export const DraggableTaskCard: FC<DraggableTaskCardProps> = memo(
       >
         <TaskCard
           task={task}
+          variant="board"
           hideKanbanStatus
           hideProject={hideProject}
           onComplete={onComplete}

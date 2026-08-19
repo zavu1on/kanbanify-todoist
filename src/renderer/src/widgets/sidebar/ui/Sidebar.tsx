@@ -1,10 +1,10 @@
-import { AppShell, Group, Stack, Text } from "@mantine/core";
+import { AppShell, Box, Group, Stack, Text } from "@mantine/core";
 import { CalendarDaysIcon } from "lucide-animated";
 import { type FC, memo } from "react";
 import { useSession } from "@/app/SessionContext";
 import logo from "@/shared/ui/kanbanify-logo.svg";
 import { SidebarNavLink } from "./SidebarNavLink";
-import { SidebarNewTaskNavLink } from "./SidebarNewTaskNavLink";
+import { SidebarNewTaskButton } from "./SidebarNewTaskButton";
 import { SidebarProjects } from "./SidebarProjects";
 import { SidebarTasksNavLink } from "./SidebarTasksNavLink";
 import { SidebarTodayNavLink } from "./SidebarTodayNavLink";
@@ -20,7 +20,7 @@ export const Sidebar: FC = memo(() => {
   const session = useSession();
 
   return (
-    <AppShell.Navbar>
+    <AppShell.Navbar bg="#fbfbfd">
       <AppShell.Section p="md">
         <Group gap="xs">
           <img src={logo} alt="" width={28} height={28} />
@@ -31,8 +31,11 @@ export const Sidebar: FC = memo(() => {
       </AppShell.Section>
 
       <AppShell.Section grow py="sm" style={{ overflowY: "auto" }}>
-        <Stack gap={2}>
-          <SidebarNewTaskNavLink />
+        <Box px="sm" mb="xs">
+          <SidebarNewTaskButton />
+        </Box>
+
+        <Stack gap={4}>
           <SidebarTasksNavLink />
           <SidebarTodayNavLink />
           <SidebarNavLink

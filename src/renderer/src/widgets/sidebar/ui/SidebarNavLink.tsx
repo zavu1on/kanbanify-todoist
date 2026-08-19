@@ -1,4 +1,4 @@
-import { Badge, NavLink, Skeleton } from "@mantine/core";
+import { Badge, NavLink, Skeleton, Text } from "@mantine/core";
 import {
   type ComponentType,
   type FC,
@@ -27,6 +27,10 @@ type SidebarNavLinkProps = {
   to: string;
   badge?: number;
   isBadgeLoading?: boolean;
+  // Red-tinted pill instead of the default plain tabular-nums count — used
+  // where the number itself signals urgency (Today's today-or-overdue
+  // count).
+  badgeColor?: "red";
   // Overrides the "#" placeholder's no-op click — used for items that open a
   // modal instead of navigating (e.g. "New task", see `Sidebar`).
   onClick?: () => void;
@@ -38,6 +42,7 @@ export const SidebarNavLink: FC<SidebarNavLinkProps> = ({
   to,
   badge,
   isBadgeLoading,
+  badgeColor,
   onClick,
 }) => {
   const iconRef = useRef<AnimatedIconHandle>(null);
@@ -45,6 +50,8 @@ export const SidebarNavLink: FC<SidebarNavLinkProps> = ({
 
   return (
     <NavLink
+      h={38}
+      bdrs={0}
       label={label}
       leftSection={
         // `lucide-animated` icons render a plain <div> wrapping an inline
@@ -68,10 +75,18 @@ export const SidebarNavLink: FC<SidebarNavLinkProps> = ({
             role="status"
             aria-label={`Loading ${label} count`}
           />
-        ) : badge === undefined ? undefined : (
-          <Badge variant="light" circle>
+        ) : badge === undefined ? undefined : badgeColor ? (
+          <Badge variant="light" color={badgeColor} circle>
             {badge}
           </Badge>
+        ) : (
+          <Text
+            size="xs"
+            c="dimmed"
+            style={{ fontVariantNumeric: "tabular-nums" }}
+          >
+            {badge}
+          </Text>
         )
       }
       active={location.pathname === to}

@@ -6,6 +6,7 @@ import {
 import {
   ActionIcon,
   Badge,
+  Box,
   Group,
   Paper,
   ScrollArea,
@@ -58,10 +59,14 @@ export const KanbanColumn: FC<KanbanColumnProps> = ({
 
   return (
     <Paper
-      withBorder
-      radius="md"
+      radius={14}
       p="xs"
-      bg={isDropTarget ? "var(--mantine-color-blue-light)" : undefined}
+      bg={isDropTarget ? "rgba(47,111,179,0.06)" : undefined}
+      bd={
+        isDropTarget
+          ? "1px dashed rgba(47,111,179,0.35)"
+          : "1px solid var(--mantine-color-default-border)"
+      }
       style={{
         display: "flex",
         flexDirection: "column",
@@ -107,6 +112,23 @@ export const KanbanColumn: FC<KanbanColumnProps> = ({
               />
             ))}
           </SortableContext>
+
+          {isDropTarget && (
+            <Box
+              h={56}
+              bd="1px dashed rgba(47,111,179,0.35)"
+              bdrs={11}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text size="xs" fw={600} c="#2f6fb3">
+                Drop here
+              </Text>
+            </Box>
+          )}
         </Stack>
       </ScrollArea.Autosize>
     </Paper>

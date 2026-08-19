@@ -5,7 +5,7 @@ import { Sidebar } from "@/widgets/sidebar";
 
 export const AppLayout: FC = () => {
   return (
-    <AppShell navbar={{ width: 260, breakpoint: "sm" }} padding="md">
+    <AppShell navbar={{ width: 272, breakpoint: "sm" }} padding="md">
       <Sidebar />
 
       <AppShell.Main>

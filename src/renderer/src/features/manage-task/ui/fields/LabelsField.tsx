@@ -1,11 +1,14 @@
 import { TagsInput } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
+import { BookmarkIcon } from "lucide-animated";
 import type { RefObject } from "react";
+import { useState } from "react";
 import type { LabelDTO } from "@/main/labels";
 import type { QuickAddContext } from "../../lib/parseQuickAdd";
 import { RESERVED_LABELS } from "../../model/reservedLabels";
 import type { TaskFormValues } from "../../model/taskFormSchema";
 import { useLabelsFieldHandler } from "../../model/useLabelsFieldHandler";
+import { FieldChip } from "../FieldChip";
 import { ReservedLabelModal } from "../ReservedLabelModal";
 import type { QuickAddTitleFieldHandle } from "./QuickAddTitleField";
 
@@ -53,16 +56,30 @@ export const LabelsField = ({
       titleFieldRef.current?.resyncTitleToken(type, tokenText),
   });
 
+  const [labels, setLabels] = useState(form.getValues().labels);
+  form.watch("labels", ({ value }) => setLabels(value));
+
   return (
     <>
-      <TagsInput
-        label="Labels"
-        placeholder="Search or create a label"
-        data={labelOptions}
-        key={form.key("labels")}
-        {...form.getInputProps("labels")}
-        onChange={handleLabelsChange}
-      />
+      <FieldChip
+        icon={<BookmarkIcon size={14} animateOnHover={false} />}
+        label={
+          labels.length > 0
+            ? `${labels.length} label${labels.length > 1 ? "s" : ""}`
+            : "Labels"
+        }
+        isEmpty={labels.length === 0}
+        popoverWidth={280}
+      >
+        <TagsInput
+          label="Labels"
+          placeholder="Search or create a label"
+          data={labelOptions}
+          key={form.key("labels")}
+          {...form.getInputProps("labels")}
+          onChange={handleLabelsChange}
+        />
+      </FieldChip>
 
       <ReservedLabelModal
         pendingLabel={pendingReservedLabel}

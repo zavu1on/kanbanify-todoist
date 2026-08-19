@@ -225,7 +225,9 @@ describe("TaskFormModal", () => {
   it("pre-fills the project from create-mode defaults", async () => {
     renderModal({ defaults: { projectId: "work" } });
 
-    expect(await screen.findByDisplayValue("Work")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Work" }),
+    ).toBeInTheDocument();
   });
 
   it("parses a quick-add priority token out of the title on create", async () => {
@@ -329,10 +331,9 @@ describe("TaskFormModal", () => {
 
     await user.click(await screen.findByRole("button", { name: "Work" }));
 
-    expect(await screen.findByDisplayValue("Work")).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Work" }),
-    ).not.toBeInTheDocument();
+      await screen.findByRole("button", { name: "Work" }),
+    ).toBeInTheDocument();
   });
 
   it("has no Delete button in create mode", () => {
@@ -479,11 +480,11 @@ describe("TaskFormModal", () => {
     expect(
       await screen.findByRole("button", { name: "← Write report" }),
     ).toBeInTheDocument();
-    // The still-mounted (hidden) parent frame also shows "Inbox" for its own
-    // project field — two matches confirms the new-subtask frame inherited it.
-    await waitFor(() =>
-      expect(screen.getAllByDisplayValue("Inbox")).toHaveLength(2),
-    );
+    // The still-mounted (hidden) parent frame also shows "Inbox" on its own
+    // project chip — two matches confirms the new-subtask frame inherited it.
+    // `getAllByText` (unlike `getAllByRole`) doesn't filter out the hidden
+    // frame, which is exactly what lets this check both at once.
+    await waitFor(() => expect(screen.getAllByText("Inbox")).toHaveLength(2));
 
     const titleInputs = screen.getAllByRole("textbox", {
       name: "Task title",

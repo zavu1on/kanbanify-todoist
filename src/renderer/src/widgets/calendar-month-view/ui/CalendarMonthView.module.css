@@ -1,0 +1,29 @@
+/* Targets `@mantine/schedule`'s own `data-weekend`/`data-today` mod
+   attributes on MonthView's day cell/day-number elements — wired in via the
+   Styles API `classNames` prop (see CalendarMonthView.tsx), the only
+   supported extension point for per-day conditional styling this package
+   exposes (no `getDayProps` render-prop for arbitrary JSX). */
+
+.day[data-weekend] {
+  background: #fcfcfd;
+}
+
+.day[data-weekend] .dayLabel {
+  color: #b6bcc7;
+}
+
+.day[data-today] {
+  background: rgba(84, 116, 180, 0.04);
+}
+
+.dayLabel[data-today] {
+  width: 21px;
+  height: 21px;
+  border-radius: 999px;
+  background: #5474b4;
+  color: #fff;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

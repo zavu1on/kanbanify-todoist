@@ -1,3 +1,4 @@
+import { Group } from "@mantine/core";
 import type { QueryKey } from "@tanstack/react-query";
 import { CalendarDaysIcon, LayoutGridIcon, ListIcon } from "lucide-animated";
 import type { FC, ReactElement } from "react";
@@ -23,10 +24,23 @@ type TasksPageToolbarProps = {
 // SegmentedControl's `data` prop change identity on every task list update
 // and reset its slide indicator/icons, showing up as a toolbar flicker.
 const VIEW_MODE_SEGMENTS = [
-  { value: "list", label: <ListIcon size={16} animateOnHover={false} /> },
+  {
+    value: "list",
+    label: (
+      <Group gap={6} wrap="nowrap">
+        <ListIcon size={15} animateOnHover={false} />
+        <span>List</span>
+      </Group>
+    ),
+  },
   {
     value: "kanban",
-    label: <LayoutGridIcon size={16} animateOnHover={false} />,
+    label: (
+      <Group gap={6} wrap="nowrap">
+        <LayoutGridIcon size={15} animateOnHover={false} />
+        <span>Board</span>
+      </Group>
+    ),
   },
 ] satisfies { value: ViewMode; label: ReactElement }[];
 
@@ -34,7 +48,12 @@ const VIEW_MODE_SEGMENTS_WITH_CALENDAR = [
   ...VIEW_MODE_SEGMENTS,
   {
     value: "calendar",
-    label: <CalendarDaysIcon size={16} animateOnHover={false} />,
+    label: (
+      <Group gap={6} wrap="nowrap">
+        <CalendarDaysIcon size={15} animateOnHover={false} />
+        <span>Month</span>
+      </Group>
+    ),
   },
 ] satisfies { value: ViewMode; label: ReactElement }[];
 

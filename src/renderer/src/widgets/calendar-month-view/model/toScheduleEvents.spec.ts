@@ -85,7 +85,7 @@ describe("toScheduleEvents", () => {
 
     const [event] = toScheduleEvents([task]);
 
-    expect(event.color).toBe("blue");
+    expect(event.color).toBe("#2f6fb3");
   });
 
   it("falls back to the priority color when there is no status", () => {
@@ -96,7 +96,7 @@ describe("toScheduleEvents", () => {
 
     const [event] = toScheduleEvents([task]);
 
-    expect(event.color).toBe("red");
+    expect(event.color).toBe("#e5484d");
   });
 
   it("falls back to gray for a default-priority, unstatused, not-overdue task", () => {
