@@ -24,6 +24,7 @@ export const DueDateTimeField = ({
       label="Date"
       placeholder="No date"
       clearable
+      valueFormat="DD-MM-YYYY"
       key={form.key("dueDate")}
       {...form.getInputProps("dueDate")}
       onChange={(value) =>
