@@ -9,7 +9,6 @@ import {
   Box,
   Group,
   Paper,
-  ScrollArea,
   Stack,
   Text,
 } from "@mantine/core";
@@ -96,7 +95,7 @@ export const KanbanColumn: FC<KanbanColumnProps> = ({
         </ActionIcon>
       </Group>
 
-      <ScrollArea.Autosize mah="calc(100vh - 260px)">
+      <Box mah="calc(100vh - 260px)" style={{ overflowY: "auto" }}>
         <Stack ref={setNodeRef} gap="xs" p="xs" mih={40}>
           <SortableContext
             items={tasks.map((task) => task.id)}
@@ -130,7 +129,7 @@ export const KanbanColumn: FC<KanbanColumnProps> = ({
             </Box>
           )}
         </Stack>
-      </ScrollArea.Autosize>
+      </Box>
     </Paper>
   );
 };

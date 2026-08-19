@@ -20,10 +20,10 @@ import {
   KANBAN_STATUS_COLORS,
 } from "../lib/kanbanColumns";
 import { PRIORITY_MARKER_COLORS } from "../lib/priority";
+import type { TaskCardVariant } from "./TaskCardBodyProps";
 import { TaskCardCompactRow } from "./TaskCardCompactRow";
 import { TaskCardExpandedStack } from "./TaskCardExpandedStack";
 import { TaskCardSingleRow } from "./TaskCardSingleRow";
-import type { TaskCardVariant } from "./TaskCardBodyProps";
 
 // Cards never show more than this many labels before collapsing the rest
 // into a "+N" pill — purely a display choice, `task.labels` itself is
@@ -130,7 +130,13 @@ export const TaskCard: FC<TaskCardProps> = memo(function TaskCard({
 
   const projectMeta = showProject && (
     <Group gap={5} wrap="nowrap" c="dimmed">
-      <Box w={7} h={7} bdrs={999} bg={getProjectColorHex(project.color)} />
+      <Box
+        w={7}
+        h={7}
+        mt={3}
+        bdrs={999}
+        bg={getProjectColorHex(project.color)}
+      />
       <Text size="xs" c="inherit">
         {project.name}
       </Text>

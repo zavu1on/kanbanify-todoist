@@ -15,6 +15,7 @@ export const SidebarNewTaskButton: FC = () => {
         radius={9}
         fullWidth
         justify="center"
+        styles={{ section: { marginInlineEnd: 6 } }}
         leftSection={
           <PlusIcon
             size={17}

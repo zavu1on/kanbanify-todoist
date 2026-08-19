@@ -20,7 +20,13 @@ export const SidebarProjectLink: FC<SidebarProjectLinkProps> = ({
       bdrs={0}
       label={project.name}
       leftSection={
-        <Paper radius="xl" w={8} h={8} bg={getProjectColorHex(project.color)} />
+        <Paper
+          radius="xl"
+          w={8}
+          h={8}
+          mt={1.5}
+          bg={getProjectColorHex(project.color)}
+        />
       }
       rightSection={
         <Group gap={4} wrap="nowrap">
