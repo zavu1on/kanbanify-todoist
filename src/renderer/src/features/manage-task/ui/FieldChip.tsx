@@ -1,4 +1,4 @@
-import { Group, Popover, Text, UnstyledButton } from "@mantine/core";
+import { Box, Group, Popover, Text, UnstyledButton } from "@mantine/core";
 import type { FC, ReactNode } from "react";
 
 type FieldChipProps = {
@@ -44,7 +44,7 @@ export const FieldChip: FC<FieldChipProps> = ({
         style={{ opacity: disabled ? 0.5 : 1 }}
       >
         <Group gap={6} wrap="nowrap">
-          {icon}
+          <Box style={{ lineHeight: 0 }}>{icon}</Box>
           <Text size="xs" fw={500} c={isEmpty ? "dimmed" : undefined}>
             {label}
           </Text>

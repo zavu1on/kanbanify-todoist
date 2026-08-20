@@ -1,4 +1,4 @@
-import { Group } from "@mantine/core";
+import { Box, Group } from "@mantine/core";
 import type { QueryKey } from "@tanstack/react-query";
 import { LayoutGridIcon, ListIcon } from "lucide-animated";
 import type { FC, ReactElement } from "react";
@@ -24,7 +24,9 @@ const VIEW_MODE_SEGMENTS = [
     value: "list",
     label: (
       <Group gap={6} wrap="nowrap">
-        <ListIcon size={15} animateOnHover={false} />
+        <Box style={{ lineHeight: 0 }}>
+          <ListIcon size={15} animateOnHover={false} />
+        </Box>
         <span>List</span>
       </Group>
     ),
@@ -33,7 +35,9 @@ const VIEW_MODE_SEGMENTS = [
     value: "kanban",
     label: (
       <Group gap={6} wrap="nowrap">
-        <LayoutGridIcon size={15} animateOnHover={false} />
+        <Box style={{ lineHeight: 0 }}>
+          <LayoutGridIcon size={15} animateOnHover={false} />
+        </Box>
         <span>Board</span>
       </Group>
     ),

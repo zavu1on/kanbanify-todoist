@@ -29,7 +29,9 @@ const VIEW_MODE_SEGMENTS = [
     value: "month",
     label: (
       <Group gap={6} wrap="nowrap">
-        <CalendarDaysIcon size={15} animateOnHover={false} />
+        <Box style={{ lineHeight: 0 }}>
+          <CalendarDaysIcon size={15} animateOnHover={false} />
+        </Box>
         <span>Month</span>
       </Group>
     ),
@@ -38,7 +40,9 @@ const VIEW_MODE_SEGMENTS = [
     value: "agenda",
     label: (
       <Group gap={6} wrap="nowrap">
-        <ListIcon size={15} animateOnHover={false} />
+        <Box style={{ lineHeight: 0 }}>
+          <ListIcon size={15} animateOnHover={false} />
+        </Box>
         <span>Agenda</span>
       </Group>
     ),
