@@ -1,7 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
+import dayjs from "dayjs";
 import type { PropsWithChildren } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { projectsListQueryKey } from "@/entities/project";
+import { taskCountQueryKey, todayCountQueryKey } from "@/entities/task";
+import type { DeleteTaskResult } from "@/main/tasks";
 import { useDeleteTaskMutation } from "./useDeleteTaskMutation";
 
 const queryKey = ["tasks", "list"];
@@ -64,6 +68,48 @@ describe("useDeleteTaskMutation", () => {
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: ["projects", "list"],
       refetchType: "active",
+    });
+  });
+
+  it("optimistically decrements the total, today, and project counts", async () => {
+    window.api.tasks.delete = vi.fn(
+      () => new Promise<DeleteTaskResult>(() => {}),
+    );
+    const queryClient = buildQueryClient();
+    const task = {
+      id: "1",
+      projectId: "project-a",
+      parentId: null,
+      due: { date: dayjs().format("YYYY-MM-DD"), datetime: null },
+    };
+    queryClient.setQueryData(queryKey, {
+      pages: [{ ok: true, tasks: [task], nextCursor: null }],
+      pageParams: [null],
+    });
+    queryClient.setQueryData(taskCountQueryKey, { ok: true, count: 5 });
+    queryClient.setQueryData(todayCountQueryKey, { ok: true, count: 2 });
+    queryClient.setQueryData(projectsListQueryKey, {
+      ok: true,
+      projects: [{ id: "project-a", activeTaskCount: 3 }],
+    });
+
+    const { result } = renderHook(() => useDeleteTaskMutation(queryKey), {
+      wrapper: buildWrapper(queryClient),
+    });
+
+    act(() => {
+      result.current.mutate({ taskId: "1" });
+    });
+    await waitFor(() => expect(result.current.isPending).toBe(true));
+
+    expect(queryClient.getQueryData(taskCountQueryKey)).toMatchObject({
+      count: 4,
+    });
+    expect(queryClient.getQueryData(todayCountQueryKey)).toMatchObject({
+      count: 1,
+    });
+    expect(queryClient.getQueryData(projectsListQueryKey)).toMatchObject({
+      projects: [{ activeTaskCount: 2 }],
     });
   });
 

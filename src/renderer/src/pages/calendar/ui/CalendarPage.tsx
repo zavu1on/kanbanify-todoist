@@ -3,11 +3,14 @@ import type { DayOfWeek } from "@mantine/schedule";
 import type { FC } from "react";
 import { useCallback, useMemo, useState } from "react";
 import { useSession } from "@/app/SessionContext";
-import { flattenTaskPages, useLoadMoreTasksHandler } from "@/entities/task";
+import {
+  calendarTasksListQueryKey,
+  flattenTaskPages,
+  useLoadMoreTasksHandler,
+} from "@/entities/task";
 import { CalendarAgendaView } from "@/widgets/calendar-agenda-list";
 import { CalendarMonthView } from "@/widgets/calendar-month-view";
 import { useCalendarTasksQuery } from "../api/useCalendarTasksQuery";
-import { calendarTasksListQueryKey } from "../model/queryKeys";
 import { loadViewMode, saveViewMode, type ViewMode } from "../model/viewMode";
 import { CalendarPageToolbar } from "./CalendarPageToolbar";
 import { CalendarSkeleton } from "./CalendarSkeleton";

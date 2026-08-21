@@ -63,6 +63,7 @@ export const useSubmitTaskForm = ({
       if (isEditMode && task) {
         updateTaskMutation.mutate({
           taskId: task.id,
+          task,
           input: {
             title,
             description: values.description,

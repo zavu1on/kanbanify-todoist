@@ -5,20 +5,42 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { taskCountQueryKey, tasksListQueryKey } from "@/entities/task";
-import { projectsListQueryKey } from "@/entities/project";
+import {
+  applyActiveTaskCountDelta,
+  projectsListQueryKey,
+} from "@/entities/project";
+import {
+  applyTaskCountDelta,
+  isDueTodayOrOverdue,
+  reconcileTaskInLists,
+  restoreTaskListSnapshots,
+  taskCountQueryKey,
+  tasksListQueryKey,
+  todayCountQueryKey,
+} from "@/entities/task";
 import type { TaskDTO, TasksListResult, UpdateTaskRequest } from "@/main/tasks";
 import { updateTask } from "./updateTask";
 
 type TasksPages = InfiniteData<TasksListResult>;
 
-type UpdateTaskVariables = { taskId: string; input: UpdateTaskRequest };
+type UpdateTaskVariables = {
+  taskId: string;
+  input: UpdateTaskRequest;
+  /** The pre-patch task, straight from whichever card/frame the caller
+   * already has it from — lets `onMutate` build the full patched `TaskDTO`
+   * itself, and reconcile it into every cached list, not just `queryKey`'s
+   * (see `reconcileTaskInLists`). */
+  task: TaskDTO;
+};
 
 /**
- * Editing a task is optimistic: the card in `queryKey`'s cache is patched
- * in place immediately, rolled back with an error notification if the API
- * call fails — same pattern as `useChangeTaskStatusMutation`. `queryKey` is
- * the caller's own list cache, same reasoning as `useCreateTaskMutation`.
+ * Editing a task is optimistic: it's patched immediately in every
+ * already-cached tasks-list it belongs in (`reconcileTaskInLists`) — not
+ * just `queryKey`, the caller's own screen — inserted where it newly
+ * qualifies (e.g. moved into a project page visited earlier this session),
+ * dropped where it no longer does (its due date moved past today on a
+ * cached Today page), and rolled back everywhere with an error notification
+ * if the API call fails.
  */
 export const useUpdateTaskMutation = (queryKey: QueryKey) => {
   const queryClient = useQueryClient();
@@ -27,11 +49,12 @@ export const useUpdateTaskMutation = (queryKey: QueryKey) => {
     mutationFn: ({ taskId, input }: UpdateTaskVariables) =>
       updateTask(taskId, input),
 
-    onMutate: async ({ taskId, input }) => {
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData<TasksPages>(queryKey);
+    onMutate: async ({ taskId, input, task }) => {
+      await queryClient.cancelQueries({ queryKey: taskCountQueryKey });
+      await queryClient.cancelQueries({ queryKey: projectsListQueryKey });
 
-      const patch: Partial<TaskDTO> = {
+      const patched: TaskDTO = {
+        ...task,
         title: input.title,
         description: input.description,
         projectId: input.projectId,
@@ -41,33 +64,56 @@ export const useUpdateTaskMutation = (queryKey: QueryKey) => {
         labels: input.labels,
       };
 
-      queryClient.setQueryData<TasksPages>(
-        queryKey,
-        (data) =>
-          data && {
-            ...data,
-            pages: data.pages.map((page) =>
-              page.ok
-                ? {
-                    ...page,
-                    tasks: page.tasks.map((task) =>
-                      task.id === taskId ? { ...task, ...patch } : task,
-                    ),
-                  }
-                : page,
-            ),
-          },
+      const listSnapshots = await reconcileTaskInLists(
+        queryClient,
+        patched,
+        taskId,
       );
 
-      return { previous };
+      const { previousTaskCount, previousTodayCount } = applyTaskCountDelta(
+        queryClient,
+        {
+          total: 0,
+          today:
+            (isDueTodayOrOverdue(patched) ? 1 : 0) -
+            (isDueTodayOrOverdue(task) ? 1 : 0),
+        },
+      );
+      let previousProjects: ReturnType<typeof applyActiveTaskCountDelta>;
+      if (task.projectId !== patched.projectId) {
+        previousProjects = applyActiveTaskCountDelta(
+          queryClient,
+          task.projectId,
+          -1,
+        );
+        applyActiveTaskCountDelta(queryClient, patched.projectId, 1);
+      }
+
+      return {
+        listSnapshots,
+        previousTaskCount,
+        previousTodayCount,
+        previousProjects,
+      };
     },
 
     // The API result is a discriminated union, not a throw (see BACKEND_CODE_STYLE_GUIDE.md
     // "IPC-контракт"), so a failed save surfaces here as `result.ok === false`, not `onError`.
     onSuccess: (result, { taskId }, context) => {
       if (!result.ok) {
-        if (context?.previous) {
-          queryClient.setQueryData(queryKey, context.previous);
+        if (context?.listSnapshots) {
+          restoreTaskListSnapshots(queryClient, context.listSnapshots);
+        }
+        queryClient.setQueryData(taskCountQueryKey, context?.previousTaskCount);
+        queryClient.setQueryData(
+          todayCountQueryKey,
+          context?.previousTodayCount,
+        );
+        if (context?.previousProjects) {
+          queryClient.setQueryData(
+            projectsListQueryKey,
+            context.previousProjects,
+          );
         }
         notifications.show({
           color: "red",
@@ -120,8 +166,16 @@ export const useUpdateTaskMutation = (queryKey: QueryKey) => {
     },
 
     onError: (_error, _variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(queryKey, context.previous);
+      if (context?.listSnapshots) {
+        restoreTaskListSnapshots(queryClient, context.listSnapshots);
+      }
+      queryClient.setQueryData(taskCountQueryKey, context?.previousTaskCount);
+      queryClient.setQueryData(todayCountQueryKey, context?.previousTodayCount);
+      if (context?.previousProjects) {
+        queryClient.setQueryData(
+          projectsListQueryKey,
+          context.previousProjects,
+        );
       }
       notifications.show({
         color: "red",

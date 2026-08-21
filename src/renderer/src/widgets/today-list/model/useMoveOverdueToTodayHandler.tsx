@@ -39,6 +39,7 @@ export const useMoveOverdueToTodayHandler = (queryKey: QueryKey) => {
         if (!task.due) continue;
         mutate({
           taskId: task.id,
+          task,
           input: toUpdateRequest(task, dueMovedToToday(task.due)),
         });
       }
@@ -48,6 +49,7 @@ export const useMoveOverdueToTodayHandler = (queryKey: QueryKey) => {
         for (const task of overdueTasks) {
           mutate({
             taskId: task.id,
+            task,
             input: toUpdateRequest(task, originalDueById.get(task.id) ?? null),
           });
         }

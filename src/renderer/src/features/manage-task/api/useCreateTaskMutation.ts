@@ -5,21 +5,34 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { taskCountQueryKey, tasksListQueryKey } from "@/entities/task";
-import { projectsListQueryKey } from "@/entities/project";
+import {
+  applyActiveTaskCountDelta,
+  projectsListQueryKey,
+} from "@/entities/project";
+import {
+  applyTaskCountDelta,
+  isDueTodayOrOverdue,
+  reconcileTaskInLists,
+  restoreTaskListSnapshots,
+  taskCountQueryKey,
+  tasksListQueryKey,
+  todayCountQueryKey,
+} from "@/entities/task";
 import type { CreateTaskRequest, TaskDTO, TasksListResult } from "@/main/tasks";
 import { createTask } from "./createTask";
 
 type TasksPages = InfiniteData<TasksListResult>;
 
 /**
- * Creating a task is optimistic: a temp-id card is inserted into `queryKey`'s
- * first page immediately, swapped for the real one on success, or rolled back
- * with an error notification on failure — same pattern as
- * `useChangeTaskStatusMutation`/`useCompleteTaskMutation`. `queryKey` is the
- * caller's own list cache (the "Tasks" page, a project page, or the kanban
- * board sharing either) so the card appears on the screen the modal was
- * opened from without waiting for the IPC round trip.
+ * Creating a task is optimistic: a temp-id card is inserted immediately into
+ * every already-cached tasks-list it belongs in (`reconcileTaskInLists`) —
+ * not just `queryKey`, the caller's own screen — so e.g. creating a task for
+ * a project from the sidebar while on Today shows it on that project's page
+ * too, the moment you navigate there, without waiting for a refetch. Swapped
+ * for the real task on success (in `queryKey` only — every other reconciled
+ * list already gets invalidated below, and picks up the real task on its own
+ * next mount/refetch), or rolled back everywhere with an error notification
+ * on failure.
  */
 export const useCreateTaskMutation = (queryKey: QueryKey) => {
   const queryClient = useQueryClient();
@@ -28,8 +41,8 @@ export const useCreateTaskMutation = (queryKey: QueryKey) => {
     mutationFn: (input: CreateTaskRequest) => createTask(input),
 
     onMutate: async (input) => {
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData<TasksPages>(queryKey);
+      await queryClient.cancelQueries({ queryKey: taskCountQueryKey });
+      await queryClient.cancelQueries({ queryKey: projectsListQueryKey });
       const tempId = `temp-${crypto.randomUUID()}`;
 
       const tempTask: TaskDTO = {
@@ -45,28 +58,47 @@ export const useCreateTaskMutation = (queryKey: QueryKey) => {
         parentId: input.parentId,
       };
 
-      queryClient.setQueryData<TasksPages>(queryKey, (data) => {
-        if (!data) return data;
-        const [firstPage, ...rest] = data.pages;
-        if (!firstPage?.ok) return data;
-        return {
-          ...data,
-          pages: [
-            { ...firstPage, tasks: [tempTask, ...firstPage.tasks] },
-            ...rest,
-          ],
-        };
-      });
+      const listSnapshots = await reconcileTaskInLists(queryClient, tempTask);
 
-      return { previous, tempId };
+      // A new task always counts toward the total/its project — both include
+      // subtasks (see `CountUnfinishedTasksUseCase`/`countActiveTasksInProject`)
+      // — but only toward Today if it actually qualifies for that filter.
+      const { previousTaskCount, previousTodayCount } = applyTaskCountDelta(
+        queryClient,
+        { total: 1, today: isDueTodayOrOverdue(tempTask) ? 1 : 0 },
+      );
+      const previousProjects = applyActiveTaskCountDelta(
+        queryClient,
+        tempTask.projectId,
+        1,
+      );
+
+      return {
+        listSnapshots,
+        tempId,
+        previousTaskCount,
+        previousTodayCount,
+        previousProjects,
+      };
     },
 
     // The API result is a discriminated union, not a throw (see BACKEND_CODE_STYLE_GUIDE.md
     // "IPC-контракт"), so a failed create surfaces here as `result.ok === false`, not `onError`.
     onSuccess: (result, _input, context) => {
       if (!result.ok) {
-        if (context?.previous) {
-          queryClient.setQueryData(queryKey, context.previous);
+        if (context?.listSnapshots) {
+          restoreTaskListSnapshots(queryClient, context.listSnapshots);
+        }
+        queryClient.setQueryData(taskCountQueryKey, context?.previousTaskCount);
+        queryClient.setQueryData(
+          todayCountQueryKey,
+          context?.previousTodayCount,
+        );
+        if (context?.previousProjects) {
+          queryClient.setQueryData(
+            projectsListQueryKey,
+            context.previousProjects,
+          );
         }
         notifications.show({
           color: "red",
@@ -116,8 +148,16 @@ export const useCreateTaskMutation = (queryKey: QueryKey) => {
     },
 
     onError: (_error, _input, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(queryKey, context.previous);
+      if (context?.listSnapshots) {
+        restoreTaskListSnapshots(queryClient, context.listSnapshots);
+      }
+      queryClient.setQueryData(taskCountQueryKey, context?.previousTaskCount);
+      queryClient.setQueryData(todayCountQueryKey, context?.previousTodayCount);
+      if (context?.previousProjects) {
+        queryClient.setQueryData(
+          projectsListQueryKey,
+          context.previousProjects,
+        );
       }
       notifications.show({
         color: "red",

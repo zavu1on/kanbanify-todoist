@@ -18,6 +18,13 @@ export const projectTasksListQueryKey = (projectId: string) =>
  * blanket `tasksListQueryKey` invalidation too. */
 export const todayTasksListQueryKey = ["tasks", "list", "today"] as const;
 
+/** The Calendar page's own cache entry — nested under the same
+ * `["tasks", "list"]` prefix for the same cross-page invalidation reason as
+ * `todayTasksListQueryKey`. Kept here (not local to `pages/calendar`) so
+ * `widgets/sidebar`'s "New task" button can resolve the right cache to write
+ * into for whichever page is on screen, without importing from `pages`. */
+export const calendarTasksListQueryKey = ["tasks", "list", "calendar"] as const;
+
 /** A task's own direct subtasks, as shown in its detail modal — nested under
  * the same `["tasks", "list"]` prefix so mutating a subtask (complete, edit,
  * delete) is swept up by the blanket `tasksListQueryKey` invalidation too. */

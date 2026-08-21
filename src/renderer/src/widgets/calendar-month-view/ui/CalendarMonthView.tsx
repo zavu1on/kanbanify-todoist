@@ -64,6 +64,7 @@ export const CalendarMonthView: FC<CalendarMonthViewProps> = memo(
 
         updateTaskMutation.mutate({
           taskId: task.id,
+          task,
           input: {
             title: task.title,
             description: task.description,

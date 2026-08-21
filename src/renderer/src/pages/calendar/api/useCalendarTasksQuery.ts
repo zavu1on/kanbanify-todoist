@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { calendarTasksListQueryKey } from "@/entities/task";
 import { STALE_TIME } from "@/shared/api/queryConfig";
-import { calendarTasksListQueryKey } from "../model/queryKeys";
 import { listTasksWithDueDate } from "./listTasksWithDueDate";
 
 /** Same "Load more" pagination as `pages/tasks` (SPECIFICATION.md's per-month

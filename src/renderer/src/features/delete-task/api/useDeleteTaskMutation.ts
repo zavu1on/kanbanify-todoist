@@ -5,8 +5,17 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { taskCountQueryKey, tasksListQueryKey } from "@/entities/task";
-import { projectsListQueryKey } from "@/entities/project";
+import {
+  applyActiveTaskCountDelta,
+  projectsListQueryKey,
+} from "@/entities/project";
+import {
+  applyTaskCountDelta,
+  isDueTodayOrOverdue,
+  taskCountQueryKey,
+  tasksListQueryKey,
+  todayCountQueryKey,
+} from "@/entities/task";
 import type { TasksListResult } from "@/main/tasks";
 import { deleteTask } from "./deleteTask";
 
@@ -29,7 +38,14 @@ export const useDeleteTaskMutation = (queryKey: QueryKey) => {
 
     onMutate: async ({ taskId }) => {
       await queryClient.cancelQueries({ queryKey });
+      await queryClient.cancelQueries({ queryKey: taskCountQueryKey });
+      await queryClient.cancelQueries({ queryKey: projectsListQueryKey });
       const previous = queryClient.getQueryData<TasksPages>(queryKey);
+      // The task being deleted is, by construction, visible in `queryKey`'s
+      // own list — same reasoning as `useCompleteTaskMutation`'s cache lookup.
+      const task = previous?.pages
+        .flatMap((page) => (page.ok ? page.tasks : []))
+        .find((t) => t.id === taskId);
 
       queryClient.setQueryData<TasksPages>(
         queryKey,
@@ -47,7 +63,24 @@ export const useDeleteTaskMutation = (queryKey: QueryKey) => {
           },
       );
 
-      return { previous };
+      if (!task) return { previous };
+
+      const { previousTaskCount, previousTodayCount } = applyTaskCountDelta(
+        queryClient,
+        { total: -1, today: isDueTodayOrOverdue(task) ? -1 : 0 },
+      );
+      const previousProjects = applyActiveTaskCountDelta(
+        queryClient,
+        task.projectId,
+        -1,
+      );
+
+      return {
+        previous,
+        previousTaskCount,
+        previousTodayCount,
+        previousProjects,
+      };
     },
 
     // The API result is a discriminated union, not a throw (see BACKEND_CODE_STYLE_GUIDE.md
@@ -56,6 +89,17 @@ export const useDeleteTaskMutation = (queryKey: QueryKey) => {
       if (!result.ok) {
         if (context?.previous) {
           queryClient.setQueryData(queryKey, context.previous);
+        }
+        queryClient.setQueryData(taskCountQueryKey, context?.previousTaskCount);
+        queryClient.setQueryData(
+          todayCountQueryKey,
+          context?.previousTodayCount,
+        );
+        if (context?.previousProjects) {
+          queryClient.setQueryData(
+            projectsListQueryKey,
+            context.previousProjects,
+          );
         }
         notifications.show({
           color: "red",
@@ -90,6 +134,14 @@ export const useDeleteTaskMutation = (queryKey: QueryKey) => {
     onError: (_error, _variables, context) => {
       if (context?.previous) {
         queryClient.setQueryData(queryKey, context.previous);
+      }
+      queryClient.setQueryData(taskCountQueryKey, context?.previousTaskCount);
+      queryClient.setQueryData(todayCountQueryKey, context?.previousTodayCount);
+      if (context?.previousProjects) {
+        queryClient.setQueryData(
+          projectsListQueryKey,
+          context.previousProjects,
+        );
       }
       notifications.show({
         color: "red",
