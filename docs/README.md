@@ -18,7 +18,7 @@ docs/
 ├── BACKEND_CODE_STYLE_GUIDE.md  — архитектура (clean architecture), code style и рецепты бэкенда
 ├── DEFERRED.md                  — реестр отложенной работы: что не сделано и чем разблокируется
 ├── assets/                      — медиа для документации и корневого README
-│   └── preview.jpg              — скриншот приложения, используется в корневом README
+│   └── preview.png              — скриншот приложения, используется в корневом README
 └── decisions/                   — ADR (Architecture Decision Records)
     ├── README.md                — паттерн, процесс и шаблон ADR
     ├── 00-use-adr.md            — использование паттерна ADR

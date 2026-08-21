@@ -4,7 +4,7 @@
 
 A desktop client for Todoist that adds a kanban workflow on top of your existing tasks — without a paid plan.
 
-![Kanbanify Todoist preview](docs/assets/preview.jpg)
+![Kanbanify Todoist preview](docs/assets/preview.png)
 
 > This application is not created by, affiliated with, or supported by Doist. "Todoist" is a trademark of Doist Inc.
 
