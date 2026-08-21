@@ -12,6 +12,8 @@ import {
 import {
   applyTaskCountDelta,
   isDueTodayOrOverdue,
+  removeTaskFromLists,
+  restoreTaskListSnapshots,
   taskCountQueryKey,
   tasksListQueryKey,
   todayCountQueryKey,
@@ -25,10 +27,10 @@ type DeleteTaskVariables = { taskId: string };
 
 /**
  * Deleting a task from its detail modal is optimistic — the card is removed
- * from `queryKey`'s cache immediately (the modal is already closed by the
- * caller by this point) and put back with an error notification if the API
- * call fails. `queryKey` is the caller's own list cache, same reasoning as
- * `useCompleteTaskMutation`, whose optimistic-removal pattern this mirrors.
+ * immediately from every already-cached tasks-list (`removeTaskFromLists`),
+ * not just `queryKey`'s (the caller's own screen, already closed by this
+ * point), and put back everywhere with an error notification if the API
+ * call fails.
  */
 export const useDeleteTaskMutation = (queryKey: QueryKey) => {
   const queryClient = useQueryClient();
@@ -37,33 +39,20 @@ export const useDeleteTaskMutation = (queryKey: QueryKey) => {
     mutationFn: ({ taskId }: DeleteTaskVariables) => deleteTask(taskId),
 
     onMutate: async ({ taskId }) => {
-      await queryClient.cancelQueries({ queryKey });
       await queryClient.cancelQueries({ queryKey: taskCountQueryKey });
       await queryClient.cancelQueries({ queryKey: projectsListQueryKey });
-      const previous = queryClient.getQueryData<TasksPages>(queryKey);
       // The task being deleted is, by construction, visible in `queryKey`'s
-      // own list — same reasoning as `useCompleteTaskMutation`'s cache lookup.
+      // own list — same reasoning `useUpdateTaskMutation` uses its caller-
+      // supplied `task` for, just recovered from the cache here instead of
+      // threading a `task` argument through every checkbox/menu call site.
+      const previous = queryClient.getQueryData<TasksPages>(queryKey);
       const task = previous?.pages
         .flatMap((page) => (page.ok ? page.tasks : []))
         .find((t) => t.id === taskId);
 
-      queryClient.setQueryData<TasksPages>(
-        queryKey,
-        (data) =>
-          data && {
-            ...data,
-            pages: data.pages.map((page) =>
-              page.ok
-                ? {
-                    ...page,
-                    tasks: page.tasks.filter((task) => task.id !== taskId),
-                  }
-                : page,
-            ),
-          },
-      );
+      const listSnapshots = await removeTaskFromLists(queryClient, taskId);
 
-      if (!task) return { previous };
+      if (!task) return { listSnapshots };
 
       const { previousTaskCount, previousTodayCount } = applyTaskCountDelta(
         queryClient,
@@ -76,7 +65,7 @@ export const useDeleteTaskMutation = (queryKey: QueryKey) => {
       );
 
       return {
-        previous,
+        listSnapshots,
         previousTaskCount,
         previousTodayCount,
         previousProjects,
@@ -87,8 +76,8 @@ export const useDeleteTaskMutation = (queryKey: QueryKey) => {
     // "IPC-контракт"), so a failed delete surfaces here as `result.ok === false`, not `onError`.
     onSuccess: (result, _variables, context) => {
       if (!result.ok) {
-        if (context?.previous) {
-          queryClient.setQueryData(queryKey, context.previous);
+        if (context?.listSnapshots) {
+          restoreTaskListSnapshots(queryClient, context.listSnapshots);
         }
         queryClient.setQueryData(taskCountQueryKey, context?.previousTaskCount);
         queryClient.setQueryData(
@@ -132,8 +121,8 @@ export const useDeleteTaskMutation = (queryKey: QueryKey) => {
     },
 
     onError: (_error, _variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(queryKey, context.previous);
+      if (context?.listSnapshots) {
+        restoreTaskListSnapshots(queryClient, context.listSnapshots);
       }
       queryClient.setQueryData(taskCountQueryKey, context?.previousTaskCount);
       queryClient.setQueryData(todayCountQueryKey, context?.previousTodayCount);

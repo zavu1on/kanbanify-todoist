@@ -84,6 +84,51 @@ export const reconcileTaskInLists = async (
   return snapshots;
 };
 
+/**
+ * Optimistically removes `taskId` from every already-cached tasks-list
+ * query, not just the one `queryKey` the caller's own screen happens to be
+ * showing — a completed/deleted task never belongs anywhere, so unlike
+ * `reconcileTaskInLists` there's no membership check, only removal. This is
+ * what makes completing/deleting a task from one screen (e.g. the Calendar)
+ * drop its card from every other *cached* screen (Today, a project page
+ * visited earlier this session) immediately, instead of only after that
+ * screen's own next mount/refetch.
+ *
+ * Returns a snapshot of every touched query's prior data, for the caller to
+ * roll back on failure.
+ */
+export const removeTaskFromLists = async (
+  queryClient: QueryClient,
+  taskId: string,
+): Promise<TaskListSnapshot[]> => {
+  const queries = queryClient
+    .getQueryCache()
+    .findAll({ queryKey: tasksListQueryKey });
+
+  const snapshots: TaskListSnapshot[] = [];
+  for (const query of queries) {
+    const queryKey = query.queryKey;
+    await queryClient.cancelQueries({ queryKey, exact: true });
+    const previous = queryClient.getQueryData<TasksPages>(queryKey);
+
+    queryClient.setQueryData<TasksPages>(
+      queryKey,
+      (data) =>
+        data && {
+          ...data,
+          pages: data.pages.map((page) =>
+            page.ok
+              ? { ...page, tasks: page.tasks.filter((t) => t.id !== taskId) }
+              : page,
+          ),
+        },
+    );
+
+    snapshots.push({ queryKey, previous });
+  }
+  return snapshots;
+};
+
 /** Undoes `reconcileTaskInLists`, restoring every touched list to its
  * pre-mutation snapshot — used from `onError`/a failed `onSuccess`. */
 export const restoreTaskListSnapshots = (

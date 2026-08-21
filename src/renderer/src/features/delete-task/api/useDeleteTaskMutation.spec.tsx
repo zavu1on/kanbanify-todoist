@@ -136,4 +136,38 @@ describe("useDeleteTaskMutation", () => {
       pages: [{ tasks: [{ id: "1" }] }],
     });
   });
+
+  it("removes the task from a project page's cache even when deleted from a different screen", async () => {
+    const calendarQueryKey = ["tasks", "list", "calendar"];
+    const projectQueryKey = ["tasks", "list", "project", "project-a"];
+    window.api.tasks.delete = vi.fn(
+      () => new Promise<DeleteTaskResult>(() => {}),
+    );
+    const queryClient = buildQueryClient();
+    const task = { id: "1", projectId: "project-a", parentId: null, due: null };
+    queryClient.setQueryData(calendarQueryKey, {
+      pages: [{ ok: true, tasks: [task], nextCursor: null }],
+      pageParams: [null],
+    });
+    // The project's page was visited earlier this session, so its cache
+    // already exists — even though the delete happens from Calendar.
+    queryClient.setQueryData(projectQueryKey, {
+      pages: [{ ok: true, tasks: [task], nextCursor: null }],
+      pageParams: [null],
+    });
+
+    const { result } = renderHook(
+      () => useDeleteTaskMutation(calendarQueryKey),
+      { wrapper: buildWrapper(queryClient) },
+    );
+
+    act(() => {
+      result.current.mutate({ taskId: "1" });
+    });
+    await waitFor(() => expect(result.current.isPending).toBe(true));
+
+    expect(queryClient.getQueryData(projectQueryKey)).toMatchObject({
+      pages: [{ tasks: [] }],
+    });
+  });
 });
