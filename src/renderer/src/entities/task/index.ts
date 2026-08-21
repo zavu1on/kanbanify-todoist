@@ -8,6 +8,7 @@ export {
 export { PRIORITY_MARKER_COLORS } from "./lib/priority";
 export {
   reconcileTaskInLists,
+  removeProjectTasksFromLists,
   removeTaskFromLists,
   restoreTaskListSnapshots,
   type TaskListSnapshot,

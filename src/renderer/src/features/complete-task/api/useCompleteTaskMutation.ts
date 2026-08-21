@@ -74,7 +74,9 @@ export const useCompleteTaskMutation = (queryKey: QueryKey) => {
     },
 
     // The API result is a discriminated union, not a throw (see BACKEND_CODE_STYLE_GUIDE.md
-    // "IPC-контракт"), so a failed completion surfaces here as `result.ok === false`, not `onError`.
+    // "IPC-контракт"), so a failed completion normally surfaces here as
+    // `result.ok === false`, not `onError` — `onError` below only covers an
+    // actual thrown exception (e.g. a broken IPC channel).
     onSuccess: (result, _variables, context) => {
       if (!result.ok) {
         if (context?.listSnapshots) {
@@ -118,6 +120,25 @@ export const useCompleteTaskMutation = (queryKey: QueryKey) => {
       queryClient.invalidateQueries({
         queryKey: projectsListQueryKey,
         refetchType: "active",
+      });
+    },
+
+    onError: (_error, _variables, context) => {
+      if (context?.listSnapshots) {
+        restoreTaskListSnapshots(queryClient, context.listSnapshots);
+      }
+      queryClient.setQueryData(taskCountQueryKey, context?.previousTaskCount);
+      queryClient.setQueryData(todayCountQueryKey, context?.previousTodayCount);
+      if (context?.previousProjects) {
+        queryClient.setQueryData(
+          projectsListQueryKey,
+          context.previousProjects,
+        );
+      }
+      notifications.show({
+        color: "red",
+        title: "Couldn't complete task",
+        message: "Something went wrong. Please try again.",
       });
     },
   });

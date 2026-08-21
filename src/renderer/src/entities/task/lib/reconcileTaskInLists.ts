@@ -129,6 +129,54 @@ export const removeTaskFromLists = async (
   return snapshots;
 };
 
+/**
+ * Optimistically removes every task belonging to `projectId` from every
+ * already-cached tasks-list query — deleting a project cascades to deleting
+ * all of its tasks server-side (Todoist), so without this every cached list
+ * containing one of them (Today, Calendar, the project's own page, the
+ * unscoped "Tasks" page) would keep showing ghost cards until a manual
+ * refetch. Returns both a snapshot of every touched query (for rollback) and
+ * the removed tasks themselves (so the caller can adjust total/Today counts
+ * by however many were actually removed).
+ */
+export const removeProjectTasksFromLists = async (
+  queryClient: QueryClient,
+  projectId: string,
+): Promise<{ snapshots: TaskListSnapshot[]; removedTasks: TaskDTO[] }> => {
+  const queries = queryClient
+    .getQueryCache()
+    .findAll({ queryKey: tasksListQueryKey });
+
+  const snapshots: TaskListSnapshot[] = [];
+  const removedById = new Map<string, TaskDTO>();
+
+  for (const query of queries) {
+    const queryKey = query.queryKey;
+    await queryClient.cancelQueries({ queryKey, exact: true });
+    const previous = queryClient.getQueryData<TasksPages>(queryKey);
+
+    queryClient.setQueryData<TasksPages>(queryKey, (data) => {
+      if (!data) return data;
+      return {
+        ...data,
+        pages: data.pages.map((page) => {
+          if (!page.ok) return page;
+          const tasks = page.tasks.filter((t) => {
+            if (t.projectId !== projectId) return true;
+            removedById.set(t.id, t);
+            return false;
+          });
+          return { ...page, tasks };
+        }),
+      };
+    });
+
+    snapshots.push({ queryKey, previous });
+  }
+
+  return { snapshots, removedTasks: [...removedById.values()] };
+};
+
 /** Undoes `reconcileTaskInLists`, restoring every touched list to its
  * pre-mutation snapshot — used from `onError`/a failed `onSuccess`. */
 export const restoreTaskListSnapshots = (

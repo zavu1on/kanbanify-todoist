@@ -170,4 +170,44 @@ describe("useCompleteTaskMutation", () => {
       pages: [{ tasks: [] }],
     });
   });
+
+  it("restores the removed task and counts when the API call throws", async () => {
+    window.api.tasks.complete = vi
+      .fn()
+      .mockRejectedValue(new Error("network down"));
+    const queryClient = buildQueryClient();
+    const task = {
+      id: "1",
+      projectId: "project-a",
+      parentId: null,
+      due: { date: dayjs().format("YYYY-MM-DD"), datetime: null },
+    };
+    queryClient.setQueryData(queryKey, {
+      pages: [{ ok: true, tasks: [task], nextCursor: null }],
+      pageParams: [null],
+    });
+    queryClient.setQueryData(taskCountQueryKey, { ok: true, count: 5 });
+    queryClient.setQueryData(projectsListQueryKey, {
+      ok: true,
+      projects: [{ id: "project-a", activeTaskCount: 3 }],
+    });
+
+    const { result } = renderHook(() => useCompleteTaskMutation(queryKey), {
+      wrapper: buildWrapper(queryClient),
+    });
+
+    await act(async () => {
+      await result.current.mutateAsync({ taskId: "1" }).catch(() => {});
+    });
+
+    expect(queryClient.getQueryData(queryKey)).toMatchObject({
+      pages: [{ tasks: [{ id: "1" }] }],
+    });
+    expect(queryClient.getQueryData(taskCountQueryKey)).toMatchObject({
+      count: 5,
+    });
+    expect(queryClient.getQueryData(projectsListQueryKey)).toMatchObject({
+      projects: [{ activeTaskCount: 3 }],
+    });
+  });
 });
