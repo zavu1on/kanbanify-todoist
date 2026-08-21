@@ -17,6 +17,12 @@ export default defineConfig({
   },
   renderer: {
     root: "src/renderer",
+    // Vite's default `localhost` binding resolves to the IPv6 loopback
+    // (`::1`) first on this machine, which Electron's Chromium network stack
+    // then fails to connect to (ERR_CONNECTION_REFUSED) — pin IPv4 instead.
+    server: {
+      host: "127.0.0.1",
+    },
     resolve: {
       alias: {
         "@/app": path.resolve(import.meta.dirname, "src/renderer/src/app"),
