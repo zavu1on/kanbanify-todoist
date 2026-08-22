@@ -1,6 +1,5 @@
 import type { UseFormReturnType } from "@mantine/form";
 import { useState } from "react";
-import type { LabelDTO } from "@/main/labels";
 import type { KanbanStatusLevel as KanbanStatusLevelType } from "@/main/tasks";
 import {
   buildKanbanStatusToken,
@@ -18,8 +17,6 @@ type UseLabelsFieldHandlerParams = {
   getRawTitle: () => string;
   quickAddContext: QuickAddContext;
   reservedLabels: readonly string[];
-  knownLabels: LabelDTO[];
-  onUnknownLabel: (name: string) => void;
   applyRawTitle: (text: string) => void;
   resyncTitleToken: (
     type: "priority" | "due" | "project" | "kanbanStatus",
@@ -40,8 +37,6 @@ export const useLabelsFieldHandler = ({
   getRawTitle,
   quickAddContext,
   reservedLabels,
-  knownLabels,
-  onUnknownLabel,
   applyRawTitle,
   resyncTitleToken,
 }: UseLabelsFieldHandlerParams) => {
@@ -63,13 +58,6 @@ export const useLabelsFieldHandler = ({
     if (reserved) {
       setPendingReservedLabel(reserved);
       return;
-    }
-
-    for (const name of added) {
-      const exists = knownLabels.some(
-        (l) => l.name.toLowerCase() === name.toLowerCase(),
-      );
-      if (!exists) onUnknownLabel(name);
     }
 
     applyLabelsChange(newLabels);

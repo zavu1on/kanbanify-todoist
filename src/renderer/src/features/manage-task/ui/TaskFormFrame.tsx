@@ -174,6 +174,8 @@ export const TaskFormFrame: FC<TaskFormFrameProps> = ({
     task,
     getRawTitle,
     quickAddContext,
+    knownLabels,
+    createLabelMutation,
     createTaskMutation,
     updateTaskMutation,
     onClose: leave,
@@ -208,7 +210,6 @@ export const TaskFormFrame: FC<TaskFormFrameProps> = ({
             projects={projects}
             knownLabels={knownLabels}
             initialRawTitle={initialRawTitle}
-            onUnknownLabel={(name) => createLabelMutation.mutate(name)}
             onTitleSubmit={() => formRef.current?.requestSubmit()}
             hideKanbanStatus={parentTask !== undefined}
             disableProject={parentTask !== undefined}

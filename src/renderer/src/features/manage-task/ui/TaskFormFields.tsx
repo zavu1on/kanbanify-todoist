@@ -29,7 +29,6 @@ type TaskFormFieldsProps = {
   /** Seeds the quick-add title text — the task's plain title on edit, blank
    * on create (see `TaskFormFrame`). */
   initialRawTitle: string;
-  onUnknownLabel: (name: string) => void;
   onTitleSubmit: () => void;
   // Hidden for a subtask's own form (SPECIFICATION.md domain model, per
   // product decision: subtasks don't carry a kanban status at all).
@@ -70,7 +69,6 @@ export const TaskFormFields = ({
   projects,
   knownLabels,
   initialRawTitle,
-  onUnknownLabel,
   onTitleSubmit,
   hideKanbanStatus,
   disableProject,
@@ -121,10 +119,8 @@ export const TaskFormFields = ({
           ref={titleFieldRef}
           form={form}
           projects={projectSummaries}
-          knownLabels={knownLabels}
           quickAddContext={quickAddContext}
           initialRawTitle={initialRawTitle}
-          onUnknownLabel={onUnknownLabel}
           onSubmit={onTitleSubmit}
         />
       </Group>
@@ -152,9 +148,7 @@ export const TaskFormFields = ({
         <LabelsField
           form={form}
           labelOptions={labelOptions}
-          knownLabels={knownLabels}
           quickAddContext={quickAddContext}
-          onUnknownLabel={onUnknownLabel}
           initialRawTitle={initialRawTitle}
           titleFieldRef={titleFieldRef}
         />

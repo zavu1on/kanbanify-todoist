@@ -3,7 +3,6 @@ import type { UseFormReturnType } from "@mantine/form";
 import { BookmarkIcon } from "lucide-animated";
 import type { RefObject } from "react";
 import { useState } from "react";
-import type { LabelDTO } from "@/main/labels";
 import type { QuickAddContext } from "../../lib/parseQuickAdd";
 import { RESERVED_LABELS } from "../../model/reservedLabels";
 import type { TaskFormValues } from "../../model/taskFormSchema";
@@ -15,9 +14,7 @@ import type { QuickAddTitleFieldHandle } from "./QuickAddTitleField";
 type LabelsFieldProps = {
   form: UseFormReturnType<TaskFormValues>;
   labelOptions: string[];
-  knownLabels: LabelDTO[];
   quickAddContext: QuickAddContext;
-  onUnknownLabel: (name: string) => void;
   initialRawTitle: string;
   titleFieldRef: RefObject<QuickAddTitleFieldHandle | null>;
 };
@@ -33,9 +30,7 @@ type LabelsFieldProps = {
 export const LabelsField = ({
   form,
   labelOptions,
-  knownLabels,
   quickAddContext,
-  onUnknownLabel,
   initialRawTitle,
   titleFieldRef,
 }: LabelsFieldProps) => {
@@ -49,8 +44,6 @@ export const LabelsField = ({
     getRawTitle: () => titleFieldRef.current?.getRawTitle() ?? initialRawTitle,
     quickAddContext,
     reservedLabels: RESERVED_LABELS,
-    knownLabels,
-    onUnknownLabel,
     applyRawTitle: (text) => titleFieldRef.current?.applyRawTitle(text),
     resyncTitleToken: (type, tokenText) =>
       titleFieldRef.current?.resyncTitleToken(type, tokenText),

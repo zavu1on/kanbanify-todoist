@@ -321,6 +321,35 @@ describe("TaskFormModal", () => {
     await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 
+  it("creates an unknown quick-add label only on submit, not per keystroke while typing it", async () => {
+    window.api.tasks.create = vi
+      .fn()
+      .mockResolvedValue({ ok: true, task: existingTask });
+    window.api.labels.create = vi
+      .fn()
+      .mockResolvedValue({ ok: true, label: { id: "label-1", name: "hello" } });
+    const user = userEvent.setup();
+    renderModal({});
+
+    const titleInput = screen.getByRole("textbox", { name: "Task title" });
+    await user.click(titleInput);
+    await user.type(titleInput, "Ship it @hello");
+
+    expect(window.api.labels.create).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Add" }));
+
+    await waitFor(() => {
+      expect(window.api.labels.create).toHaveBeenCalledTimes(1);
+    });
+    expect(window.api.labels.create).toHaveBeenCalledWith({ name: "hello" });
+    await waitFor(() => {
+      expect(window.api.tasks.create).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "Ship it", labels: ["hello"] }),
+      );
+    });
+  });
+
   it("suggests known projects while typing a '#' token and applies the pick", async () => {
     const user = userEvent.setup();
     renderModal({});

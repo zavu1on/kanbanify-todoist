@@ -1,7 +1,6 @@
 import { Box, Paper, Stack, UnstyledButton } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 import { type Ref, useImperativeHandle } from "react";
-import type { LabelDTO } from "@/main/labels";
 import type { QuickAddContext } from "../../lib/parseQuickAdd";
 import type { TaskFormValues } from "../../model/taskFormSchema";
 import { useProjectMentionSuggestions } from "../../model/useProjectMentionSuggestions";
@@ -21,10 +20,8 @@ type QuickAddTitleFieldProps = {
   ref: Ref<QuickAddTitleFieldHandle>;
   form: UseFormReturnType<TaskFormValues>;
   projects: { id: string; name: string }[];
-  knownLabels: LabelDTO[];
   quickAddContext: QuickAddContext;
   initialRawTitle: string;
-  onUnknownLabel: (name: string) => void;
   onSubmit: () => void;
 };
 
@@ -40,10 +37,8 @@ export const QuickAddTitleField = ({
   ref,
   form,
   projects,
-  knownLabels,
   quickAddContext,
   initialRawTitle,
-  onUnknownLabel,
   onSubmit,
 }: QuickAddTitleFieldProps) => {
   const {
@@ -56,8 +51,6 @@ export const QuickAddTitleField = ({
     initialRawTitle,
     quickAddContext,
     form,
-    knownLabels,
-    onUnknownLabel,
   });
 
   useImperativeHandle(ref, () => ({

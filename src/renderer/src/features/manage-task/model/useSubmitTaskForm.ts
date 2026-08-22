@@ -1,7 +1,9 @@
 import type { UseFormReturnType } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import dayjs from "dayjs";
+import type { LabelDTO } from "@/main/labels";
 import type { TaskDTO } from "@/main/tasks";
+import type { useCreateLabelMutation } from "../api/useCreateLabelMutation";
 import type { useCreateTaskMutation } from "../api/useCreateTaskMutation";
 import type { useUpdateTaskMutation } from "../api/useUpdateTaskMutation";
 import { parseQuickAdd, type QuickAddContext } from "../lib/parseQuickAdd";
@@ -17,6 +19,8 @@ type UseSubmitTaskFormParams = {
   // subscribing to every change.
   getRawTitle: () => string;
   quickAddContext: QuickAddContext;
+  knownLabels: LabelDTO[];
+  createLabelMutation: ReturnType<typeof useCreateLabelMutation>;
   createTaskMutation: ReturnType<typeof useCreateTaskMutation>;
   updateTaskMutation: ReturnType<typeof useUpdateTaskMutation>;
   onClose: () => void;
@@ -26,20 +30,26 @@ type UseSubmitTaskFormParams = {
 
 /** Builds the create/update payload and dispatches the right mutation for
  * the mode this modal is in — the title comes from the quick-add text (with
- * its tokens stripped), not a separate form field. */
+ * its tokens stripped), not a separate form field. Labels typed via `@token`
+ * or the Labels field are only names until here: any name not already in
+ * `knownLabels` is created in Todoist at this point, submit time, not while
+ * the user is still typing or picking (see `useQuickAddTitleSync`/
+ * `useLabelsFieldHandler`, which just track the name locally). */
 export const useSubmitTaskForm = ({
   form,
   isEditMode,
   task,
   getRawTitle,
   quickAddContext,
+  knownLabels,
+  createLabelMutation,
   createTaskMutation,
   updateTaskMutation,
   onClose,
   parentId,
 }: UseSubmitTaskFormParams) =>
   form.onSubmit(
-    (values) => {
+    async (values) => {
       const title = parseQuickAdd(getRawTitle(), quickAddContext).cleanTitle;
 
       if (title.length === 0) {
@@ -50,6 +60,14 @@ export const useSubmitTaskForm = ({
         });
         return;
       }
+
+      const unknownLabels = values.labels.filter(
+        (name) =>
+          !knownLabels.some((l) => l.name.toLowerCase() === name.toLowerCase()),
+      );
+      await Promise.all(
+        unknownLabels.map((name) => createLabelMutation.mutateAsync(name)),
+      );
 
       const due = values.dueDate
         ? {

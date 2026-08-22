@@ -1,7 +1,6 @@
 import type { UseFormReturnType } from "@mantine/form";
 import dayjs from "dayjs";
 import { useRef, useState } from "react";
-import type { LabelDTO } from "@/main/labels";
 import {
   parseQuickAdd,
   type QuickAddContext,
@@ -14,8 +13,6 @@ type UseQuickAddTitleSyncParams = {
   initialRawTitle: string;
   quickAddContext: QuickAddContext;
   form: UseFormReturnType<TaskFormValues>;
-  knownLabels: LabelDTO[];
-  onUnknownLabel: (name: string) => void;
 };
 
 /**
@@ -30,8 +27,6 @@ export const useQuickAddTitleSync = ({
   initialRawTitle,
   quickAddContext,
   form,
-  knownLabels,
-  onUnknownLabel,
 }: UseQuickAddTitleSyncParams) => {
   const [rawTitle, setRawTitle] = useState(initialRawTitle);
   const prevQuickAddRef = useRef<QuickAddParseResult | null>(null);
@@ -90,12 +85,6 @@ export const useQuickAddTitleSync = ({
         ...form.values.labels.filter((l) => !removedLabels.includes(l)),
         ...addedLabels.filter((l) => !form.values.labels.includes(l)),
       ]);
-      for (const name of addedLabels) {
-        const exists = knownLabels.some(
-          (l) => l.name.toLowerCase() === name.toLowerCase(),
-        );
-        if (!exists) onUnknownLabel(name);
-      }
     }
 
     prevQuickAddRef.current = next;
