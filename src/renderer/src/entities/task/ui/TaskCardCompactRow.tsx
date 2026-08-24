@@ -34,7 +34,12 @@ export const TaskCardCompactRow: FC<TaskCardBodyProps> = ({
     <Box
       style={{ visibility: hovered ? "visible" : "hidden", flex: "0 0 auto" }}
     >
-      <ChevronRightIcon size={15} animateOnHover={false} color="#c3c9d3" />
+      <ChevronRightIcon
+        size={15}
+        animateOnHover={false}
+        color="#c3c9d3"
+        style={{ display: "flex" }}
+      />
     </Box>
   </Group>
 );
