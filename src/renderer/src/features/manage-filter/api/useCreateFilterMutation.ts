@@ -72,6 +72,9 @@ export const useCreateFilterMutation = () => {
               }
             : data,
       );
+      // The server response carries `taskCount: 0` (see `FiltersIpcController`)
+      // — refetch to replace it with the real count.
+      queryClient.invalidateQueries({ queryKey: filtersListQueryKey });
     },
 
     onError: (_error, _input, context) => {

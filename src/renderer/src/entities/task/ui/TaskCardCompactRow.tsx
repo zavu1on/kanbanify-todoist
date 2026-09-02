@@ -18,7 +18,7 @@ export const TaskCardCompactRow: FC<TaskCardBodyProps> = ({
 }) => (
   <Group gap={6} wrap="nowrap" align="center">
     {checkbox}
-    <Text size="sm" fw={500} truncate="end" style={{ flexShrink: 0 }}>
+    <Text size="sm" fw={500} truncate="end" style={{ minWidth: 0 }}>
       {title}
     </Text>
     {hasMeta && (
