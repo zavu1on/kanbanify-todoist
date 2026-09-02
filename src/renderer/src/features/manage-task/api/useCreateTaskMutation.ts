@@ -5,11 +5,13 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
+import { filtersListQueryKey } from "@/entities/filter";
 import {
   applyActiveTaskCountDelta,
   projectsListQueryKey,
 } from "@/entities/project";
 import {
+  applyFilterTaskCountDelta,
   applyTaskCountDelta,
   isDueTodayOrOverdue,
   reconcileTaskInLists,
@@ -43,6 +45,7 @@ export const useCreateTaskMutation = (queryKey: QueryKey) => {
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: taskCountQueryKey });
       await queryClient.cancelQueries({ queryKey: projectsListQueryKey });
+      await queryClient.cancelQueries({ queryKey: filtersListQueryKey });
       const tempId = `temp-${crypto.randomUUID()}`;
 
       const tempTask: TaskDTO = {
@@ -72,6 +75,11 @@ export const useCreateTaskMutation = (queryKey: QueryKey) => {
         tempTask.projectId,
         1,
       );
+      const previousFilters = applyFilterTaskCountDelta(
+        queryClient,
+        null,
+        tempTask,
+      );
 
       return {
         listSnapshots,
@@ -79,6 +87,7 @@ export const useCreateTaskMutation = (queryKey: QueryKey) => {
         previousTaskCount,
         previousTodayCount,
         previousProjects,
+        previousFilters,
       };
     },
 
@@ -98,6 +107,12 @@ export const useCreateTaskMutation = (queryKey: QueryKey) => {
           queryClient.setQueryData(
             projectsListQueryKey,
             context.previousProjects,
+          );
+        }
+        if (context?.previousFilters) {
+          queryClient.setQueryData(
+            filtersListQueryKey,
+            context.previousFilters,
           );
         }
         notifications.show({
@@ -145,6 +160,11 @@ export const useCreateTaskMutation = (queryKey: QueryKey) => {
         queryKey: projectsListQueryKey,
         refetchType: "active",
       });
+      // A new task can change any number of filters' `taskCount` badges.
+      queryClient.invalidateQueries({
+        queryKey: filtersListQueryKey,
+        refetchType: "active",
+      });
     },
 
     onError: (_error, _input, context) => {
@@ -158,6 +178,9 @@ export const useCreateTaskMutation = (queryKey: QueryKey) => {
           projectsListQueryKey,
           context.previousProjects,
         );
+      }
+      if (context?.previousFilters) {
+        queryClient.setQueryData(filtersListQueryKey, context.previousFilters);
       }
       notifications.show({
         color: "red",

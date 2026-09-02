@@ -193,7 +193,11 @@ const registerIpcHandlers = () => {
   ).register();
 
   const filterStore = new SqliteFilterStore();
-  const listFiltersUseCase = new ListFiltersUseCase(filterStore);
+  const listFiltersUseCase = new ListFiltersUseCase(
+    filterStore,
+    taskGateway,
+    tokenStore,
+  );
   const createFilterUseCase = new CreateFilterUseCase(filterStore);
   const updateFilterUseCase = new UpdateFilterUseCase(filterStore);
   const deleteFilterUseCase = new DeleteFilterUseCase(filterStore);

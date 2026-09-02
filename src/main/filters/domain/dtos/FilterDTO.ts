@@ -3,4 +3,5 @@ export interface FilterDTO {
   title: string;
   color: string;
   query: string;
+  taskCount: number;
 }

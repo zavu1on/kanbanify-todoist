@@ -1,4 +1,5 @@
 export { useSubtasksQuery } from "./api/useSubtasksQuery";
+export { applyFilterTaskCountDelta } from "./lib/applyFilterTaskCountDelta";
 export { applyTaskCountDelta } from "./lib/applyTaskCountDelta";
 export { DUE_STATE_COLORS, getDueDisplay } from "./lib/dueDate";
 export {

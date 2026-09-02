@@ -5,11 +5,13 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
+import { filtersListQueryKey } from "@/entities/filter";
 import {
   applyActiveTaskCountDelta,
   projectsListQueryKey,
 } from "@/entities/project";
 import {
+  applyFilterTaskCountDelta,
   applyTaskCountDelta,
   isDueTodayOrOverdue,
   removeTaskFromLists,
@@ -41,6 +43,7 @@ export const useDeleteTaskMutation = (queryKey: QueryKey) => {
     onMutate: async ({ taskId }) => {
       await queryClient.cancelQueries({ queryKey: taskCountQueryKey });
       await queryClient.cancelQueries({ queryKey: projectsListQueryKey });
+      await queryClient.cancelQueries({ queryKey: filtersListQueryKey });
       // The task being deleted is, by construction, visible in `queryKey`'s
       // own list — same reasoning `useUpdateTaskMutation` uses its caller-
       // supplied `task` for, just recovered from the cache here instead of
@@ -63,12 +66,18 @@ export const useDeleteTaskMutation = (queryKey: QueryKey) => {
         task.projectId,
         -1,
       );
+      const previousFilters = applyFilterTaskCountDelta(
+        queryClient,
+        task,
+        null,
+      );
 
       return {
         listSnapshots,
         previousTaskCount,
         previousTodayCount,
         previousProjects,
+        previousFilters,
       };
     },
 
@@ -88,6 +97,12 @@ export const useDeleteTaskMutation = (queryKey: QueryKey) => {
           queryClient.setQueryData(
             projectsListQueryKey,
             context.previousProjects,
+          );
+        }
+        if (context?.previousFilters) {
+          queryClient.setQueryData(
+            filtersListQueryKey,
+            context.previousFilters,
           );
         }
         notifications.show({
@@ -118,6 +133,11 @@ export const useDeleteTaskMutation = (queryKey: QueryKey) => {
         queryKey: projectsListQueryKey,
         refetchType: "active",
       });
+      // A deleted task can change any number of filters' `taskCount` badges.
+      queryClient.invalidateQueries({
+        queryKey: filtersListQueryKey,
+        refetchType: "active",
+      });
     },
 
     onError: (_error, _variables, context) => {
@@ -131,6 +151,9 @@ export const useDeleteTaskMutation = (queryKey: QueryKey) => {
           projectsListQueryKey,
           context.previousProjects,
         );
+      }
+      if (context?.previousFilters) {
+        queryClient.setQueryData(filtersListQueryKey, context.previousFilters);
       }
       notifications.show({
         color: "red",

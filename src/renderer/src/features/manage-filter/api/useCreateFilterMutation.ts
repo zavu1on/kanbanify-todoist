@@ -37,6 +37,7 @@ export const useCreateFilterMutation = () => {
                     title: input.title,
                     color: input.color,
                     query: input.query,
+                    taskCount: 0,
                   } satisfies FilterDTO,
                 ],
               }

@@ -101,7 +101,9 @@ export class FiltersIpcController implements IpcController {
       const filters = await this.listFiltersUseCase.execute();
       return {
         ok: true,
-        filters: filters.map((filter) => this.filterMapper.toDTO(filter)),
+        filters: filters.map(({ filter, taskCount }) =>
+          this.filterMapper.toDTO(filter, taskCount),
+        ),
       };
     } catch (error) {
       return this.toFailure(error);
@@ -115,7 +117,10 @@ export class FiltersIpcController implements IpcController {
       const filter = await this.createFilterUseCase.execute(
         new CreateFilterInput(input.title, input.color, input.query),
       );
-      return { ok: true, filter: this.filterMapper.toDTO(filter) };
+      // `taskCount` is display-only and never sent back to Todoist — 0 is a
+      // harmless stand-in here (see `CreateProjectUseCase`); the sidebar's
+      // own `filters:list` refetch supplies the real count.
+      return { ok: true, filter: this.filterMapper.toDTO(filter, 0) };
     } catch (error) {
       return this.toFailure(error);
     }
@@ -129,7 +134,9 @@ export class FiltersIpcController implements IpcController {
       const filter = await this.updateFilterUseCase.execute(
         new UpdateFilterInput(id, input.title, input.color, input.query),
       );
-      return { ok: true, filter: this.filterMapper.toDTO(filter) };
+      // Same stand-in as `create` — the query may have changed, but
+      // recounting here would mean a second full page walk on every edit.
+      return { ok: true, filter: this.filterMapper.toDTO(filter, 0) };
     } catch (error) {
       return this.toFailure(error);
     }

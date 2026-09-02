@@ -9,6 +9,7 @@ const workFilter: FilterDTO = {
   title: "Urgent work",
   color: "red",
   query: "#Work & p1",
+  taskCount: 0,
 };
 
 const renderModal = (props: { filter?: FilterDTO }) => {
