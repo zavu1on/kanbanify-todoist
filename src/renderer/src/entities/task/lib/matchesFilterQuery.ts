@@ -36,23 +36,22 @@ export const taskMatchesFilterQuery = (
 ): boolean => {
   const fields = parseFilterQuery(query);
 
-  if (fields.projectName !== null && fields.projectName !== projectName) {
-    return false;
+  const clauses: boolean[] = [];
+  if (fields.projectName !== null) {
+    clauses.push(fields.projectName === projectName);
   }
-  if (
-    fields.priorities.length > 0 &&
-    !fields.priorities.includes(task.priority)
-  ) {
-    return false;
+  if (fields.priorities.length > 0) {
+    clauses.push(fields.priorities.includes(task.priority));
   }
-  if (fields.due !== null && !matchesDue(fields.due, task.due)) {
-    return false;
+  if (fields.due !== null) {
+    clauses.push(matchesDue(fields.due, task.due));
   }
-  if (
-    fields.labels.length > 0 &&
-    !fields.labels.some((label) => task.labels.includes(label))
-  ) {
-    return false;
+  if (fields.labels.length > 0) {
+    clauses.push(fields.labels.some((label) => task.labels.includes(label)));
   }
-  return true;
+
+  if (clauses.length === 0) return true;
+  return fields.conjunction === "or"
+    ? clauses.some(Boolean)
+    : clauses.every(Boolean);
 };

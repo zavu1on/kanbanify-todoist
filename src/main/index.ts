@@ -17,8 +17,8 @@ import { CommentsIpcController } from "./comments/infrastructure/CommentsIpcCont
 import { TodoistCommentGateway } from "./comments/infrastructure/TodoistCommentGateway";
 import { CreateFilterUseCase } from "./filters/application/use-cases/CreateFilterUseCase";
 import { DeleteFilterUseCase } from "./filters/application/use-cases/DeleteFilterUseCase";
-import { ListFilterTasksUseCase } from "./filters/application/use-cases/ListFilterTasksUseCase";
 import { ListFiltersUseCase } from "./filters/application/use-cases/ListFiltersUseCase";
+import { ListFilterTasksUseCase } from "./filters/application/use-cases/ListFilterTasksUseCase";
 import { UpdateFilterUseCase } from "./filters/application/use-cases/UpdateFilterUseCase";
 import { FiltersIpcController } from "./filters/infrastructure/FiltersIpcController";
 import { SqliteFilterStore } from "./filters/infrastructure/SqliteFilterStore";

@@ -75,4 +75,16 @@ describe("taskMatchesFilterQuery", () => {
       taskMatchesFilterQuery("#Work & p1 & @waiting", match, "Personal"),
     ).toBe(false);
   });
+
+  it("matches when any clause across fields matches (OR)", () => {
+    const onlyLabelMatches = {
+      ...task,
+      priority: "p4" as const,
+      labels: ["waiting"],
+    };
+    expect(
+      taskMatchesFilterQuery("p1 | @waiting", onlyLabelMatches, null),
+    ).toBe(true);
+    expect(taskMatchesFilterQuery("p1 | @waiting", task, null)).toBe(false);
+  });
 });
