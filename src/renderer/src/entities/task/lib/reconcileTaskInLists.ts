@@ -110,12 +110,17 @@ export const reconcileTaskInLists = async (
       if (found || !qualifies) {
         return { ...data, pages };
       }
-      // Missing from this list before, but qualifies now — insert it.
-      const [firstPage, ...rest] = pages;
-      if (!firstPage.ok) return { ...data, pages };
+      // Missing from this list before, but qualifies now — append it to the
+      // end (a new task has no `order` from Todoist yet to sort by, and the
+      // API places new tasks last, not first).
+      const lastPage = pages[pages.length - 1];
+      if (!lastPage.ok) return { ...data, pages };
       return {
         ...data,
-        pages: [{ ...firstPage, tasks: [task, ...firstPage.tasks] }, ...rest],
+        pages: [
+          ...pages.slice(0, -1),
+          { ...lastPage, tasks: [...lastPage.tasks, task] },
+        ],
       };
     });
 

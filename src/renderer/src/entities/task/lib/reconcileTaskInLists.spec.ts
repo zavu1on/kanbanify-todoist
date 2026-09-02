@@ -76,3 +76,78 @@ describe("reconcileTaskInLists - filter lists", () => {
     expect(data?.pages[0].tasks).toEqual([newlyMatching]);
   });
 });
+
+describe("reconcileTaskInLists - insertion order", () => {
+  const buildQueryClient = () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(filtersListQueryKey, { ok: true, filters: [] });
+    queryClient.setQueryData(projectsListQueryKey, { ok: true, projects: [] });
+    return queryClient;
+  };
+
+  it("appends a newly qualifying task to the end of a list, not the front", async () => {
+    const queryClient = buildQueryClient();
+    const queryKey = ["tasks", "list", "project", "p1"];
+    const existing: TaskDTO = { ...task, id: "1" };
+    queryClient.setQueryData(queryKey, {
+      pages: [{ ok: true, tasks: [existing], nextCursor: null }],
+      pageParams: [null],
+    });
+    const created: TaskDTO = { ...task, id: "2" };
+
+    await reconcileTaskInLists(queryClient, created);
+
+    const data = queryClient.getQueryData<{
+      pages: { ok: boolean; tasks: TaskDTO[] }[];
+    }>(queryKey);
+    expect(data?.pages[0].tasks.map((t) => t.id)).toEqual(["1", "2"]);
+  });
+
+  it("appends to the end of the last loaded page, not the first, across multiple pages", async () => {
+    const queryClient = buildQueryClient();
+    const queryKey = ["tasks", "list", "project", "p1"];
+    const firstPageTask: TaskDTO = { ...task, id: "1" };
+    const secondPageTask: TaskDTO = { ...task, id: "2" };
+    queryClient.setQueryData(queryKey, {
+      pages: [
+        { ok: true, tasks: [firstPageTask], nextCursor: "cursor-1" },
+        { ok: true, tasks: [secondPageTask], nextCursor: null },
+      ],
+      pageParams: [null, "cursor-1"],
+    });
+    const created: TaskDTO = { ...task, id: "3" };
+
+    await reconcileTaskInLists(queryClient, created);
+
+    const data = queryClient.getQueryData<{
+      pages: { ok: boolean; tasks: TaskDTO[] }[];
+    }>(queryKey);
+    expect(data?.pages[0].tasks.map((t) => t.id)).toEqual(["1"]);
+    expect(data?.pages[1].tasks.map((t) => t.id)).toEqual(["2", "3"]);
+  });
+
+  it("leaves the list untouched when the last loaded page failed to fetch", async () => {
+    const queryClient = buildQueryClient();
+    const queryKey = ["tasks", "list", "project", "p1"];
+    const firstPageTask: TaskDTO = { ...task, id: "1" };
+    queryClient.setQueryData(queryKey, {
+      pages: [
+        { ok: true, tasks: [firstPageTask], nextCursor: "cursor-1" },
+        { ok: false, error: { type: "network_error", message: "offline" } },
+      ],
+      pageParams: [null, "cursor-1"],
+    });
+    const created: TaskDTO = { ...task, id: "2" };
+
+    await reconcileTaskInLists(queryClient, created);
+
+    const data = queryClient.getQueryData<{
+      pages: { ok: boolean; tasks?: TaskDTO[] }[];
+    }>(queryKey);
+    expect(data?.pages[0].tasks?.map((t) => t.id)).toEqual(["1"]);
+    expect(data?.pages[1]).toEqual({
+      ok: false,
+      error: { type: "network_error", message: "offline" },
+    });
+  });
+});
