@@ -108,8 +108,15 @@ export const QuickAddTitleInput: FC<QuickAddTitleInputProps> = ({
 
   const handleKeyDown = (event: KeyboardEvent) => {
     // Skip while an IME composition is in progress — Enter there confirms
-    // the candidate, it shouldn't submit the form.
-    if (event.key === "Enter" && !event.nativeEvent.isComposing) {
+    // the candidate, it shouldn't submit the form. Skip Ctrl/Cmd+Enter too —
+    // that combo is handled once, globally, by the modal's own shortcut
+    // (`TaskFormFrame`); handling it here too would submit the form twice.
+    if (
+      event.key === "Enter" &&
+      !event.nativeEvent.isComposing &&
+      !event.ctrlKey &&
+      !event.metaKey
+    ) {
       event.preventDefault();
       onSubmit?.();
     }

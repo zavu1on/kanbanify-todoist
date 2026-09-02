@@ -321,6 +321,80 @@ describe("TaskFormModal", () => {
     await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 
+  it("submits the form on Ctrl+Enter while focus is in a field", async () => {
+    window.api.tasks.create = vi
+      .fn()
+      .mockResolvedValue({ ok: true, task: existingTask });
+    const user = userEvent.setup();
+    const { onClose } = renderModal({});
+
+    const titleInput = screen.getByRole("textbox", { name: "Task title" });
+    await user.click(titleInput);
+    await user.type(titleInput, "Buy milk");
+    fireEvent.keyDown(document.activeElement ?? document.body, {
+      key: "Enter",
+      ctrlKey: true,
+    });
+
+    await waitFor(() => {
+      expect(window.api.tasks.create).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "Buy milk" }),
+      );
+    });
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+  });
+
+  it("submits the form on Ctrl+Enter even without focus inside it", async () => {
+    window.api.tasks.create = vi
+      .fn()
+      .mockResolvedValue({ ok: true, task: existingTask });
+    const user = userEvent.setup();
+    const { onClose } = renderModal({});
+
+    const titleInput = screen.getByRole("textbox", { name: "Task title" });
+    titleInput.textContent = "Buy milk";
+    fireEvent.input(titleInput);
+    await waitFor(() => expect(titleInput).toHaveTextContent("Buy milk"));
+
+    // A click on the modal's (non-focusable) heading moves focus off the
+    // title field without landing it on anything inside the form.
+    await user.click(screen.getByRole("heading", { name: "New task" }));
+    expect(titleInput).not.toHaveFocus();
+
+    fireEvent.keyDown(document, { key: "Enter", ctrlKey: true });
+
+    await waitFor(() => {
+      expect(window.api.tasks.create).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "Buy milk" }),
+      );
+    });
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+  });
+
+  it("submits once and returns to the parent — not the whole modal — on Ctrl+Enter in a subtask's title field", async () => {
+    window.api.tasks.update = vi
+      .fn()
+      .mockResolvedValue({ ok: true, task: existingSubtask });
+    const user = userEvent.setup();
+    const { onClose } = renderModal({ task: existingTask });
+
+    await user.click(await screen.findByText("Gather numbers"));
+    await screen.findByRole("button", { name: "← Write report" });
+
+    fireEvent.keyDown(document.activeElement ?? document.body, {
+      key: "Enter",
+      ctrlKey: true,
+    });
+
+    await waitFor(() =>
+      expect(window.api.tasks.update).toHaveBeenCalledTimes(1),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Edit task" }),
+    ).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it("creates an unknown quick-add label only on submit, not per keystroke while typing it", async () => {
     window.api.tasks.create = vi
       .fn()

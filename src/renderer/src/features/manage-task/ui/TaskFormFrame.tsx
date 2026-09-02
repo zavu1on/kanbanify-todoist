@@ -68,6 +68,10 @@ type TaskFormFrameProps = {
    * the breadcrumb link) through this frame's own dirty-check, without the
    * shell reaching into `useDiscardConfirmation`'s internals itself. */
   registerLeave: (fn: () => void) => void;
+  /** Whether this frame is the one currently visible in the modal's stack —
+   * gates the Ctrl/Cmd+Enter submit shortcut so a hidden frame underneath
+   * doesn't also submit. */
+  isTop: boolean;
 };
 
 export const TaskFormFrame: FC<TaskFormFrameProps> = ({
@@ -80,6 +84,7 @@ export const TaskFormFrame: FC<TaskFormFrameProps> = ({
   onBack,
   onCloseModal,
   registerLeave,
+  isTop,
 }) => {
   const isEditMode = task !== undefined;
   // Leaving this frame: pop back to the parent frame if there is one,
@@ -157,6 +162,21 @@ export const TaskFormFrame: FC<TaskFormFrameProps> = ({
   useEffect(() => {
     registerLeave(() => discardConfirmRef.current?.requestClose());
   });
+
+  // Document-scoped so Ctrl/Cmd+Enter submits regardless of whether focus is
+  // in a field or nowhere in particular (e.g. on the modal chrome itself) —
+  // a `<form onKeyDown>` handler only sees events that bubble through the form.
+  useEffect(() => {
+    if (!isTop) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        formRef.current?.requestSubmit();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isTop]);
 
   // The root frame gets Mantine's own `data-autofocus` handling on the
   // modal's initial open — but a subtask frame is pushed onto an already-open

@@ -89,6 +89,7 @@ export const TaskFormModal: FC<TaskFormModalProps> = ({
           registerLeave={(fn) => {
             if (!topFrame) activeLeaveRef.current = fn;
           }}
+          isTop={!topFrame}
         />
       </div>
 
@@ -113,6 +114,7 @@ export const TaskFormModal: FC<TaskFormModalProps> = ({
               registerLeave={(fn) => {
                 if (isTop) activeLeaveRef.current = fn;
               }}
+              isTop={isTop}
             />
           </div>
         );
