@@ -44,6 +44,7 @@ export const CalendarPage: FC = () => {
   // changed — memoized on `tasksQuery.data` (kept referentially stable by
   // TanStack Query's structural sharing when a refetch returns the same
   // content) so their own memoization downstream can actually bail out.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: depends only on tasksQuery.data by design (see comment above) — adding tasksQuery itself would defeat the memoization
   const { tasks, initialLoadError } = useMemo(
     () => flattenTaskPages(tasksQuery),
     [tasksQuery.data],
