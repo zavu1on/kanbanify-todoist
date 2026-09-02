@@ -90,10 +90,13 @@ describe("ListProjectsUseCase", () => {
       },
     ]);
     const taskGateway = buildTaskGateway({
-      "1": [{ tasks: [{} as Task], nextCursor: null }],
+      "1": [{ tasks: [{ parentId: null } as Task], nextCursor: null }],
       "2": [
-        { tasks: [{} as Task, {} as Task], nextCursor: "1" },
-        { tasks: [{} as Task], nextCursor: null },
+        {
+          tasks: [{ parentId: null } as Task, { parentId: null } as Task],
+          nextCursor: "1",
+        },
+        { tasks: [{ parentId: null } as Task], nextCursor: null },
       ],
     });
     const useCase = new ListProjectsUseCase(
@@ -128,6 +131,37 @@ describe("ListProjectsUseCase", () => {
       isArchived: false,
       activeTaskCount: 3,
     });
+  });
+
+  it("excludes subtasks from the active task count", async () => {
+    const projectGateway = buildProjectGateway([
+      {
+        id: "1",
+        name: "Work",
+        description: "",
+        color: "blue",
+        parentId: null,
+        isInboxProject: false,
+        isArchived: false,
+      },
+    ]);
+    const taskGateway = buildTaskGateway({
+      "1": [
+        {
+          tasks: [{ parentId: null } as Task, { parentId: "parent-1" } as Task],
+          nextCursor: null,
+        },
+      ],
+    });
+    const useCase = new ListProjectsUseCase(
+      projectGateway,
+      taskGateway,
+      buildTokenStore(token),
+    );
+
+    const projects = await useCase.execute();
+
+    expect(projects[0]).toMatchObject({ activeTaskCount: 1 });
   });
 
   it("returns an empty list when there are no projects", async () => {

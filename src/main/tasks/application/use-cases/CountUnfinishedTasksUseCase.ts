@@ -17,7 +17,7 @@ export class CountUnfinishedTasksUseCase implements UseCase<void, number> {
     let cursor: string | null = null;
     do {
       const page = await this.taskGateway.listTasks(accessToken.value, cursor);
-      count += page.tasks.length;
+      count += page.tasks.filter((task) => task.parentId === null).length;
       cursor = page.nextCursor;
     } while (cursor !== null);
 

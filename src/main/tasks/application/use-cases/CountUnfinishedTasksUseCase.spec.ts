@@ -40,8 +40,11 @@ describe("CountUnfinishedTasksUseCase", () => {
 
   it("walks every page until nextCursor is null and sums their tasks", async () => {
     const gateway = buildGateway([
-      { tasks: [{} as Task, {} as Task], nextCursor: "page-2" },
-      { tasks: [{} as Task], nextCursor: null },
+      {
+        tasks: [{ parentId: null } as Task, { parentId: null } as Task],
+        nextCursor: "page-2",
+      },
+      { tasks: [{ parentId: null } as Task], nextCursor: null },
     ]);
     const useCase = new CountUnfinishedTasksUseCase(
       gateway,
@@ -61,6 +64,20 @@ describe("CountUnfinishedTasksUseCase", () => {
       "a-valid-token-value-000000000000",
       "page-2",
     );
+  });
+
+  it("excludes subtasks from the count", async () => {
+    const useCase = new CountUnfinishedTasksUseCase(
+      buildGateway([
+        {
+          tasks: [{ parentId: null } as Task, { parentId: "parent-1" } as Task],
+          nextCursor: null,
+        },
+      ]),
+      buildTokenStore(AccessToken.of("a-valid-token-value-000000000000")),
+    );
+
+    await expect(useCase.execute()).resolves.toBe(1);
   });
 
   it("returns 0 for a single empty page", async () => {

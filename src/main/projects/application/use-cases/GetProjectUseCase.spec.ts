@@ -69,8 +69,11 @@ describe("GetProjectUseCase", () => {
   it("loads the project and counts its active tasks across pages", async () => {
     const projectGateway = buildProjectGateway(regularRaw);
     const taskGateway = buildTaskGateway([
-      { tasks: [{} as Task, {} as Task], nextCursor: "1" },
-      { tasks: [{} as Task], nextCursor: null },
+      {
+        tasks: [{ parentId: null } as Task, { parentId: null } as Task],
+        nextCursor: "1",
+      },
+      { tasks: [{ parentId: null } as Task], nextCursor: null },
     ]);
     const useCase = new GetProjectUseCase(
       projectGateway,
@@ -91,5 +94,24 @@ describe("GetProjectUseCase", () => {
       isArchived: false,
       activeTaskCount: 3,
     });
+  });
+
+  it("excludes subtasks from the active task count", async () => {
+    const projectGateway = buildProjectGateway(regularRaw);
+    const taskGateway = buildTaskGateway([
+      {
+        tasks: [{ parentId: null } as Task, { parentId: "parent-1" } as Task],
+        nextCursor: null,
+      },
+    ]);
+    const useCase = new GetProjectUseCase(
+      projectGateway,
+      taskGateway,
+      buildTokenStore(token),
+    );
+
+    const project = await useCase.execute("1");
+
+    expect(project.activeTaskCount).toBe(1);
   });
 });

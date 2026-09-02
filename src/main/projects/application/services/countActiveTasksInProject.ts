@@ -13,7 +13,7 @@ export const countActiveTasksInProject = async (
   let cursor: string | null = null;
   do {
     const page = await taskGateway.listTasks(accessToken, cursor, projectId);
-    count += page.tasks.length;
+    count += page.tasks.filter((task) => task.parentId === null).length;
     cursor = page.nextCursor;
   } while (cursor !== null);
   return count;

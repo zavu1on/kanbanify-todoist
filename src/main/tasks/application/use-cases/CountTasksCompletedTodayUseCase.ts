@@ -23,7 +23,7 @@ export class CountTasksCompletedTodayUseCase implements UseCase<void, number> {
         accessToken.value,
         cursor,
       );
-      count += page.tasks.length;
+      count += page.tasks.filter((task) => task.parentId === null).length;
       cursor = page.nextCursor;
     } while (cursor !== null);
 
