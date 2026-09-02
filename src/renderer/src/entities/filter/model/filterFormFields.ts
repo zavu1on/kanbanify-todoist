@@ -5,12 +5,19 @@ import type { PriorityLevel } from "@/main/tasks";
 export const DUE_VARIANTS = [
   "today_overdue",
   "today",
-  "overdue",
   "next_7_days",
   "no_date",
 ] as const;
 
 export type DueVariant = (typeof DUE_VARIANTS)[number];
+
+/** How `buildFilterQuery` joins the field blocks (project/priority/due/labels)
+ * into the query string — `&` (AND, the default) or `|` (OR). A single
+ * concatenator applies across all blocks, not per pair — Todoist's filter
+ * language has no per-clause operator choice, so neither does this form. */
+export const FILTER_CONJUNCTIONS = ["and", "or"] as const;
+
+export type FilterConjunction = (typeof FILTER_CONJUNCTIONS)[number];
 
 /** The structured shape `buildFilterQuery`/`parseFilterQuery` translate
  * to/from a Todoist filter query string. Keyed by project *name*, not id —
@@ -22,4 +29,5 @@ export type FilterQueryFields = {
   priorities: PriorityLevel[];
   due: DueVariant | null;
   labels: string[];
+  conjunction: FilterConjunction;
 };

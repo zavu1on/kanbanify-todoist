@@ -8,6 +8,7 @@ const EMPTY: FilterQueryFields = {
   priorities: [],
   due: null,
   labels: [],
+  conjunction: "and",
 };
 
 describe("buildFilterQuery", () => {
@@ -34,7 +35,6 @@ describe("buildFilterQuery", () => {
       "(today | overdue)",
     );
     expect(buildFilterQuery({ ...EMPTY, due: "today" })).toBe("today");
-    expect(buildFilterQuery({ ...EMPTY, due: "overdue" })).toBe("overdue");
     expect(buildFilterQuery({ ...EMPTY, due: "next_7_days" })).toBe("7 days");
     expect(buildFilterQuery({ ...EMPTY, due: "no_date" })).toBe("no date");
   });
@@ -55,9 +55,23 @@ describe("buildFilterQuery", () => {
       priorities: ["p1", "p2"],
       due: "today_overdue",
       labels: ["deep"],
+      conjunction: "and",
     };
     expect(buildFilterQuery(fields)).toBe(
       "#Work & (p1 | p2) & (today | overdue) & @deep",
+    );
+  });
+
+  it("joins every set field with | when conjunction is or", () => {
+    const fields: FilterQueryFields = {
+      projectName: "Work",
+      priorities: ["p1", "p2"],
+      due: "today_overdue",
+      labels: ["deep"],
+      conjunction: "or",
+    };
+    expect(buildFilterQuery(fields)).toBe(
+      "#Work | (p1 | p2) | (today | overdue) | @deep",
     );
   });
 });
@@ -78,7 +92,6 @@ describe("parseFilterQuery", () => {
     { ...EMPTY, priorities: ["p1", "p2", "p3"] },
     { ...EMPTY, due: "today_overdue" },
     { ...EMPTY, due: "today" },
-    { ...EMPTY, due: "overdue" },
     { ...EMPTY, due: "next_7_days" },
     { ...EMPTY, due: "no_date" },
     { ...EMPTY, labels: ["deep"] },
@@ -88,6 +101,14 @@ describe("parseFilterQuery", () => {
       priorities: ["p1", "p2"],
       due: "today_overdue",
       labels: ["deep", "urgent"],
+      conjunction: "and",
+    },
+    {
+      projectName: "Work",
+      priorities: ["p1", "p2"],
+      due: "today_overdue",
+      labels: ["deep", "urgent"],
+      conjunction: "or",
     },
   ];
 

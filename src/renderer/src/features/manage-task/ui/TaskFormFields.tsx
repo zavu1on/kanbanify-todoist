@@ -119,6 +119,7 @@ export const TaskFormFields = ({
           ref={titleFieldRef}
           form={form}
           projects={projectSummaries}
+          labelOptions={labelOptions}
           quickAddContext={quickAddContext}
           initialRawTitle={initialRawTitle}
           onSubmit={onTitleSubmit}

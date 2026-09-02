@@ -6,6 +6,7 @@ import {
   Loader,
   Modal,
   Paper,
+  Radio,
   Select,
   Stack,
   TagsInput,
@@ -44,7 +45,6 @@ type FilterFormModalProps = {
 const DUE_LABELS: Record<DueVariant, string> = {
   today_overdue: "Today + Overdue",
   today: "Today",
-  overdue: "Overdue",
   next_7_days: "Next 7 days",
   no_date: "No date",
 };
@@ -141,6 +141,7 @@ const FilterForm: FC<FilterFormProps> = ({
       priorities: parsedQuery?.priorities ?? [],
       due: parsedQuery?.due ?? (isEditMode ? null : "today_overdue"),
       labels: parsedQuery?.labels ?? [],
+      conjunction: parsedQuery?.conjunction ?? "and",
     },
     validate: schemaResolver(filterFormSchema, { sync: true }),
   });
@@ -152,6 +153,7 @@ const FilterForm: FC<FilterFormProps> = ({
     priorities: form.values.priorities,
     due: form.values.due,
     labels: form.values.labels,
+    conjunction: form.values.conjunction,
   });
 
   const requestClose = () => {
@@ -181,6 +183,7 @@ const FilterForm: FC<FilterFormProps> = ({
           priorities: values.priorities,
           due: values.due,
           labels: values.labels,
+          conjunction: values.conjunction,
         }),
       };
 
@@ -252,9 +255,9 @@ const FilterForm: FC<FilterFormProps> = ({
               value={form.values.priorities}
               onChange={(value) => form.setFieldValue("priorities", value)}
             >
-              <Group gap="xs">
+              <Group gap={6}>
                 {PRIORITY_LEVELS.map((level) => (
-                  <Chip key={level} value={level}>
+                  <Chip key={level} value={level} size="xs">
                     {level.toUpperCase()}
                   </Chip>
                 ))}
@@ -266,12 +269,13 @@ const FilterForm: FC<FilterFormProps> = ({
             <Text size="sm" fw={500}>
               Due
             </Text>
-            <Group gap="xs">
+            <Group gap={6}>
               {DUE_VARIANTS.map((variant) => (
                 <Chip
                   key={variant}
                   checked={form.values.due === variant}
                   onChange={() => toggleDue(variant)}
+                  size="xs"
                 >
                   {DUE_LABELS[variant]}
                 </Chip>
@@ -285,6 +289,13 @@ const FilterForm: FC<FilterFormProps> = ({
             data={labelOptions}
             {...form.getInputProps("labels")}
           />
+
+          <Radio.Group label="Match" {...form.getInputProps("conjunction")}>
+            <Group gap="xs" mt={4}>
+              <Radio value="and" label="All conditions (AND)" />
+              <Radio value="or" label="Any condition (OR)" />
+            </Group>
+          </Radio.Group>
 
           <Text size="xs" c="dimmed" ff="monospace">
             query={previewQuery}

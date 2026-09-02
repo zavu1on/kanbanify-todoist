@@ -16,6 +16,30 @@ const splitGroup = (segment: string): string[] => {
   return (match ? match[1] : segment).split(" | ");
 };
 
+/** Splits `str` on `separator`, but only where it sits outside any
+ * parenthesized group — so a field's own OR-group (`(p1 | p2)`) never gets
+ * mistaken for the cross-field conjunction. */
+const splitTopLevel = (str: string, separator: string): string[] => {
+  const parts: string[] = [];
+  let depth = 0;
+  let current = "";
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    if (char === "(") depth++;
+    else if (char === ")") depth--;
+
+    if (depth === 0 && str.startsWith(separator, i)) {
+      parts.push(current);
+      current = "";
+      i += separator.length - 1;
+      continue;
+    }
+    current += char;
+  }
+  parts.push(current);
+  return parts;
+};
+
 /**
  * Reconstructs the filter form's structured fields from a query string —
  * the exact inverse of `buildFilterQuery`. This only has to undo strings
@@ -31,12 +55,26 @@ export const parseFilterQuery = (query: string): FilterQueryFields => {
     priorities: [],
     due: null,
     labels: [],
+    conjunction: "and",
   };
 
   const trimmed = query.trim();
   if (!trimmed) return fields;
 
-  for (const segment of trimmed.split(" & ")) {
+  // Which separator actually joins the top-level blocks decides the
+  // conjunction — try AND first (the default), fall back to OR only if no
+  // top-level ` & ` was found. A single block (no top-level separator
+  // either way) stays "and", matching the form's default.
+  let segments = splitTopLevel(trimmed, " & ");
+  if (segments.length === 1) {
+    const orSegments = splitTopLevel(trimmed, " | ");
+    if (orSegments.length > 1) {
+      segments = orSegments;
+      fields.conjunction = "or";
+    }
+  }
+
+  for (const segment of segments) {
     if (segment.startsWith("#")) {
       fields.projectName = segment.slice(1);
       continue;

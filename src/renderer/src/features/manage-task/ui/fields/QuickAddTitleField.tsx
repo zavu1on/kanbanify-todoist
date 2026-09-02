@@ -3,6 +3,7 @@ import type { UseFormReturnType } from "@mantine/form";
 import { type Ref, useImperativeHandle } from "react";
 import type { QuickAddContext } from "../../lib/parseQuickAdd";
 import type { TaskFormValues } from "../../model/taskFormSchema";
+import { useLabelMentionSuggestions } from "../../model/useLabelMentionSuggestions";
 import { useProjectMentionSuggestions } from "../../model/useProjectMentionSuggestions";
 import { useQuickAddTitleSync } from "../../model/useQuickAddTitleSync";
 import { QuickAddTitleInput } from "../QuickAddTitleInput";
@@ -20,6 +21,7 @@ type QuickAddTitleFieldProps = {
   ref: Ref<QuickAddTitleFieldHandle>;
   form: UseFormReturnType<TaskFormValues>;
   projects: { id: string; name: string }[];
+  labelOptions: string[];
   quickAddContext: QuickAddContext;
   initialRawTitle: string;
   onSubmit: () => void;
@@ -37,6 +39,7 @@ export const QuickAddTitleField = ({
   ref,
   form,
   projects,
+  labelOptions,
   quickAddContext,
   initialRawTitle,
   onSubmit,
@@ -61,6 +64,13 @@ export const QuickAddTitleField = ({
 
   const { projectSuggestions, selectProjectSuggestion } =
     useProjectMentionSuggestions({ rawTitle, projects, form, applyRawTitle });
+  const { labelSuggestions, selectLabelSuggestion } =
+    useLabelMentionSuggestions({
+      rawTitle,
+      labelOptions,
+      form,
+      applyRawTitle,
+    });
 
   return (
     <Box pos="relative" style={{ flex: 1 }}>
@@ -90,6 +100,31 @@ export const QuickAddTitleField = ({
                 onClick={() => selectProjectSuggestion(project)}
               >
                 {project.name}
+              </UnstyledButton>
+            ))}
+          </Stack>
+        </Paper>
+      )}
+      {projectSuggestions.length === 0 && labelSuggestions.length > 0 && (
+        <Paper
+          withBorder
+          shadow="sm"
+          pos="absolute"
+          top="100%"
+          left={0}
+          right={0}
+          style={{ zIndex: 200 }}
+        >
+          <Stack gap={0}>
+            {labelSuggestions.map((label) => (
+              <UnstyledButton
+                key={label}
+                px="sm"
+                py={6}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => selectLabelSuggestion(label)}
+              >
+                @{label}
               </UnstyledButton>
             ))}
           </Stack>
