@@ -1,4 +1,4 @@
-import { Badge, NavLink, Skeleton, Text } from "@mantine/core";
+import { Badge, Box, NavLink, Skeleton, Text } from "@mantine/core";
 import {
   type ComponentType,
   type FC,
@@ -75,18 +75,26 @@ export const SidebarNavLink: FC<SidebarNavLinkProps> = ({
             role="status"
             aria-label={`Loading ${label} count`}
           />
-        ) : badge === undefined ? undefined : badgeColor ? (
-          <Badge variant="light" color={badgeColor} circle>
-            {badge}
-          </Badge>
-        ) : (
-          <Text
-            size="xs"
-            c="dimmed"
-            style={{ fontVariantNumeric: "tabular-nums" }}
-          >
-            {badge}
-          </Text>
+        ) : badge === undefined ? undefined : (
+          // Fixed-width, centered wrapper: keeps the badge/text count column
+          // vertically aligned across nav items regardless of the digit
+          // count's own width (a plain Text is auto-width, a Badge circle
+          // isn't) or whether it's a circle badge or plain text.
+          <Box w={20} ta="center">
+            {badgeColor ? (
+              <Badge variant="light" color={badgeColor} circle>
+                {badge}
+              </Badge>
+            ) : (
+              <Text
+                size="xs"
+                c="dimmed"
+                style={{ fontVariantNumeric: "tabular-nums" }}
+              >
+                {badge}
+              </Text>
+            )}
+          </Box>
         )
       }
       active={location.pathname === to}
