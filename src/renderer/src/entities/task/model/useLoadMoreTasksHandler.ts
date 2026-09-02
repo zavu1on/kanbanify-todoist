@@ -4,13 +4,14 @@ import type {
   UseInfiniteQueryResult,
 } from "@tanstack/react-query";
 import { useCallback } from "react";
-import type { TasksListResult } from "@/main/tasks";
+import type { TaskPageResult } from "./flattenTaskPages";
 
-/** Shared "Load more" handler for every screen paginating `tasks:list`/
- * `tasks:listWithDueDate` (`pages/tasks`, `pages/calendar`) — fetches the next
- * page and reports the running total or the page's error via a toast. */
-export const useLoadMoreTasksHandler = (
-  tasksQuery: UseInfiniteQueryResult<InfiniteData<TasksListResult>>,
+/** Shared "Load more" handler for every screen paginating a tasks list
+ * (`pages/tasks`, `pages/calendar`, `pages/filter`) — fetches the next page
+ * and reports the running total or the page's error via a toast. Generic
+ * over the same minimal page shape as `flattenTaskPages` (see there for why). */
+export const useLoadMoreTasksHandler = <TResult extends TaskPageResult>(
+  tasksQuery: UseInfiniteQueryResult<InfiniteData<TResult>>,
 ) => {
   const { fetchNextPage } = tasksQuery;
 

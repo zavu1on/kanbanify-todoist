@@ -26,7 +26,9 @@ type KanbanColumnProps = {
   hideProject?: boolean;
   onComplete: (taskId: string) => void;
   onTaskClick: (task: TaskDTO) => void;
-  onAddTask: () => void;
+  // Absent on the filter page — no single project/status a new
+  // task from this column could unambiguously belong to.
+  onAddTask?: () => void;
 };
 
 export const KanbanColumn: FC<KanbanColumnProps> = ({
@@ -85,14 +87,16 @@ export const KanbanColumn: FC<KanbanColumnProps> = ({
 
         {/* Creates a task pre-filled with this column's status (SPECIFICATION.md
          * "Kanban-режим"). */}
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          aria-label={`Add task to ${KANBAN_COLUMN_LABELS[status]}`}
-          onClick={onAddTask}
-        >
-          <PlusIcon size={16} animateOnHover={false} />
-        </ActionIcon>
+        {onAddTask && (
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            aria-label={`Add task to ${KANBAN_COLUMN_LABELS[status]}`}
+            onClick={onAddTask}
+          >
+            <PlusIcon size={16} animateOnHover={false} />
+          </ActionIcon>
+        )}
       </Group>
 
       <Box mah="calc(100vh - 260px)" style={{ overflowY: "auto" }}>

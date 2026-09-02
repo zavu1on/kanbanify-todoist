@@ -27,6 +27,12 @@ export const isDueTodayOrOverdue = (task: TaskDTO): boolean => {
  * showing one parent's direct children. The unscoped "Tasks" page shows
  * every task regardless of due date/project, so it falls through to `true`.
  */
+/**
+ * A filter's own membership isn't decided here — see
+ * `reconcileTaskInLists`'s `taskQualifiesForList`, which re-evaluates the
+ * filter's actual query (`taskMatchesFilterQuery`) instead of guessing. This
+ * only covers the field-cheap lists that don't need a query re-evaluation.
+ */
 export const belongsToList = (queryKey: QueryKey, task: TaskDTO): boolean => {
   if (queryKey[2] === "today") {
     return isDueTodayOrOverdue(task);

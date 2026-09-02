@@ -15,6 +15,11 @@ type TaskFormControlsProps = {
   // Pre-fills the "Add task" modal's project (see SPECIFICATION.md "Добавление
   // задачи") — absent on the global "Tasks" page, set on a project's page.
   projectId?: string;
+  // The filter page has no single project/status a new task
+  // could unambiguously belong to, so it hides task creation entirely —
+  // `openEdit` (below) stays available either way, only the button and its
+  // modal's create mode are gated by this.
+  hideAddButton?: boolean;
 };
 
 /** Owns the "Add task" button, `TaskFormModal` and the add/edit state behind
@@ -26,6 +31,7 @@ export const TaskFormControls = ({
   ref,
   queryKey,
   projectId,
+  hideAddButton,
 }: TaskFormControlsProps) => {
   const [editingTask, setEditingTask] = useState<TaskDTO | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -36,15 +42,17 @@ export const TaskFormControls = ({
 
   return (
     <>
-      <Button
-        variant="subtle"
-        color="gray"
-        justify="flex-start"
-        leftSection={<PlusIcon size={16} animateOnHover={false} />}
-        onClick={() => setIsCreateOpen(true)}
-      >
-        Add task
-      </Button>
+      {!hideAddButton && (
+        <Button
+          variant="subtle"
+          color="gray"
+          justify="flex-start"
+          leftSection={<PlusIcon size={16} animateOnHover={false} />}
+          onClick={() => setIsCreateOpen(true)}
+        >
+          Add task
+        </Button>
+      )}
 
       {/* Mounted only while open — a fresh instance each time means the
           form always starts blank and `useForm`'s initialValues pick up

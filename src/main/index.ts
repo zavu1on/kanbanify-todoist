@@ -15,6 +15,13 @@ import { ListCommentsUseCase } from "./comments/application/use-cases/ListCommen
 import { UpdateCommentUseCase } from "./comments/application/use-cases/UpdateCommentUseCase";
 import { CommentsIpcController } from "./comments/infrastructure/CommentsIpcController";
 import { TodoistCommentGateway } from "./comments/infrastructure/TodoistCommentGateway";
+import { CreateFilterUseCase } from "./filters/application/use-cases/CreateFilterUseCase";
+import { DeleteFilterUseCase } from "./filters/application/use-cases/DeleteFilterUseCase";
+import { ListFilterTasksUseCase } from "./filters/application/use-cases/ListFilterTasksUseCase";
+import { ListFiltersUseCase } from "./filters/application/use-cases/ListFiltersUseCase";
+import { UpdateFilterUseCase } from "./filters/application/use-cases/UpdateFilterUseCase";
+import { FiltersIpcController } from "./filters/infrastructure/FiltersIpcController";
+import { SqliteFilterStore } from "./filters/infrastructure/SqliteFilterStore";
 import { CreateLabelUseCase } from "./labels/application/use-cases/CreateLabelUseCase";
 import { ListLabelsUseCase } from "./labels/application/use-cases/ListLabelsUseCase";
 import { LabelsIpcController } from "./labels/infrastructure/LabelsIpcController";
@@ -183,6 +190,25 @@ const registerIpcHandlers = () => {
     updateProjectUseCase,
     archiveProjectUseCase,
     deleteProjectUseCase,
+  ).register();
+
+  const filterStore = new SqliteFilterStore();
+  const listFiltersUseCase = new ListFiltersUseCase(filterStore);
+  const createFilterUseCase = new CreateFilterUseCase(filterStore);
+  const updateFilterUseCase = new UpdateFilterUseCase(filterStore);
+  const deleteFilterUseCase = new DeleteFilterUseCase(filterStore);
+  const listFilterTasksUseCase = new ListFilterTasksUseCase(
+    filterStore,
+    taskGateway,
+    tokenStore,
+  );
+
+  new FiltersIpcController(
+    listFiltersUseCase,
+    createFilterUseCase,
+    updateFilterUseCase,
+    deleteFilterUseCase,
+    listFilterTasksUseCase,
   ).register();
 
   const labelGateway = new TodoistLabelGateway();

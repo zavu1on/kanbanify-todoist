@@ -1,0 +1,78 @@
+import { QueryClient } from "@tanstack/react-query";
+import { describe, expect, it } from "vitest";
+import { filtersListQueryKey } from "@/entities/filter";
+import { projectsListQueryKey } from "@/entities/project";
+import type { TaskDTO } from "@/main/tasks";
+import { filterTasksListQueryKey } from "../../filter/model/queryKeys";
+import { reconcileTaskInLists } from "./reconcileTaskInLists";
+
+const task: TaskDTO = {
+  id: "1",
+  title: "Task",
+  description: "",
+  projectId: "p1",
+  priority: "p4",
+  due: null,
+  kanbanStatus: { level: "todo", hasConflict: false },
+  labels: ["waiting"],
+  checked: false,
+  parentId: null,
+};
+
+const seed = () => {
+  const queryClient = new QueryClient();
+  queryClient.setQueryData(filtersListQueryKey, {
+    ok: true,
+    filters: [{ id: 1, title: "Waiting on", color: "red", query: "@waiting" }],
+  });
+  queryClient.setQueryData(projectsListQueryKey, { ok: true, projects: [] });
+
+  const queryKey = filterTasksListQueryKey(1);
+  queryClient.setQueryData(queryKey, {
+    pages: [{ ok: true, tasks: [task], nextCursor: null }],
+    pageParams: [null],
+  });
+  return { queryClient, queryKey };
+};
+
+describe("reconcileTaskInLists - filter lists", () => {
+  it("drops a task from a cached filter list the instant it stops matching (no waiting for refetch)", async () => {
+    const { queryClient, queryKey } = seed();
+    const edited: TaskDTO = { ...task, labels: [] };
+
+    await reconcileTaskInLists(queryClient, edited);
+
+    const data = queryClient.getQueryData<{
+      pages: { ok: boolean; tasks: TaskDTO[] }[];
+    }>(queryKey);
+    expect(data?.pages[0].tasks).toEqual([]);
+  });
+
+  it("keeps a task in a cached filter list it still matches after an edit", async () => {
+    const { queryClient, queryKey } = seed();
+    const edited: TaskDTO = { ...task, title: "Renamed" };
+
+    await reconcileTaskInLists(queryClient, edited);
+
+    const data = queryClient.getQueryData<{
+      pages: { ok: boolean; tasks: TaskDTO[] }[];
+    }>(queryKey);
+    expect(data?.pages[0].tasks).toEqual([edited]);
+  });
+
+  it("inserts a task into a cached filter list the instant it starts matching", async () => {
+    const { queryClient, queryKey } = seed();
+    queryClient.setQueryData(queryKey, {
+      pages: [{ ok: true, tasks: [], nextCursor: null }],
+      pageParams: [null],
+    });
+    const newlyMatching: TaskDTO = { ...task, id: "2", labels: ["waiting"] };
+
+    await reconcileTaskInLists(queryClient, newlyMatching);
+
+    const data = queryClient.getQueryData<{
+      pages: { ok: boolean; tasks: TaskDTO[] }[];
+    }>(queryKey);
+    expect(data?.pages[0].tasks).toEqual([newlyMatching]);
+  });
+});

@@ -4,6 +4,7 @@ import { type FC, memo } from "react";
 import { useSession } from "@/app/SessionContext";
 import logo from "@/shared/ui/kanbanify-logo.svg";
 import { SidebarNavLink } from "./SidebarNavLink";
+import { SidebarFilters } from "./SidebarFilters";
 import { SidebarNewTaskButton } from "./SidebarNewTaskButton";
 import { SidebarProjects } from "./SidebarProjects";
 import { SidebarTasksNavLink } from "./SidebarTasksNavLink";
@@ -46,6 +47,7 @@ export const Sidebar: FC = memo(() => {
         </Stack>
 
         <SidebarProjects />
+        <SidebarFilters />
       </AppShell.Section>
 
       <AppShell.Section p="sm">

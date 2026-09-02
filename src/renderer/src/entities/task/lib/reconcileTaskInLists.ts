@@ -3,11 +3,49 @@ import type {
   QueryClient,
   QueryKey,
 } from "@tanstack/react-query";
+import { filtersListQueryKey } from "@/entities/filter";
+import { projectsListQueryKey } from "@/entities/project";
+import type { FiltersListResult } from "@/main/filters";
+import type { ProjectsListResult } from "@/main/projects";
 import type { TaskDTO, TasksListResult } from "@/main/tasks";
 import { tasksListQueryKey } from "../model/queryKeys";
+import { taskMatchesFilterQuery } from "./matchesFilterQuery";
 import { belongsToList } from "./taskListMembership";
 
 type TasksPages = InfiniteData<TasksListResult>;
+
+/**
+ * Whether `task` qualifies for the tasks-list cache identified by `queryKey`
+ * — `belongsToList`'s cheap per-field checks for every list shape except a
+ * filter's own, which instead re-evaluates that filter's saved query
+ * (`taskMatchesFilterQuery`) against the currently cached filters/projects
+ * lists. Falls back to `false` when either cache is missing (matches
+ * `belongsToList`'s old default: never guess a filter's membership), which
+ * only matters for a filter page never visited/loaded this session — its
+ * query is never cached anywhere else either.
+ */
+const taskQualifiesForList = (
+  queryClient: QueryClient,
+  queryKey: QueryKey,
+  task: TaskDTO,
+): boolean => {
+  if (queryKey[2] !== "filter") return belongsToList(queryKey, task);
+
+  const filtersData =
+    queryClient.getQueryData<FiltersListResult>(filtersListQueryKey);
+  const filter = filtersData?.ok
+    ? filtersData.filters.find((f) => f.id === queryKey[3])
+    : undefined;
+  if (!filter) return false;
+
+  const projectsData =
+    queryClient.getQueryData<ProjectsListResult>(projectsListQueryKey);
+  const projectName = projectsData?.ok
+    ? (projectsData.projects.find((p) => p.id === task.projectId)?.name ?? null)
+    : null;
+
+  return taskMatchesFilterQuery(filter.query, task, projectName);
+};
 
 export type TaskListSnapshot = {
   queryKey: QueryKey;
@@ -17,11 +55,11 @@ export type TaskListSnapshot = {
 /**
  * Optimistically reconciles `task` into every already-cached tasks-list
  * query (`["tasks","list",...]` — Today, Calendar, a project page, a
- * subtasks list, the unscoped "Tasks" page), not just the one `queryKey` the
- * caller's own screen happens to be showing. Per `belongsToList`: inserts
- * `task` into a list it's missing from but now qualifies for, patches it in
- * place where it's already present and still qualifies, or drops it where
- * it's present but no longer qualifies.
+ * subtasks list, a filter's own page, the unscoped "Tasks" page), not just
+ * the one `queryKey` the caller's own screen happens to be showing. Per
+ * `taskQualifiesForList`: inserts `task` into a list it's missing from but
+ * now qualifies for, patches it in place where it's already present and
+ * still qualifies, or drops it where it's present but no longer qualifies.
  *
  * This is what makes a create/edit made from one screen (e.g. the sidebar's
  * "New task" while on Today) show up correctly on every other *cached*
@@ -51,6 +89,8 @@ export const reconcileTaskInLists = async (
     await queryClient.cancelQueries({ queryKey, exact: true });
     const previous = queryClient.getQueryData<TasksPages>(queryKey);
 
+    const qualifies = taskQualifiesForList(queryClient, queryKey, task);
+
     queryClient.setQueryData<TasksPages>(queryKey, (data) => {
       if (!data) return data;
 
@@ -62,12 +102,12 @@ export const reconcileTaskInLists = async (
           tasks: page.tasks.flatMap((t) => {
             if (t.id !== removeId) return [t];
             found = true;
-            return belongsToList(queryKey, task) ? [task] : [];
+            return qualifies ? [task] : [];
           }),
         };
       });
 
-      if (found || !belongsToList(queryKey, task)) {
+      if (found || !qualifies) {
         return { ...data, pages };
       }
       // Missing from this list before, but qualifies now — insert it.

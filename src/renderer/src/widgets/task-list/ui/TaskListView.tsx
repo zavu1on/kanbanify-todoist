@@ -19,6 +19,8 @@ type TaskListViewProps = {
   // Pre-fills the "Add task" modal's project (see SPECIFICATION.md "Добавление
   // задачи") — absent on the global "Tasks" page, set on a project's page.
   projectId?: string;
+  // See `TaskFormControls` — the filter page sets this.
+  hideAddButton?: boolean;
 };
 
 export const TaskListView: FC<TaskListViewProps> = ({
@@ -26,6 +28,7 @@ export const TaskListView: FC<TaskListViewProps> = ({
   queryKey,
   hideProject,
   projectId,
+  hideAddButton,
 }) => {
   const completeTaskMutation = useCompleteTaskMutation(queryKey);
   const formControlsRef = useRef<TaskFormControlsHandle>(null);
@@ -66,6 +69,7 @@ export const TaskListView: FC<TaskListViewProps> = ({
         ref={formControlsRef}
         queryKey={queryKey}
         projectId={projectId}
+        hideAddButton={hideAddButton}
       />
     </Stack>
   );

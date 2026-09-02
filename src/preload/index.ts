@@ -17,6 +17,15 @@ import type {
   UpdateCommentResult,
 } from "../main/comments";
 import type {
+  CreateFilterRequest,
+  CreateFilterResult,
+  DeleteFilterResult,
+  FilterTasksResult,
+  FiltersListResult,
+  UpdateFilterRequest,
+  UpdateFilterResult,
+} from "../main/filters";
+import type {
   CreateLabelRequest,
   CreateLabelResult,
   LabelsListResult,
@@ -85,6 +94,23 @@ const api = {
       ipcRenderer.invoke("tasks:update", taskId, input),
     delete: (taskId: string): Promise<DeleteTaskResult> =>
       ipcRenderer.invoke("tasks:delete", taskId),
+  },
+  filters: {
+    list: (): Promise<FiltersListResult> => ipcRenderer.invoke("filters:list"),
+    create: (input: CreateFilterRequest): Promise<CreateFilterResult> =>
+      ipcRenderer.invoke("filters:create", input),
+    update: (
+      id: number,
+      input: UpdateFilterRequest,
+    ): Promise<UpdateFilterResult> =>
+      ipcRenderer.invoke("filters:update", id, input),
+    delete: (id: number): Promise<DeleteFilterResult> =>
+      ipcRenderer.invoke("filters:delete", id),
+    tasks: (
+      filterId: number,
+      cursor: string | null,
+    ): Promise<FilterTasksResult> =>
+      ipcRenderer.invoke("filters:tasks", filterId, cursor),
   },
   labels: {
     list: (): Promise<LabelsListResult> => ipcRenderer.invoke("labels:list"),

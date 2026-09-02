@@ -34,6 +34,10 @@ type TaskBoardProps = {
   // button creates a task due today (SPECIFICATION.md "Сегодня"), absent
   // elsewhere.
   createDueDefault?: TaskDTO["due"];
+  // See `KanbanColumn`'s `onAddTask` — the filter page sets this, which
+  // also keeps the create-mode `TaskFormModal` below from ever
+  // mounting on that page.
+  hideAddButton?: boolean;
 };
 
 export const TaskBoardView: FC<TaskBoardProps> = ({
@@ -42,6 +46,7 @@ export const TaskBoardView: FC<TaskBoardProps> = ({
   hideProject,
   projectId,
   createDueDefault,
+  hideAddButton,
 }) => {
   const {
     columns,
@@ -103,7 +108,7 @@ export const TaskBoardView: FC<TaskBoardProps> = ({
             hideProject={hideProject}
             onComplete={handleComplete}
             onTaskClick={setEditingTask}
-            onAddTask={() => handleAddTask(status)}
+            onAddTask={hideAddButton ? undefined : () => handleAddTask(status)}
           />
         ))}
       </Group>

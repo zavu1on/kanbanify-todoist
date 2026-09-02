@@ -17,7 +17,10 @@ export {
   belongsToList,
   isDueTodayOrOverdue,
 } from "./lib/taskListMembership";
-export { flattenTaskPages } from "./model/flattenTaskPages";
+export {
+  flattenTaskPages,
+  type TaskPageResult,
+} from "./model/flattenTaskPages";
 export {
   calendarTasksListQueryKey,
   projectTasksListQueryKey,
