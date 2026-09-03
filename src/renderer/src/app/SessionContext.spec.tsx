@@ -18,14 +18,18 @@ const SessionProbe = () => {
       {session.status === "authenticated" && (
         <span>{session.user.fullName}</span>
       )}
-      {session.status === "unauthenticated" && session.errorMessage && (
+      {session.status === "unauthenticated" && session.hasStoredToken && (
         <span>{session.errorMessage}</span>
       )}
+      <span data-testid="rechecking">{String(session.isRechecking)}</span>
       <button type="button" onClick={() => session.authenticate(user)}>
         Authenticate
       </button>
       <button type="button" onClick={() => session.logout()}>
         Log out
+      </button>
+      <button type="button" onClick={() => session.recheckSession()}>
+        Retry
       </button>
     </div>
   );
@@ -134,6 +138,69 @@ describe("SessionContext", () => {
       expect(screen.getByTestId("status")).toHaveTextContent("unauthenticated");
     });
     expect(window.api.auth.logout).toHaveBeenCalledOnce();
+  });
+
+  it("recheckSession() retries the stored token and can recover from a network error", async () => {
+    mockCheckSession({
+      status: "error",
+      error: { type: "network_error", message: "Network unreachable" },
+    });
+    render(
+      <SessionProvider>
+        <SessionProbe />
+      </SessionProvider>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText("Network unreachable")).toBeInTheDocument();
+    });
+
+    vi.mocked(window.api.auth.checkSession).mockResolvedValue({
+      status: "authenticated",
+      user,
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("status")).toHaveTextContent("authenticated");
+    });
+    expect(window.api.auth.checkSession).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries automatically when the window regains focus and a token is stored", async () => {
+    mockCheckSession({
+      status: "error",
+      error: { type: "network_error", message: "Network unreachable" },
+    });
+    render(
+      <SessionProvider>
+        <SessionProbe />
+      </SessionProvider>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText("Network unreachable")).toBeInTheDocument();
+    });
+
+    window.dispatchEvent(new Event("focus"));
+
+    await waitFor(() => {
+      expect(window.api.auth.checkSession).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it("does not retry on focus when no token is stored", async () => {
+    mockCheckSession({ status: "no_token" });
+    render(
+      <SessionProvider>
+        <SessionProbe />
+      </SessionProvider>,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("status")).toHaveTextContent("unauthenticated");
+    });
+
+    window.dispatchEvent(new Event("focus"));
+
+    expect(window.api.auth.checkSession).toHaveBeenCalledOnce();
   });
 
   it("throws when useSession is used outside a SessionProvider", () => {

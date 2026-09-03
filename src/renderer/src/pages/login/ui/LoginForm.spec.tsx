@@ -125,6 +125,19 @@ describe("LoginForm", () => {
     });
   });
 
+  it("shows a retry icon alongside the session error when a token is stored", async () => {
+    vi.mocked(window.api.auth.checkSession).mockResolvedValue({
+      status: "error",
+      error: { type: "network_error", message: "Network unreachable" },
+    });
+    renderLoginForm();
+
+    expect(await screen.findByText("Network unreachable")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Retry with saved token" }),
+    ).toBeInTheDocument();
+  });
+
   it("shows the backend error message when authentication fails", async () => {
     vi.mocked(window.api.auth.login).mockResolvedValue({
       ok: false,

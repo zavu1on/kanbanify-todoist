@@ -1,7 +1,17 @@
-import { Alert, Button, PasswordInput, Stack } from "@mantine/core";
+import {
+  ActionIcon,
+  Alert,
+  Button,
+  Group,
+  PasswordInput,
+  Stack,
+  Text,
+  Tooltip,
+} from "@mantine/core";
 import { schemaResolver, useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { useMutation } from "@tanstack/react-query";
+import { RefreshCwIcon } from "lucide-animated";
 import type { FC } from "react";
 import { useSession } from "@/app/SessionContext";
 import { loginWithAccessToken } from "../api/loginWithAccessToken";
@@ -52,9 +62,23 @@ export const LoginForm: FC = () => {
   return (
     <form onSubmit={handleSubmit}>
       <Stack gap="sm">
-        {session.status === "unauthenticated" && session.errorMessage && (
+        {session.status === "unauthenticated" && session.hasStoredToken && (
           <Alert color="red" title="Session expired">
-            {session.errorMessage}
+            <Group justify="space-between" wrap="nowrap" gap="sm">
+              <Text size="sm">{session.errorMessage}</Text>
+              <Tooltip label="Retry with saved token">
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="sm"
+                  loading={session.isRechecking}
+                  aria-label="Retry with saved token"
+                  onClick={() => session.recheckSession()}
+                >
+                  <RefreshCwIcon size={14} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
           </Alert>
         )}
 
