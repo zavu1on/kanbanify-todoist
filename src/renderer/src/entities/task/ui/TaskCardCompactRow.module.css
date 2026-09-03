@@ -1,0 +1,11 @@
+.card:hover {
+  background-color: #fafbfd;
+}
+
+.chevron {
+  visibility: hidden;
+}
+
+.card:hover .chevron {
+  visibility: visible;
+}

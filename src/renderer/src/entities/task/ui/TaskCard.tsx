@@ -8,7 +8,6 @@ import {
   Tooltip,
   Transition,
 } from "@mantine/core";
-import { useHover } from "@mantine/hooks";
 import { BadgeAlertIcon, ClockIcon } from "lucide-animated";
 import type { FC } from "react";
 import { memo, useState } from "react";
@@ -22,6 +21,7 @@ import {
 import { PRIORITY_MARKER_COLORS } from "../lib/priority";
 import type { TaskCardVariant } from "./TaskCardBodyProps";
 import { TaskCardCompactRow } from "./TaskCardCompactRow";
+import styles from "./TaskCardCompactRow.module.css";
 import { TaskCardExpandedStack } from "./TaskCardExpandedStack";
 import { TaskCardSingleRow } from "./TaskCardSingleRow";
 
@@ -67,7 +67,6 @@ export const TaskCard: FC<TaskCardProps> = memo(function TaskCard({
   // `onComplete` (the optimistic-removal mutation) fires from `onExited`,
   // once the card has visually finished disappearing.
   const [completing, setCompleting] = useState(false);
-  const { hovered, ref: hoverRef } = useHover<HTMLDivElement>();
 
   const due = task.due ? getDueDisplay(task.due) : null;
   const priorityRailColor = PRIORITY_MARKER_COLORS[task.priority];
@@ -223,7 +222,6 @@ export const TaskCard: FC<TaskCardProps> = memo(function TaskCard({
     projectMeta,
     kanbanPill,
     labelPills,
-    hovered,
   };
 
   return (
@@ -235,12 +233,11 @@ export const TaskCard: FC<TaskCardProps> = memo(function TaskCard({
     >
       {(transitionStyles) => (
         <Card
-          ref={hoverRef}
+          className={variant === "compact" ? styles.card : undefined}
           withBorder={variant !== "compact"}
           radius={variant === "compact" ? 9 : 11}
           p={variant === "compact" ? 9 : "sm"}
           pos="relative"
-          bg={variant === "compact" && hovered ? "#fafbfd" : undefined}
           style={{
             ...transitionStyles,
             cursor: onClick ? "pointer" : undefined,

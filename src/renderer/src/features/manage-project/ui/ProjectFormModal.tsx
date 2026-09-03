@@ -43,6 +43,7 @@ export const ProjectFormModal: FC<ProjectFormModalProps> = ({
   // Mounted fresh on every open (see `ProjectActionsMenu`), so this always
   // starts closed — no reset effect needed.
   const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
+  const [color, setColor] = useState(project?.color ?? "charcoal");
   const projectsQuery = useProjectsQuery();
   const projects = projectsQuery.data?.ok ? projectsQuery.data.projects : [];
   const parentProject = project
@@ -53,6 +54,13 @@ export const ProjectFormModal: FC<ProjectFormModalProps> = ({
   const updateMutation = useUpdateProjectMutation();
 
   const form = useForm({
+    // Keeps field values out of React state so typing doesn't re-render this
+    // whole modal on every keystroke — only the input that calls
+    // `form.getInputProps` for a changed field re-renders (see `TaskFormFrame`
+    // for the same pattern). The color swatch preview below needs a reactive
+    // read of its own field, so it's tracked separately via `form.watch`
+    // (see `PriorityField`).
+    mode: "uncontrolled",
     initialValues: {
       name: project?.name ?? "",
       description: project?.description ?? "",
@@ -61,6 +69,7 @@ export const ProjectFormModal: FC<ProjectFormModalProps> = ({
     },
     validate: schemaResolver(projectFormSchema, { sync: true }),
   });
+  form.watch("color", ({ value }) => setColor(value));
 
   const requestClose = () => {
     if (form.isDirty()) {
@@ -134,6 +143,7 @@ export const ProjectFormModal: FC<ProjectFormModalProps> = ({
             placeholder="Project name"
             maxLength={120}
             data-autofocus
+            key={form.key("name")}
             {...form.getInputProps("name")}
           />
 
@@ -141,13 +151,14 @@ export const ProjectFormModal: FC<ProjectFormModalProps> = ({
             label="Description"
             placeholder="Add a description"
             minRows={2}
+            key={form.key("description")}
             {...form.getInputProps("description")}
           />
 
           <Select
             label="Color"
             data={[...PROJECT_COLOR_OPTIONS]}
-            leftSection={colorSwatch(form.values.color)}
+            leftSection={colorSwatch(color)}
             renderOption={({ option }) => (
               <Group gap="xs">
                 {colorSwatch(option.value)}
@@ -155,6 +166,7 @@ export const ProjectFormModal: FC<ProjectFormModalProps> = ({
               </Group>
             )}
             allowDeselect={false}
+            key={form.key("color")}
             {...form.getInputProps("color")}
           />
 
@@ -172,6 +184,7 @@ export const ProjectFormModal: FC<ProjectFormModalProps> = ({
               data={parentOptions}
               searchable
               allowDeselect={false}
+              key={form.key("parentId")}
               {...form.getInputProps("parentId")}
             />
           )}

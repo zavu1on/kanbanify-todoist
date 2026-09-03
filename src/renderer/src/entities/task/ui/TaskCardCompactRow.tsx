@@ -2,10 +2,13 @@ import { Box, Group, ScrollArea, Text } from "@mantine/core";
 import { ChevronRightIcon } from "lucide-animated";
 import type { FC } from "react";
 import type { TaskCardBodyProps } from "./TaskCardBodyProps";
+import styles from "./TaskCardCompactRow.module.css";
 
 // Plain list-row layout for subtask rows inside the detail modal — no
 // priority rail (subtasks don't carry one in this view), a chevron hints
-// the row opens the subtask on click.
+// the row opens the subtask on click. Hover feedback (background + chevron
+// visibility) is pure CSS (`:hover` in TaskCardCompactRow.module.css, keyed
+// off `.card` set on the Card in TaskCard.tsx) — no re-render on hover.
 export const TaskCardCompactRow: FC<TaskCardBodyProps> = ({
   checkbox,
   title,
@@ -14,7 +17,6 @@ export const TaskCardCompactRow: FC<TaskCardBodyProps> = ({
   projectMeta,
   kanbanPill,
   labelPills,
-  hovered,
 }) => (
   <Group gap={6} wrap="nowrap" align="center">
     {checkbox}
@@ -31,9 +33,7 @@ export const TaskCardCompactRow: FC<TaskCardBodyProps> = ({
         </Group>
       </ScrollArea>
     )}
-    <Box
-      style={{ visibility: hovered ? "visible" : "hidden", flex: "0 0 auto" }}
-    >
+    <Box className={styles.chevron} style={{ flex: "0 0 auto" }}>
       <ChevronRightIcon
         size={15}
         animateOnHover={false}

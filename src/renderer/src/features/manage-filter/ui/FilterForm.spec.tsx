@@ -2,7 +2,19 @@ import { MantineProvider } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { screen, waitFor } from "@testing-library/react";
 import type { FilterDTO } from "@/main/filters";
-import { FilterFormModal } from "./FilterFormModal";
+import type { ProjectDTO } from "@/main/projects";
+import { FilterForm } from "./FilterForm";
+
+const workProject: ProjectDTO = {
+  id: "p1",
+  name: "Work",
+  description: "",
+  color: "blue",
+  parentId: null,
+  isInboxProject: false,
+  isArchived: false,
+  activeTaskCount: 0,
+};
 
 const workFilter: FilterDTO = {
   id: 1,
@@ -12,7 +24,7 @@ const workFilter: FilterDTO = {
   taskCount: 0,
 };
 
-const renderModal = (props: { filter?: FilterDTO }) => {
+const renderForm = (props: { filter?: FilterDTO }) => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
@@ -21,7 +33,13 @@ const renderModal = (props: { filter?: FilterDTO }) => {
   render(
     <MantineProvider>
       <QueryClientProvider client={queryClient}>
-        <FilterFormModal opened onClose={onClose} filter={props.filter} />
+        <FilterForm
+          opened
+          onClose={onClose}
+          filter={props.filter}
+          projects={[workProject]}
+          labelOptions={[]}
+        />
       </QueryClientProvider>
     </MantineProvider>,
   );
@@ -29,34 +47,13 @@ const renderModal = (props: { filter?: FilterDTO }) => {
   return { onClose };
 };
 
-describe("FilterFormModal", () => {
+describe("FilterForm", () => {
   beforeEach(() => {
     Object.defineProperty(window, "api", {
       writable: true,
       configurable: true,
       value: {
-        projects: {
-          list: vi.fn().mockResolvedValue({
-            ok: true,
-            projects: [
-              {
-                id: "p1",
-                name: "Work",
-                description: "",
-                color: "blue",
-                parentId: null,
-                isInboxProject: false,
-                isArchived: false,
-                activeTaskCount: 0,
-              },
-            ],
-          }),
-        },
-        labels: {
-          list: vi.fn().mockResolvedValue({ ok: true, labels: [] }),
-        },
         filters: {
-          list: vi.fn().mockResolvedValue({ ok: true, filters: [] }),
           create: vi.fn(),
           update: vi.fn(),
         },
@@ -65,7 +62,7 @@ describe("FilterFormModal", () => {
   });
 
   it("shows an 'Add filter' title with 'Today + Overdue' preselected in create mode", async () => {
-    renderModal({});
+    renderForm({});
 
     expect(
       screen.getByRole("heading", { name: "Add filter" }),
@@ -77,9 +74,9 @@ describe("FilterFormModal", () => {
   });
 
   it("shows an 'Edit filter' title and reconstructs the saved query's fields", async () => {
-    renderModal({ filter: workFilter });
+    renderForm({ filter: workFilter });
 
-    expect(await screen.findByDisplayValue("Urgent work")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Urgent work")).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "P1" })).toBeChecked();
     expect(screen.getByRole("combobox", { name: "Project" })).toHaveValue(
       "Work",
@@ -89,9 +86,9 @@ describe("FilterFormModal", () => {
 
   it("shows a validation error for a blank title and does not call the IPC bridge", async () => {
     const user = userEvent.setup();
-    renderModal({ filter: workFilter });
+    renderForm({ filter: workFilter });
 
-    await user.clear(await screen.findByLabelText("Title"));
+    await user.clear(screen.getByLabelText("Title"));
     await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(await screen.findByText("Title is required")).toBeInTheDocument();
@@ -104,7 +101,7 @@ describe("FilterFormModal", () => {
       filter: { ...workFilter, id: 2, title: "New" },
     });
     const user = userEvent.setup();
-    const { onClose } = renderModal({});
+    const { onClose } = renderForm({});
 
     await user.type(screen.getByLabelText("Title"), "  New  ");
     await user.click(screen.getByRole("checkbox", { name: "P1" }));

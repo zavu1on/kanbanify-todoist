@@ -1,4 +1,4 @@
-import { ActionIcon, Menu } from "@mantine/core";
+import { ActionIcon, Box, Menu } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
   ArchiveIcon,
@@ -29,7 +29,13 @@ export const ProjectActionsMenu: FC<ProjectActionsMenuProps> = ({
     useDisclosure(false);
 
   return (
-    <>
+    // The row this menu sits in (`SidebarProjectLink`) is itself a router
+    // `Link` — a click anywhere in here (including inside the Portal'd Menu
+    // dropdown and the three modals below, which are still React-tree
+    // descendants of this component even though they render into
+    // `document.body`) would otherwise bubble up to that Link and navigate,
+    // re-rendering every nav link in the sidebar for no reason.
+    <Box onClick={(event) => event.stopPropagation()} display="contents">
       <Menu withinPortal position="bottom-end">
         <Menu.Target>
           <ActionIcon
@@ -89,6 +95,6 @@ export const ProjectActionsMenu: FC<ProjectActionsMenuProps> = ({
           project={project}
         />
       )}
-    </>
+    </Box>
   );
 };

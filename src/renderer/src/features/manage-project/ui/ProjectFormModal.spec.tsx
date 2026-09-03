@@ -80,8 +80,8 @@ describe("ProjectFormModal", () => {
     ).toBeInTheDocument();
     expect(screen.getByDisplayValue("Work")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Work stuff")).toBeInTheDocument();
-    const parentField = await screen.findByLabelText("Parent project");
-    expect(parentField).toHaveValue("Life");
+    const parentField = screen.getByLabelText("Parent project");
+    await waitFor(() => expect(parentField).toHaveValue("Life"));
     expect(parentField).toBeDisabled();
   });
 

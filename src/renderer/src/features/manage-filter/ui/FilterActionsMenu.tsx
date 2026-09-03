@@ -1,4 +1,4 @@
-import { ActionIcon, Menu } from "@mantine/core";
+import { ActionIcon, Box, Menu } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { DeleteIcon, MenuIcon, SquarePenIcon } from "lucide-animated";
 import type { FC } from "react";
@@ -19,7 +19,11 @@ export const FilterActionsMenu: FC<FilterActionsMenuProps> = ({ filter }) => {
     useDisclosure(false);
 
   return (
-    <>
+    // Mirrors `ProjectActionsMenu` — `SidebarFilterLink` wraps this in a
+    // router `Link`, so a click here (including inside the Portal'd Menu
+    // dropdown and the two modals below) would otherwise bubble up and
+    // navigate, re-rendering every nav link in the sidebar.
+    <Box onClick={(event) => event.stopPropagation()} display="contents">
       <Menu withinPortal position="bottom-end">
         <Menu.Target>
           <ActionIcon
@@ -64,6 +68,6 @@ export const FilterActionsMenu: FC<FilterActionsMenuProps> = ({ filter }) => {
           filter={filter}
         />
       )}
-    </>
+    </Box>
   );
 };

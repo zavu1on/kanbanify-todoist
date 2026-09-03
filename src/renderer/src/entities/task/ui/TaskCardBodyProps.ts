@@ -10,5 +10,4 @@ export type TaskCardBodyProps = {
   projectMeta: ReactNode;
   kanbanPill: ReactNode;
   labelPills: ReactNode;
-  hovered: boolean;
 };
