@@ -6,6 +6,7 @@ files:
   - dist/**
   - package.json
 asar: true
+npmRebuild: false
 icon: resources/icon.png
 extraResources:
   - from: resources/icon.png
