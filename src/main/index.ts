@@ -1,5 +1,12 @@
 import path from "node:path";
-import { app, BrowserWindow, Menu, nativeImage, Tray } from "electron";
+import {
+  app,
+  BrowserWindow,
+  Menu,
+  MenuItem,
+  nativeImage,
+  Tray,
+} from "electron";
 import { DownloadAttachmentUseCase } from "./attachments/application/use-cases/DownloadAttachmentUseCase";
 import { AttachmentsIpcController } from "./attachments/infrastructure/AttachmentsIpcController";
 import { TodoistAttachmentGateway } from "./attachments/infrastructure/TodoistAttachmentGateway";
@@ -289,6 +296,41 @@ const createWindow = () => {
   } else {
     window.loadFile(path.join(__dirname, "../renderer/index.html"));
   }
+
+  // Chromium's spellchecker only checks the OS locale's language by
+  // default — force ru/en-US so both are checked regardless of locale.
+  window.webContents.session.setSpellCheckerLanguages(["ru", "en-US"]);
+
+  window.webContents.on("context-menu", (_event, params) => {
+    if (!params.misspelledWord) return;
+
+    const menu = new Menu();
+
+    for (const suggestion of params.dictionarySuggestions) {
+      menu.append(
+        new MenuItem({
+          label: suggestion,
+          click: () => window.webContents.replaceMisspelling(suggestion),
+        }),
+      );
+    }
+
+    if (params.dictionarySuggestions.length > 0) {
+      menu.append(new MenuItem({ type: "separator" }));
+    }
+
+    menu.append(
+      new MenuItem({
+        label: "Добавить в словарь",
+        click: () =>
+          window.webContents.session.addWordToSpellCheckerDictionary(
+            params.misspelledWord,
+          ),
+      }),
+    );
+
+    menu.popup();
+  });
 
   // Closing the window ("X") minimizes to tray instead of quitting — only
   // the tray's "Quit" (or another OS-level quit path) actually exits.
