@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Kanbanify Todoist** — desktop-приложение (Electron), UI-клиент для Todoist, добавляющий kanban-статусы для **Задач** через встроенные **Лейблы** Todoist (не через нативные поля Todoist: на бесплатном тарифе API их не предоставляет).
 
-Полное описание экранов и сценариев — [`docs/SPECIFICATION.md`](docs/SPECIFICATION.md). Навигация по всей документации — [`docs/README.md`](docs/README.md), начинай оттуда, если нужен контекст за пределами этого файла. Конвенции кода — [`docs/COMMON_CODE_STYLE_GUIDE.md`](docs/COMMON_CODE_STYLE_GUIDE.md) и два процессных руководства рядом с ним. Обоснование выбора стека — [`docs/decisions/01-tech-stack.md`](docs/decisions/01-tech-stack.md), обоснование архитектурных конвенций — [`docs/decisions/02-architecture.md`](docs/decisions/02-architecture.md).
+Полное описание экранов и сценариев — [`docs/SPECIFICATION.md`](docs/SPECIFICATION.md). Навигация по всей документации — [`docs/README.md`](docs/README.md), начинай оттуда, если нужен контекст за пределами этого файла. Конвенции кода — [`docs/COMMON_CODE_STYLE_GUIDE.md`](docs/COMMON_CODE_STYLE_GUIDE.md) и два процессных руководства рядом с ним. Обоснование выбора стека — [`docs/decisions/01-tech-stack.md`](docs/decisions/01-tech-stack.md), обоснование архитектурных конвенций — [`docs/decisions/02-architecture.md`](docs/decisions/02-architecture.md), локальное хранилище фильтров — [`docs/decisions/04-filters-persistence.md`](docs/decisions/04-filters-persistence.md). Реестр работы, заблокированной отсутствующим функционалом, — [`docs/DEFERRED.md`](docs/DEFERRED.md): сверяйся с ним перед реализацией фичи и пополняй после.
 
 `docs/feat/*` — черновые короткоживущие мини-ТЗ пользователя, не в git (см. `.gitignore`) и не часть документации проекта. **Не читай файлы из этой папки** ни проактивно, ни через `docs/README.md` — если задача упомянута со ссылкой на файл в `docs/feat/`, работай по тексту, который пользователь дал в самом промпте. Единственное исключение - указание пути на `.md` файл с явной просьбой реализовать фичу, описанную в данном файле.
 
@@ -19,6 +19,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **`src/renderer/src/`** — Electron renderer-процесс (фронтенд): React + React Router + Mantine UI + dnd-kit (drag-and-drop канбан-доски) + TanStack Query (серверное состояние, IPC-запросы, пагинация) + Day.js (работа со сроком задачи). Организован по **FSD** (Feature-Sliced Design) — слои и сегменты фич, публичные API слайсов.
 
 Связь бекенда и фронтенда — исключительно через IPC (preload как контракт), renderer не имеет прямого доступа к Todoist API или токену.
+
+Не всё идёт через Todoist: сохранённые **Фильтры** (вкладки сайдбара) — локальная конфигурация, лежит в sqlite (`better-sqlite3`, файл `filters.db` в `userData`, модуль `src/main/filters/`), а не в Todoist.
 
 ### Ключевая доменная модель (из ТЗ)
 
@@ -46,9 +48,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `yarn build` | production-сборка (`electron-vite build`) |
 | `yarn start` | предпросмотр production-сборки (`electron-vite preview`) |
 | `yarn typecheck` | проверка типов отдельно для node- и web-частей (`tsconfig.node.json`, `tsconfig.web.json`) |
-| `yarn test` | прогон тестов через Vitest (`vitest run`) |
+| `yarn test` | прогон тестов через Vitest (`vitest run`); тесты — `src/**/*.spec.{ts,tsx}`, окружение jsdom. Один файл: `yarn test <путь>`, один тест: `yarn test -t "<имя>"` |
 | `yarn lint` | линт через `biome lint .` |
 | `yarn format` | автоформатирование через `biome format --write .` |
+| `yarn dist:win` | сборка + упаковка Windows-инсталлера через `electron-builder` (артефакты в `release/`) |
 
 ## AI-инфраструктура (Claude Code)
 
@@ -106,9 +109,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Хук | Действие |
 |---|---|
 | `PostToolUse` на `Edit`/`Write`/`MultiEdit` | прогоняет `yarn biome format --write` по изменённому файлу (`.ts`, `.tsx`, `.json`, `.md`) |
-| `Stop` | запускает [`.claude/hooks/sdlc-gates.sh`](.claude/hooks/sdlc-gates.sh): `yarn typecheck` и `yarn test`, если в `src/` есть изменения. При красном результате блокирует завершение и возвращает вывод агенту на починку |
+| `Stop` | **не подключён** в `settings.json`: скрипт [`.claude/hooks/sdlc-gates.sh`](.claude/hooks/sdlc-gates.sh) есть, но не зарегистрирован. После подключения запускает `yarn typecheck` и `yarn test`, если в `src/` есть изменения; при красном результате блокирует завершение и возвращает вывод агенту на починку. Пока хук не подключён — гоняй оба гейта вручную перед завершением |
 
-Гейт-скрипт пропускает прогон, когда `src/` не менялся (правки только в документации), и не блокирует повторно при уже активном stop-хуке — чтобы непочиняемая ошибка не зациклила сессию.
+Гейт-скрипт (когда подключён) пропускает прогон, когда `src/` не менялся (правки только в документации), и не блокирует повторно при уже активном stop-хуке — чтобы непочиняемая ошибка не зациклила сессию.
 
 ### Правило актуализации
 
