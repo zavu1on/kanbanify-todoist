@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { PropsWithChildren } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   TaskDTO,
   TasksListResult,
@@ -29,6 +29,55 @@ describe("useChangeTaskStatusMutation", () => {
       writable: true,
       configurable: true,
       value: { tasks: { updateStatus: vi.fn() } },
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("refetches active tasks-lists and filters 3s after the last drop, not before", async () => {
+    vi.useFakeTimers();
+    window.api.tasks.updateStatus = vi
+      .fn()
+      .mockResolvedValue({ ok: true, task: { id: "1" } });
+    const queryClient = buildQueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+
+    const { result } = renderHook(() => useChangeTaskStatusMutation(queryKey), {
+      wrapper: buildWrapper(queryClient),
+    });
+
+    await act(async () => {
+      await result.current.mutateAsync({ taskId: "1", status: "in-progress" });
+    });
+    invalidateSpy.mockClear();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2_000);
+    });
+    expect(invalidateSpy).not.toHaveBeenCalled();
+
+    // A second drop restarts the 3s window.
+    await act(async () => {
+      await result.current.mutateAsync({ taskId: "1", status: "completed" });
+    });
+    invalidateSpy.mockClear();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2_000);
+    });
+    expect(invalidateSpy).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000);
+    });
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: ["tasks", "list"],
+      refetchType: "active",
+    });
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: ["filters", "list"],
+      refetchType: "active",
     });
   });
 

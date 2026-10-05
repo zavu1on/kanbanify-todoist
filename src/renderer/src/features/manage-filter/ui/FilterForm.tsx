@@ -3,7 +3,6 @@ import {
   Chip,
   Group,
   Modal,
-  Radio,
   Select,
   Stack,
   TagsInput,
@@ -13,7 +12,13 @@ import {
 import { schemaResolver, useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { type FC, useState } from "react";
-import { buildFilterQuery, parseFilterQuery } from "@/entities/filter";
+import {
+  buildFilterQuery,
+  createEmptyFilterFields,
+  FILTER_KANBAN_STATUSES,
+  parseFilterQuery,
+} from "@/entities/filter";
+import { KANBAN_COLUMN_LABELS } from "@/entities/task";
 import type { FilterDTO } from "@/main/filters";
 import type { ProjectDTO } from "@/main/projects";
 import { PRIORITY_LEVELS, type PriorityLevel } from "@/main/tasks";
@@ -21,6 +26,7 @@ import { useCreateFilterMutation } from "../api/useCreateFilterMutation";
 import { useUpdateFilterMutation } from "../api/useUpdateFilterMutation";
 import { filterFormSchema } from "../model/filterFormSchema";
 import { FilterColorField } from "./FilterColorField";
+import { FilterFieldControls } from "./FilterFieldControls";
 import { FilterDueField } from "./FilterDueField";
 import { FilterQueryPreview } from "./FilterQueryPreview";
 
@@ -81,7 +87,16 @@ export const FilterForm: FC<FilterFormProps> = ({
       priorities: parsedQuery?.priorities ?? [],
       due: parsedQuery?.due ?? (isEditMode ? null : "today_overdue"),
       labels: parsedQuery?.labels ?? [],
-      conjunction: parsedQuery?.conjunction ?? "and",
+      kanbanStatus: parsedQuery?.kanbanStatus ?? null,
+      negated: parsedQuery?.negated ?? {
+        project: false,
+        priorities: false,
+        due: false,
+        labels: false,
+        kanbanStatus: false,
+      },
+      next: parsedQuery?.next ?? createEmptyFilterFields().next,
+      prec: parsedQuery?.prec ?? createEmptyFilterFields().prec,
     },
     validate: validateFilterForm,
   });
@@ -109,7 +124,10 @@ export const FilterForm: FC<FilterFormProps> = ({
           priorities: values.priorities,
           due: values.due,
           labels: values.labels,
-          conjunction: values.conjunction,
+          kanbanStatus: values.kanbanStatus,
+          negated: values.negated,
+          next: values.next,
+          prec: values.prec,
         }),
       };
 
@@ -141,6 +159,7 @@ export const FilterForm: FC<FilterFormProps> = ({
       opened={opened}
       onClose={requestClose}
       title={isEditMode ? "Edit filter" : "Add filter"}
+      size="lg"
     >
       <form onSubmit={handleSubmit}>
         <Stack gap="md">
@@ -155,56 +174,77 @@ export const FilterForm: FC<FilterFormProps> = ({
 
           <FilterColorField form={form} />
 
-          <Select
-            label="Project"
-            placeholder="Any project"
-            data={projects.map((p) => ({ value: p.id, label: p.name }))}
-            searchable
-            clearable
-            key={form.key("projectId")}
-            {...form.getInputProps("projectId")}
-          />
+          <Group align="flex-end" wrap="nowrap">
+            <Select
+              label="Project"
+              placeholder="Any project"
+              data={projects.map((p) => ({ value: p.id, label: p.name }))}
+              searchable
+              clearable
+              style={{ flex: 1 }}
+              key={form.key("projectId")}
+              {...form.getInputProps("projectId")}
+            />
+            <FilterFieldControls form={form} field="project" />
+          </Group>
 
-          <Stack gap={4}>
-            <Text size="sm" fw={500}>
-              Priority
-            </Text>
-            <Chip.Group
-              multiple
-              key={form.key("priorities")}
-              {...prioritiesInputProps}
-              onChange={(value) => onPrioritiesChange(value as PriorityLevel[])}
-            >
-              <Group gap={6}>
-                {PRIORITY_LEVELS.map((level) => (
-                  <Chip key={level} value={level} size="xs">
-                    {level.toUpperCase()}
-                  </Chip>
-                ))}
-              </Group>
-            </Chip.Group>
-          </Stack>
+          <Group align="flex-end" justify="space-between" wrap="nowrap">
+            <Stack gap={4}>
+              <Text size="sm" fw={500}>
+                Priority
+              </Text>
+              <Chip.Group
+                multiple
+                key={form.key("priorities")}
+                {...prioritiesInputProps}
+                onChange={(value) =>
+                  onPrioritiesChange(value as PriorityLevel[])
+                }
+              >
+                <Group gap={6}>
+                  {PRIORITY_LEVELS.map((level) => (
+                    <Chip key={level} value={level} size="xs">
+                      {level.toUpperCase()}
+                    </Chip>
+                  ))}
+                </Group>
+              </Chip.Group>
+            </Stack>
+            <FilterFieldControls form={form} field="priorities" />
+          </Group>
 
-          <FilterDueField form={form} />
+          <Group align="flex-end" justify="space-between" wrap="nowrap">
+            <FilterDueField form={form} />
+            <FilterFieldControls form={form} field="due" />
+          </Group>
 
-          <TagsInput
-            label="Labels"
-            placeholder="Search or add a label"
-            data={labelOptions}
-            key={form.key("labels")}
-            {...form.getInputProps("labels")}
-          />
+          <Group align="flex-end" wrap="nowrap">
+            <TagsInput
+              label="Labels"
+              placeholder="Search or add a label"
+              data={labelOptions}
+              style={{ flex: 1 }}
+              key={form.key("labels")}
+              {...form.getInputProps("labels")}
+            />
+            <FilterFieldControls form={form} field="labels" />
+          </Group>
 
-          <Radio.Group
-            label="Match"
-            key={form.key("conjunction")}
-            {...form.getInputProps("conjunction")}
-          >
-            <Group gap="xs" mt={4}>
-              <Radio value="and" label="All conditions (AND)" />
-              <Radio value="or" label="Any condition (OR)" />
-            </Group>
-          </Radio.Group>
+          <Group align="flex-end" wrap="nowrap">
+            <Select
+              label="Kanban status"
+              placeholder="Any status"
+              data={FILTER_KANBAN_STATUSES.map((level) => ({
+                value: level,
+                label: KANBAN_COLUMN_LABELS[level],
+              }))}
+              clearable
+              style={{ flex: 1 }}
+              key={form.key("kanbanStatus")}
+              {...form.getInputProps("kanbanStatus")}
+            />
+            <FilterFieldControls form={form} field="kanbanStatus" />
+          </Group>
 
           <FilterQueryPreview form={form} projects={projects} />
 

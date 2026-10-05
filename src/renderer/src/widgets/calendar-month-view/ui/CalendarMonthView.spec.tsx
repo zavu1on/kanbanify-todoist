@@ -55,7 +55,9 @@ describe("CalendarMonthView", () => {
           create: vi.fn(),
           update: vi.fn(),
           updateStatus: vi.fn(),
-          list: vi.fn().mockResolvedValue({ ok: true, tasks: [], nextCursor: null }),
+          list: vi
+            .fn()
+            .mockResolvedValue({ ok: true, tasks: [], nextCursor: null }),
           complete: vi.fn(),
         },
       },
@@ -82,9 +84,7 @@ describe("CalendarMonthView", () => {
     const user = userEvent.setup();
     renderMonthView([]);
 
-    await user.click(
-      screen.getByRole("button", { name: "August 10, 2026" }),
-    );
+    await user.click(screen.getByRole("button", { name: "August 10, 2026" }));
 
     expect(
       await screen.findByRole("heading", { name: "New task" }),

@@ -49,7 +49,9 @@ describe("CalendarAgendaView", () => {
           create: vi.fn(),
           update: vi.fn(),
           updateStatus: vi.fn(),
-          list: vi.fn().mockResolvedValue({ ok: true, tasks: [], nextCursor: null }),
+          list: vi
+            .fn()
+            .mockResolvedValue({ ok: true, tasks: [], nextCursor: null }),
           complete: vi.fn(),
         },
       },

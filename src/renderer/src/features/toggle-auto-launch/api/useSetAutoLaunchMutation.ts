@@ -12,9 +12,8 @@ export const useSetAutoLaunchMutation = () => {
 
     onMutate: async (enabled: boolean) => {
       await queryClient.cancelQueries({ queryKey: autoLaunchQueryKey });
-      const previous = queryClient.getQueryData<AutoLaunchStatusResult>(
-        autoLaunchQueryKey,
-      );
+      const previous =
+        queryClient.getQueryData<AutoLaunchStatusResult>(autoLaunchQueryKey);
 
       const optimistic: AutoLaunchStatusResult = { ok: true, enabled };
       queryClient.setQueryData(autoLaunchQueryKey, optimistic);

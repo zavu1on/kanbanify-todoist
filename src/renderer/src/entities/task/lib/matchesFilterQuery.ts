@@ -1,5 +1,10 @@
 import dayjs from "dayjs";
-import { type DueVariant, parseFilterQuery } from "@/entities/filter";
+import {
+  buildFilterTree,
+  type DueVariant,
+  evaluateTree,
+  parseFilterQuery,
+} from "@/entities/filter";
 import type { TaskDTO } from "@/main/tasks";
 import { getDueDisplay } from "./dueDate";
 
@@ -21,7 +26,7 @@ const matchesDue = (variant: DueVariant, due: TaskDTO["due"]): boolean => {
 
 /**
  * Evaluates whether `task` matches a saved filter's `query` — only the exact
- * structured project/priority/due/labels grammar `buildFilterQuery` produces
+ * structured project/priority/due/labels/status grammar `buildFilterQuery` produces
  * (see `parseFilterQuery`), not arbitrary Todoist filter syntax; that's the
  * only shape this app's own filters are ever saved in, so it's enough to
  * drive optimistic membership in `reconcileTaskInLists` without a real
@@ -36,22 +41,30 @@ export const taskMatchesFilterQuery = (
 ): boolean => {
   const fields = parseFilterQuery(query);
 
-  const clauses: boolean[] = [];
-  if (fields.projectName !== null) {
-    clauses.push(fields.projectName === projectName);
-  }
-  if (fields.priorities.length > 0) {
-    clauses.push(fields.priorities.includes(task.priority));
-  }
-  if (fields.due !== null) {
-    clauses.push(matchesDue(fields.due, task.due));
-  }
-  if (fields.labels.length > 0) {
-    clauses.push(fields.labels.some((label) => task.labels.includes(label)));
-  }
+  const { tree, keys } = buildFilterTree(fields);
+  if (keys.length === 0) return true;
 
-  if (clauses.length === 0) return true;
-  return fields.conjunction === "or"
-    ? clauses.some(Boolean)
-    : clauses.every(Boolean);
+  const matchesField = (key: (typeof keys)[number]): boolean => {
+    switch (key) {
+      case "project":
+        return fields.projectName === projectName;
+      case "priorities":
+        return fields.priorities.includes(task.priority);
+      case "due":
+        return fields.due !== null && matchesDue(fields.due, task.due);
+      case "labels":
+        return fields.labels.some((label) => task.labels.includes(label));
+      case "kanbanStatus":
+        // Raw label, like the server's `@label` — not the resolved status.
+        return (
+          fields.kanbanStatus !== null &&
+          task.labels.includes(fields.kanbanStatus)
+        );
+    }
+  };
+
+  return evaluateTree(
+    tree,
+    (index) => matchesField(keys[index]) !== fields.negated[keys[index]],
+  );
 };

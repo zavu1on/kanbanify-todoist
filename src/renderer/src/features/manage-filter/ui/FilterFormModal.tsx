@@ -1,6 +1,7 @@
 import { Center, Loader, Modal } from "@mantine/core";
 import type { FC } from "react";
 import { useLabelsQuery } from "@/entities/label";
+import { FILTER_KANBAN_STATUSES } from "@/entities/filter";
 import { useProjectsQuery } from "@/entities/project";
 import type { FilterDTO } from "@/main/filters";
 import { FilterForm } from "./FilterForm";
@@ -31,12 +32,15 @@ export const FilterFormModal: FC<FilterFormModalProps> = ({
   const projects = projectsQuery.data?.ok ? projectsQuery.data.projects : [];
   const labelsQuery = useLabelsQuery();
   const labelOptions = labelsQuery.data?.ok
-    ? labelsQuery.data.labels.map((label) => label.name)
+    ? labelsQuery.data.labels
+        .map((label) => label.name)
+        // Reserved labels are picked via the Kanban status field instead.
+        .filter((name) => !(FILTER_KANBAN_STATUSES as string[]).includes(name))
     : [];
 
   if (isEditMode && projectsQuery.isPending) {
     return (
-      <Modal opened={opened} onClose={onClose} title="Edit filter">
+      <Modal opened={opened} onClose={onClose} title="Edit filter" size="lg">
         <Center py="lg">
           <Loader />
         </Center>

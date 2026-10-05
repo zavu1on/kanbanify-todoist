@@ -61,9 +61,7 @@ export class TodoistCommentGateway implements ICommentGateway {
     });
   }
 
-  private toApiAttachment(
-    attachment: Comment["attachment"],
-  ):
+  private toApiAttachment(attachment: Comment["attachment"]):
     | {
         fileUrl: string;
         fileName?: string;

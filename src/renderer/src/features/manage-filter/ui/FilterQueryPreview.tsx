@@ -31,9 +31,14 @@ const FilterQueryPreviewComponent: FC<FilterQueryPreviewProps> = ({
   form.watch("labels", ({ value }) =>
     setValues((v) => ({ ...v, labels: value })),
   );
-  form.watch("conjunction", ({ value }) =>
-    setValues((v) => ({ ...v, conjunction: value })),
+  form.watch("kanbanStatus", ({ value }) =>
+    setValues((v) => ({ ...v, kanbanStatus: value })),
   );
+  form.watch("negated", ({ value }) =>
+    setValues((v) => ({ ...v, negated: value })),
+  );
+  form.watch("next", ({ value }) => setValues((v) => ({ ...v, next: value })));
+  form.watch("prec", ({ value }) => setValues((v) => ({ ...v, prec: value })));
 
   const projectName =
     projects.find((p) => p.id === values.projectId)?.name ?? null;
@@ -42,7 +47,10 @@ const FilterQueryPreviewComponent: FC<FilterQueryPreviewProps> = ({
     priorities: values.priorities,
     due: values.due,
     labels: values.labels,
-    conjunction: values.conjunction,
+    kanbanStatus: values.kanbanStatus,
+    negated: values.negated,
+    next: values.next,
+    prec: values.prec,
   });
 
   return (

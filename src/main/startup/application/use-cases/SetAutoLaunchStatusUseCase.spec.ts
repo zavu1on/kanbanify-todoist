@@ -24,6 +24,8 @@ describe("SetAutoLaunchStatusUseCase", () => {
     };
     const useCase = new SetAutoLaunchStatusUseCase(autoLaunchGateway);
 
-    await expect(useCase.execute(true)).rejects.toThrow("registry write failed");
+    await expect(useCase.execute(true)).rejects.toThrow(
+      "registry write failed",
+    );
   });
 });

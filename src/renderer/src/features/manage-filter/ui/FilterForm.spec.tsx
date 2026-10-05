@@ -111,9 +111,54 @@ describe("FilterForm", () => {
       expect(window.api.filters.create).toHaveBeenCalledWith({
         title: "New",
         color: "charcoal",
-        query: "p1 & (today | overdue)",
+        query: "p1 | (today | overdue)",
       });
     });
     await waitFor(() => expect(onClose).toHaveBeenCalled());
+  });
+
+  it("disables NOT/conjunction for an empty field and restores them in edit mode", async () => {
+    renderForm({
+      filter: { ...workFilter, query: "!(p1 | p2) & @todo" },
+    });
+
+    expect(screen.getByRole("checkbox", { name: "P1" })).toBeChecked();
+    expect(screen.getAllByRole("checkbox", { name: "NOT" })[1]).toBeChecked();
+    // Project is empty → its NOT is disabled.
+    expect(screen.getAllByRole("checkbox", { name: "NOT" })[0]).toBeDisabled();
+    expect(screen.getByText("query=!(p1 | p2) & @todo")).toBeInTheDocument();
+  });
+
+  it("shows the precedence select only with two or more operators", async () => {
+    renderForm({
+      filter: { ...workFilter, query: "#Work & p1" },
+    });
+    expect(
+      screen.queryAllByRole("combobox", { name: /precedence/ }),
+    ).toHaveLength(0);
+  });
+
+  it("restores ranks in edit mode and shows the precedence selects", async () => {
+    renderForm({
+      filter: { ...workFilter, query: "(#Work | p1) & @a" },
+    });
+
+    expect(screen.getByText("query=(#Work | p1) & @a")).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("combobox", { name: /precedence/ }).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("rejects a reserved label in Labels", async () => {
+    const user = userEvent.setup();
+    renderForm({ filter: { ...workFilter, query: "#Work & p1" } });
+
+    await user.type(
+      screen.getByPlaceholderText("Search or add a label"),
+      "todo{Enter}",
+    );
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(window.api.filters.update).not.toHaveBeenCalled();
   });
 });

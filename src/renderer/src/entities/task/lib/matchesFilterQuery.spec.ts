@@ -87,4 +87,35 @@ describe("taskMatchesFilterQuery", () => {
     ).toBe(true);
     expect(taskMatchesFilterQuery("p1 | @waiting", task, null)).toBe(false);
   });
+
+  it("negates a clause", () => {
+    expect(taskMatchesFilterQuery("!(@a)", task, null)).toBe(true);
+    expect(taskMatchesFilterQuery("!(p4)", task, null)).toBe(false);
+  });
+
+  it("matches the Kanban status by raw label", () => {
+    const labeled = { ...task, labels: ["todo"] };
+    expect(taskMatchesFilterQuery("p1 | @todo", labeled, null)).toBe(true);
+    expect(taskMatchesFilterQuery("p1 & @todo", labeled, null)).toBe(false);
+  });
+
+  it("binds & tighter than |", () => {
+    const p1 = { ...task, priority: "p1" as const };
+    // p1 | (today & @a) is true via p1; ((p1 | today) & @a) would be false.
+    expect(taskMatchesFilterQuery("p1 | today & @a", p1, null)).toBe(true);
+    // (p1 & today) | @a is true via @a; p1 & (today | @a) would be false.
+    const labeled = { ...task, labels: ["a"] };
+    expect(taskMatchesFilterQuery("p1 & today | @a", labeled, null)).toBe(true);
+  });
+
+  it("evaluates parenthesized groups, so a rank changes the result", () => {
+    const labeled = { ...task, priority: "p1" as const, labels: [] };
+    // p1 | (today & @a) → true via p1; (p1 | today) & @a → false (no @a).
+    expect(taskMatchesFilterQuery("p1 | (today & @a)", labeled, null)).toBe(
+      true,
+    );
+    expect(taskMatchesFilterQuery("(p1 | today) & @a", labeled, null)).toBe(
+      false,
+    );
+  });
 });

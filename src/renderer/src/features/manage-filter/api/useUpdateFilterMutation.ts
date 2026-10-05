@@ -1,6 +1,9 @@
 import { notifications } from "@mantine/notifications";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { filtersListQueryKey } from "@/entities/filter";
+import {
+  filtersListQueryKey,
+  filterTasksListQueryKey,
+} from "@/entities/filter";
 import type { FiltersListResult, UpdateFilterRequest } from "@/main/filters";
 import { getFilterErrorMessage } from "../model/getFilterErrorMessage";
 import { updateFilter } from "./updateFilter";
@@ -64,6 +67,11 @@ export const useUpdateFilterMutation = () => {
       // The server response carries `taskCount: 0` (see `FiltersIpcController`)
       // — refetch to replace it with the real count.
       queryClient.invalidateQueries({ queryKey: filtersListQueryKey });
+      // The edited `query` changes which tasks the filter matches, so its
+      // cached tasks page (kept fresh for `STALE_TIME` otherwise) is stale.
+      queryClient.invalidateQueries({
+        queryKey: filterTasksListQueryKey(result.filter.id),
+      });
     },
 
     onError: (_error, _variables, context) => {

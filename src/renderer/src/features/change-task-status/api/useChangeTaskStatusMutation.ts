@@ -1,10 +1,12 @@
 import { notifications } from "@mantine/notifications";
 import {
   type InfiniteData,
+  type QueryClient,
   type QueryKey,
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
+import { filtersListQueryKey } from "@/entities/filter";
 import {
   reconcileTaskInLists,
   restoreTaskListSnapshots,
@@ -14,6 +16,39 @@ import type { KanbanStatusLevel, TaskDTO, TasksListResult } from "@/main/tasks";
 import { updateTaskStatus } from "./updateTaskStatus";
 
 type TasksPages = InfiniteData<TasksListResult>;
+
+/** How long after the last successful drop the lists are actually refetched. */
+const REVALIDATE_DELAY_MS = 3_000;
+
+let revalidateTimer: ReturnType<typeof setTimeout> | undefined;
+
+/**
+ * Debounced refetch of every active tasks-list (and the filters' counters)
+ * `REVALIDATE_DELAY_MS` after the *last* drop: a status change can move a
+ * task in or out of a filter (`@todo`, `!(@completed)`…) that the optimistic
+ * `reconcileTaskInLists` may not know about, so the server gets the final
+ * word — but only once dragging has settled, since refetching right away is
+ * what made cards jump (see `onSuccess`). Module-level so it survives the
+ * board unmounting; if a drop is still in flight when it fires, it waits
+ * another round instead of overwriting the optimistic state.
+ */
+const scheduleRevalidation = (queryClient: QueryClient) => {
+  clearTimeout(revalidateTimer);
+  revalidateTimer = setTimeout(() => {
+    if (queryClient.isMutating() > 0) {
+      scheduleRevalidation(queryClient);
+      return;
+    }
+    queryClient.invalidateQueries({
+      queryKey: tasksListQueryKey,
+      refetchType: "active",
+    });
+    queryClient.invalidateQueries({
+      queryKey: filtersListQueryKey,
+      refetchType: "active",
+    });
+  }, REVALIDATE_DELAY_MS);
+};
 
 type ChangeTaskStatusVariables = { taskId: string; status: KanbanStatusLevel };
 
@@ -91,6 +126,7 @@ export const useChangeTaskStatusMutation = (queryKey: QueryKey) => {
         queryKey: tasksListQueryKey,
         refetchType: "none",
       });
+      scheduleRevalidation(queryClient);
     },
 
     onError: (_error, _variables, context) => {
