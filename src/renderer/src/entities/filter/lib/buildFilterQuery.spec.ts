@@ -24,6 +24,7 @@ describe("buildFilterQuery", () => {
     expect(buildFilterQuery(fields({ due: "today_overdue" }))).toBe(
       "(today | overdue)",
     );
+    expect(buildFilterQuery(fields({ due: "next_3_days" }))).toBe("3 days");
     expect(buildFilterQuery(fields({ due: "next_7_days" }))).toBe("7 days");
   });
 
@@ -55,18 +56,18 @@ describe("buildFilterQuery", () => {
   });
 
   it("joins by each field's own conjunction, OR by default", () => {
-    expect(buildFilterQuery(fields({ due: "today", labels: ["a"] }))).toBe(
-      "today | @a",
-    );
+    expect(
+      buildFilterQuery(fields({ due: "next_3_days", labels: ["a"] })),
+    ).toBe("3 days | @a");
     expect(
       buildFilterQuery(
         fields({
-          due: "today",
+          due: "next_3_days",
           labels: ["a"],
           next: { ...createEmptyFilterFields().next, due: "and" },
         }),
       ),
-    ).toBe("today & @a");
+    ).toBe("3 days & @a");
   });
 
   it("skips empty fields and uses the previous defined field's conjunction", () => {
@@ -94,11 +95,11 @@ describe("buildFilterQuery", () => {
     expect(
       buildFilterQuery(
         fields({
-          due: "today",
+          due: "next_3_days",
           next: { ...createEmptyFilterFields().next, due: "and" },
         }),
       ),
-    ).toBe("today");
+    ).toBe("3 days");
   });
 });
 
@@ -134,7 +135,7 @@ describe("parseFilterQuery", () => {
       fields({
         projectName: "Work",
         priorities: ["p1"],
-        due: "today",
+        due: "next_3_days",
         labels: ["a"],
         kanbanStatus: "completed",
         next: { project: "and", priorities: "or", due: "and", labels: "or" },
@@ -257,7 +258,7 @@ describe("operator precedence", () => {
     const full = fields({
       projectName: "Work",
       priorities: ["p1"],
-      due: "today",
+      due: "next_3_days",
       labels: ["a"],
       kanbanStatus: "todo",
     });

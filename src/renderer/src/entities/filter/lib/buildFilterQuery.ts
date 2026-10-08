@@ -1,5 +1,5 @@
-import { buildFilterTree, type TreeNode } from "./expressionTree";
 import type { DueVariant, FilterQueryFields } from "../model/filterFormFields";
+import { buildFilterTree, type TreeNode } from "./expressionTree";
 
 /** Due-variant tokens — `today_overdue` mirrors the backend's own
  * `TODAY_FILTER_QUERY` (`(today | overdue)`, see `ListTodayTasksUseCase`)
@@ -10,7 +10,7 @@ import type { DueVariant, FilterQueryFields } from "../model/filterFormFields";
  * needs. */
 export const DUE_TOKENS: Record<DueVariant, string> = {
   today_overdue: "today | overdue",
-  today: "today",
+  next_3_days: "3 days",
   next_7_days: "7 days",
   no_date: "no date",
 };

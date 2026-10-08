@@ -1,12 +1,12 @@
 import { Chip, Group, Stack, Text } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
-import { memo, type FC, useState } from "react";
+import { type FC, memo, useState } from "react";
 import { DUE_VARIANTS, type DueVariant } from "@/entities/filter";
 import type { FilterFormValues } from "../model/filterFormSchema";
 
 const DUE_LABELS: Record<DueVariant, string> = {
   today_overdue: "Today + Overdue",
-  today: "Today",
+  next_3_days: "Next 3 days",
   next_7_days: "Next 7 days",
   no_date: "No date",
 };

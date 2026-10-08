@@ -42,15 +42,27 @@ describe("taskMatchesFilterQuery", () => {
     expect(taskMatchesFilterQuery("(p1 | p4)", task, null)).toBe(true);
   });
 
-  it("evaluates the 'today' due token against the task's actual due date", () => {
-    expect(taskMatchesFilterQuery("today", task, null)).toBe(false);
+  it("evaluates the 'today | overdue' due token against the task's actual due date", () => {
+    expect(taskMatchesFilterQuery("(today | overdue)", task, null)).toBe(false);
     const dueToday = { ...task, due: { date: "2026-09-02", datetime: null } };
-    expect(taskMatchesFilterQuery("today", dueToday, null)).toBe(true);
+    expect(taskMatchesFilterQuery("(today | overdue)", dueToday, null)).toBe(
+      true,
+    );
     const dueTomorrow = {
       ...task,
       due: { date: "2026-09-03", datetime: null },
     };
-    expect(taskMatchesFilterQuery("today", dueTomorrow, null)).toBe(false);
+    expect(taskMatchesFilterQuery("(today | overdue)", dueTomorrow, null)).toBe(
+      false,
+    );
+  });
+
+  it("evaluates the '3 days' due token as a 3-day window", () => {
+    const at = (date: string) => ({ ...task, due: { date, datetime: null } });
+    expect(taskMatchesFilterQuery("3 days", at("2026-09-04"), null)).toBe(true);
+    expect(taskMatchesFilterQuery("3 days", at("2026-09-06"), null)).toBe(
+      false,
+    );
   });
 
   it("requires at least one matching label out of an OR-group", () => {

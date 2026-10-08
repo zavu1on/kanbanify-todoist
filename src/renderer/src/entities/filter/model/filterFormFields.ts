@@ -8,7 +8,7 @@ import {
  * a single optional choice, not a multi-select like priority/labels. */
 export const DUE_VARIANTS = [
   "today_overdue",
-  "today",
+  "next_3_days",
   "next_7_days",
   "no_date",
 ] as const;

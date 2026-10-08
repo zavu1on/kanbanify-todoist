@@ -12,15 +12,17 @@ const matchesDue = (variant: DueVariant, due: TaskDTO["due"]): boolean => {
   if (variant === "no_date") return due === null;
   if (due === null) return false;
 
-  if (variant === "next_7_days") {
+  if (variant === "next_3_days" || variant === "next_7_days") {
+    const days = variant === "next_3_days" ? 3 : 7;
     const target = due.datetime ? dayjs(due.datetime) : dayjs(due.date);
     const now = dayjs();
-    return !target.isBefore(now, "day") && target.isBefore(now.add(7, "day"));
+    return (
+      !target.isBefore(now, "day") && target.isBefore(now.add(days, "day"))
+    );
   }
 
   const { isOverdue, isDueToday } = getDueDisplay(due);
   if (variant === "today_overdue") return isOverdue || isDueToday;
-  if (variant === "today") return isDueToday;
   return isOverdue; // "overdue"
 };
 
