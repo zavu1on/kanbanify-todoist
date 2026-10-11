@@ -1,9 +1,9 @@
 {
   "name": "kanbanify-todoist",
   "productName": "Kanbanify Todoist",
-  "description": "Неофициальная Electron-надстройка над Todoist с канбан-статусами задач.",
+  "description": "Unofficial Electron add-on for Todoist that adds kanban statuses to tasks.",
   "packageManager": "yarn@4.14.1",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "main": "./dist/main/index.js",
   "scripts": {
     "dev": "electron-vite dev --watch",
